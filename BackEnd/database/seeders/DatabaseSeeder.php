@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             PermissionSeeder::class,
-            UserSeeder::class, // أضف هذا السطر في النهاية
+            UserSeeder::class, // أضف هذا السطر في النهاية\
+            ViolationTypeSeeder::class,
         ]);
     }
 }
