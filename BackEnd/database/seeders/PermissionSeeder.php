@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\Permission; // لا تنس استدعاء الـ Model
+use App\Models\Permission;
 
 class PermissionSeeder extends Seeder
 {
@@ -13,19 +12,31 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        // قائمة شاملة بالصلاحيات بناءً على وثيقة SRS
         $permissions = [
-            // Manager Permissions
-            'manage_users',
+            // User Management Permissions
+            'manage_users',       // إدارة المستخدمين (إضافة، تعديل، حذف)
 
-            // Employee Permissions
-            'view_violations',
+            // Violation Permissions
+            'view_violations',    // عرض المخالفات
 
+            // Dashboard & Statistics Permissions
+            'view_dashboard',     // عرض لوحة التحكم الرئيسية
+            'view_statistics',    // عرض الإحصائيات
+            'export_reports',     // تصدير التقارير كـ PDF/Excel
+
+            // Vehicle Tracking Permissions
+            'track_vehicle',      // تتبع مركبة معينة
+
+            // System & Roles Permissions
+            'manage_roles',       // إدارة الأدوار والصلاحيات
         ];
 
-        foreach ($permissions as $permission) {
+        // نستخدم نفس الطريقة الاحترافية لإضافة الصلاحيات
+        foreach ($permissions as $permissionName) {
             Permission::updateOrCreate(
-                ['permission_name' => $permission],
-                ['guard_name' => 'web']
+                ['permission_name' => $permissionName],
+                ['guard_name' => 'web'] // 'web' هو الـ guard الافتراضي في لارافيل
             );
         }
     }

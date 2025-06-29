@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,10 +12,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            ViolationTypeSeeder::class,
             RoleSeeder::class,
             PermissionSeeder::class,
-            UserSeeder::class, // أضف هذا السطر في النهاية\
-            ViolationTypeSeeder::class,
+            RolePermissionSeeder::class, // الـ Seeder الجديد الذي يربط بينهما
+            UserSeeder::class,           // الـ Seeder المبسّط الخاص بالمستخدمين
         ]);
     }
 }

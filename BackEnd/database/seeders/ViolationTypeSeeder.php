@@ -35,6 +35,11 @@ class ViolationTypeSeeder extends Seeder
                 'fine_amount' => 500
             ],
             [
+                'key' => 'accident_detection',
+                'type_name' => 'اكتشاف حادث مروري', //
+                'fine_amount' => 0 // كما اقترحت، قيمة الغرامة صفر
+            ],
+            [
                 'key' => 'no_plate',
                 'type_name' => 'اكتشاف غياب لوحة المركبة', // تم التعديل هنا
                 'fine_amount' => 1000

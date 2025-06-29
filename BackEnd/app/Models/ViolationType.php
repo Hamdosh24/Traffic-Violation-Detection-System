@@ -10,32 +10,19 @@ class ViolationType extends Model
 {
     use HasFactory, HasUuids;
 
-    /**
-     * The primary key for the model.
-     *
-     * @var string
-     */
     protected $primaryKey = 'v_type_id';
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
     public $incrementing = false;
-
-    /**
-     * The "type" of the primary key ID.
-     *
-     * @var string
-     */
     protected $keyType = 'string';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    // هذه هي الحقول الصحيحة التي نسمح بتعبئتها في جدول أنواع المخالفات
     protected $fillable = [
-    'v_type_id',
-    'camera_id',
-    'plate_num', // تأكد من أن هذا الحقل موجود هنا
-    'timestamp',
-    'evidence_url',
-];
+        'type_name',
+        'key',
+        'fine_amount',
+    ];
 }
