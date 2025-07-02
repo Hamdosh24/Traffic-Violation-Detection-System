@@ -1,8 +1,6 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import logo from "../../public/Logo.svg";
 import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
@@ -11,6 +9,7 @@ import {
   User2,
   History,
   LockOpen,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function Sidebar({ type, showSidebar, setShowSidebar }) {
@@ -45,11 +44,6 @@ export default function Sidebar({ type, showSidebar, setShowSidebar }) {
 
   const sidebarLinks = [
     {
-      title: "Statistic",
-      icon: ChartColumn,
-      href: "/adminDashboard/statistic",
-    },
-    {
       title: "Accounts",
       icon: User2,
       href: "/adminDashboard/accounts",
@@ -58,11 +52,6 @@ export default function Sidebar({ type, showSidebar, setShowSidebar }) {
       title: "Activity Log",
       icon: History,
       href: "/adminDashboard/activityLog",
-    },
-    {
-      title: "Change Passowrd",
-      icon: LockOpen,
-      href: "/adminDashboard/changepassowrd",
     },
   ];
   return (
@@ -73,12 +62,15 @@ export default function Sidebar({ type, showSidebar, setShowSidebar }) {
           : "z-50 fixed hidden sm:block mt-16 sm:mt-0 dark:bg-slate-800 bg-white space-y-6 w-64 h-screen dark:text-slate-100 left-0 top-0 shadow-md flex-col"
       }
     >
-      <div className="px-6 py-4 ">
+      <div className="px-6 py-5 border-b-2 border-spacing-1 dark:border-customGreen">
         <Link
           onClick={() => setShowSidebar(false)}
           href={type === "employee" ? "/employeeDashboard" : "/adminDashboard"}
         >
-          <Image src={logo} alt="limifood logo" className="w-28 text-black" />
+          <span className="font-bold text-black dark:text-white dark:hover:text-customGreen/90 hover:text-customGreen flex">
+            <ShieldCheck />
+            Traffic Violation Detect
+          </span>
         </Link>
       </div>
       <div className="text-gray-400  space-y-3 flex flex-col">

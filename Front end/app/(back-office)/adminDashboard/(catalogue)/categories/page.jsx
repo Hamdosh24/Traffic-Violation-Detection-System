@@ -1,4 +1,4 @@
-import React from "react";
+"use client";
 import PageHeader from "@/components/backoffice/PageHeader";
 import TableActions from "@/components/backoffice/TableActions";
 
