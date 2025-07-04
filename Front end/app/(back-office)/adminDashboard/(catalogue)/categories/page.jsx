@@ -1,0 +1,23 @@
+"use client";
+import PageHeader from "@/components/backoffice/PageHeader";
+import TableActions from "@/components/backoffice/TableActions";
+
+export default function page() {
+  return (
+    <div>
+      {/* Header */}
+      <PageHeader
+        heading="Category"
+        href="/dashboard/categories/new"
+        LinkTitle="Add Category"
+      />
+      {/* Table Actions */}
+      {/* Expert || Search || Bulk Delete */}
+      <TableActions />
+
+      <div className="py-8">
+        <h2>Table</h2>
+      </div>
+    </div>
+  );
+}

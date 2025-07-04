@@ -1,0 +1,52 @@
+[
+  {
+    "Name": "John Smith",
+    "Father": "Michael Smith",
+    "Mother": "Emily Johnson",
+    "ID": "1234567890",
+    "Email": "john.smith@example.com",
+    "Position": "Development Manager",
+    "Status": "online",
+    "Action": "Edit/Delete"
+  },
+  {
+    "Name": "Sarah Williams",
+    "Father": "David Williams",
+    "Mother": "Jennifer Brown",
+    "ID": "2345678901",
+    "Email": "sarah.williams@example.com",
+    "Position": "HR Specialist",
+    "Status": "online",
+    "Action": "Edit/Delete"
+  },
+  {
+    "Name": "Robert Johnson",
+    "Father": "James Johnson",
+    "Mother": "Mary Davis",
+    "ID": "3456789012",
+    "Email": "robert.johnson@example.com",
+    "Position": "Senior Developer",
+    "Status": "online",
+    "Action": "Edit/Delete"
+  },
+  {
+    "Name": "Lisa Anderson",
+    "Father": "Thomas Anderson",
+    "Mother": "Patricia Miller",
+    "ID": "4567890123",
+    "Email": "lisa.anderson@example.com",
+    "Position": "Marketing Director",
+    "Status": "offline",
+    "Action": "Edit/Delete"
+  },
+  {
+    "Name": "Daniel Wilson",
+    "Father": "Christopher Wilson",
+    "Mother": "Susan Taylor",
+    "ID": "5678901234",
+    "Email": "daniel.wilson@example.com",
+    "Position": "Financial Analyst",
+    "Status": "offline",
+    "Action": "Edit/Delete"
+  }
+]
