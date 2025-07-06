@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+
+class Accident extends Model
+{
+    use HasFactory;
+
+    // --- إعدادات مفتاح UUID الأساسي ---
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    /**
+     * الحقول التي نسمح بتعبئتها
+     */
+    protected $fillable = [
+        'camera_id',
+        'timestamp',
+        'involved_vehicles',
+        'status',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    // نصيحة احترافية: هذه الخاصية تخبر لارافيل بأن تتعامل دائمًا
+    // مع حقل 'involved_vehicles' على أنه مصفوفة PHP (array)
+    // وليس كنص JSON، مما يسهل التعامل معه في الكود.
+    protected $casts = [
+        'involved_vehicles' => 'array',
+    ];
+
+    /**
+     * دالة لإنشاء UUID تلقائيًا عند إنشاء سجل جديد
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = Str::uuid();
+            }
+        });
+    }
+}
