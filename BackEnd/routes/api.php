@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ViolationController; // تأكد من وجود هذا
 use App\Http\Controllers\Api\PassingCarController;
+use App\Http\Controllers\Api\AccidentController; // أضف هذا في الأعلى
 
 // Route for user login
 Route::post('/login', [AuthController::class, 'login']);
@@ -13,6 +14,9 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/violations', [ViolationController::class, 'store']); // <-- هذا هو السطر المفقود
 
 Route::post('/passing-cars', [PassingCarController::class, 'store']);
+
+Route::post('/accidents', [AccidentController::class, 'store']);
+
 
 
 // Test route
