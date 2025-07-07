@@ -21,20 +21,7 @@ class Accident extends Model
     protected $fillable = [
         'camera_id',
         'timestamp',
-        'involved_vehicles',
         'status',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
-    // نصيحة احترافية: هذه الخاصية تخبر لارافيل بأن تتعامل دائمًا
-    // مع حقل 'involved_vehicles' على أنه مصفوفة PHP (array)
-    // وليس كنص JSON، مما يسهل التعامل معه في الكود.
-    protected $casts = [
-        'involved_vehicles' => 'array',
     ];
 
     /**

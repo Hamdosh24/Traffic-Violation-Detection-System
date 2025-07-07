@@ -15,7 +15,6 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('camera_id');
             $table->timestamp('timestamp');
-            $table->json('involved_vehicles')->nullable();
             $table->string('status')->default('new');
             $table->timestamps();
         });
