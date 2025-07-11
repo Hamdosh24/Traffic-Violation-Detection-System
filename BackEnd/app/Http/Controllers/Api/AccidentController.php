@@ -31,4 +31,23 @@ class AccidentController extends Controller
         // إرجاع استجابة ناجحة
         return response()->json($accident, 201);
     }
+
+      public function indexNew()
+    {
+        // ابحث عن كل الحوادث التي حالتها 'new'
+        $newAccidents = Accident::where('status', 'new')->latest()->get();
+
+        // أرجعها كاستجابة JSON
+        return response()->json($newAccidents);
+    }
+
+    public function markAsViewed(Accident $accident)
+    {
+        // نقوم بتحديث حقل الحالة فقط
+        $accident->status = 'viewed';
+        $accident->save();
+
+        // نرجع استجابة ناجحة مع بيانات الحادث المحدثة
+        return response()->json($accident);
+    }
 }
