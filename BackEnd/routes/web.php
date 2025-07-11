@@ -1,16 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Home;
+use App\Http\Controllers\Api\ViolationController; // This line is new and important
+
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/kareem/',function($id){
-    echo("Welcome");
-
-
-});
-
-;
+// This is the new route for showing violation details
+Route::get('/violations/{violation}', [ViolationController::class, 'show'])->name('violations.show');
