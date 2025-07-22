@@ -60,3 +60,13 @@ Route::get('/test-notification', function () {
 
     return "تم إنشاء مخالفة اختبار! تم تفعيل عملية الإشعار. تحقق من بريدك الإلكتروني أو Mailtrap.";
 });
+
+use App\Http\Controllers\Admin\EmployeeController;
+
+Route::prefix('admin')->middleware(['auth:sanctum', 'manager'])->group(function () {
+    Route::get('employees', [EmployeeController::class, 'index']);
+    Route::post('employees', [EmployeeController::class, 'store']);
+    Route::get('employees/{user_id}', [EmployeeController::class, 'show']);
+    Route::put('employees/{user_id}', [EmployeeController::class, 'update']);
+    Route::delete('employees/{user_id}', [EmployeeController::class, 'destroy']);
+});
