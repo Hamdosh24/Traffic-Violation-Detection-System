@@ -50,4 +50,11 @@ class Violation extends Model
     {
         return $this->belongsTo(ViolationType::class, 'v_type_id', 'v_type_id');
     }
+
+    
+    public function camera()
+    {
+        return $this->belongsTo(Camera::class, 'camera_id', 'camera_id');
+    }
+
 }

@@ -70,3 +70,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'manager'])->group(function 
     Route::put('employees/{user_id}', [EmployeeController::class, 'update']);
     Route::delete('employees/{user_id}', [EmployeeController::class, 'destroy']);
 });
+
+use App\Http\Controllers\Statistics\StatisticsController;
+
+Route::middleware(['auth:sanctum', 'employee'])->group(function () {
+    Route::post('/violations/hourly', [StatisticsController::class, 'getViolationsByHour']);
+    Route::post('/violations/by-region', [StatisticsController::class, 'getViolationsByRegion']);
+});

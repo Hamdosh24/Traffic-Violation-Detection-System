@@ -35,4 +35,9 @@ class Accident extends Model
             }
         });
     }
+
+    public function camera()
+    {
+        return $this->belongsTo(camera::class, 'camera_id', 'camera_id');
+    }
 }
