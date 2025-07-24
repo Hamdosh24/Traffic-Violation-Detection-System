@@ -6,8 +6,8 @@ import NewAccount from "@/components/frontend/NewAccount";
 export default function page() {
   return (
     <div className="p-4">
-      <Heading title="Create New Account" />
-      <NewAccount />
+      <Heading title="انشاء حساب جديد" />
+      <NewAccount isEditMode={false} />
     </div>
   );
 }

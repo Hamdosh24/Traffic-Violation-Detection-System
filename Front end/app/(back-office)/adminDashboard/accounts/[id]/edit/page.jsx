@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import EmployeeForm from "@/components/backoffice/EmployeeInfo";
 import Heading from "@/components/backoffice/Heading";
 import { toast } from "react-hot-toast";
 import Data from "../../../../../../Account.json";
+import NewAccount from "@/components/frontend/NewAccount";
 
 export default function EditEmployeePage({ params }) {
   const { id } = params;
@@ -16,18 +16,19 @@ export default function EditEmployeePage({ params }) {
   useEffect(() => {
     setIsLoading(true);
     try {
-      const foundEmployee = employeesData.find((emp) => emp.ID === id);
+      const foundEmployee = employeesData.find((emp) => emp.id === id);
       if (foundEmployee) {
         setEmployee(foundEmployee);
       } else {
-        toast.error("Employee not found");
+        toast.error("لم يتم العثور على الموظف");
+        router.push("/adminDashboard/accounts");
       }
     } catch (error) {
-      toast.error("Error loading employee dats");
+      toast.error("حدث خطأ أثناء تحميل بيانات الموظف");
     } finally {
       setIsLoading(false);
     }
-  }, [id, employeesData]);
+  }, [id, employeesData, router]);
 
   const handleSubmit = (formData) => {
     try {
@@ -35,18 +36,18 @@ export default function EditEmployeePage({ params }) {
 
       // تحديث البيانات مباشرة في state
       const updatedData = employeesData.map((emp) =>
-        emp.ID === id ? { ...emp, ...formData } : emp
+        emp.id === id ? { ...emp, ...formData } : emp
       );
 
       setEmployeesData(updatedData);
-      toast.success("Employee updated successfully");
+      toast.success("تم تحديث بيانات الموظف بنجاح");
 
       // إعادة التوجيه بعد التحديث
       setTimeout(() => {
         router.push("/adminDashboard/accounts");
       }, 1000);
     } catch (error) {
-      toast.error(error.message || "Failed to update employee");
+      toast.error(error.message || "فشل في تحديث بيانات الموظف");
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +57,7 @@ export default function EditEmployeePage({ params }) {
     return (
       <div className="p-4">
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-customGreen"></div>
         </div>
       </div>
     );
@@ -65,12 +66,12 @@ export default function EditEmployeePage({ params }) {
   if (!employee) {
     return (
       <div className="p-4">
-        <p className="text-red-500">Employee not found</p>
+        <p className="text-red-500">لم يتم العثور على الموظف</p>
         <button
-          onClick={() => router.back()}
-          className="mt-4 text-blue-600 hover:underline"
+          onClick={() => router.push("/adminDashboard/accounts")}
+          className="mt-4 text-customGreen hover:underline"
         >
-          Go back
+          العودة إلى القائمة
         </button>
       </div>
     );
@@ -79,21 +80,45 @@ export default function EditEmployeePage({ params }) {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-6">
-        <Heading title={`Edit Employee: ${employee.Name}`} />
+        <Heading title={`تعديل الموظف: ${employee.Name}`} />
         <button
           onClick={() => router.push(`/adminDashboard/accounts/${id}`)}
           className="px-4 py-2 bg-customGreen text-white rounded hover:bg-customGreen/75"
         >
-          View Details
+          عرض التفاصيل
         </button>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <EmployeeForm
-          initialData={employee}
-          onSubmit={handleSubmit}
-          isSubmitting={isLoading}
-          onCancel={() => router.push(`/adminDashboard/accounts/${id}`)}
+        <NewAccount
+          isEditMode={true}
+          initialData={{
+            id: employee.id || "", // تأكد من استخدام id بدلاً من ID
+            user_name: employee.user_name || "",
+            national_num: employee.national_num || "",
+            password: "",
+            first_name: employee.first_name || "",
+            last_name: employee.last_name || "",
+            phone_num: employee.phone_num || "",
+            email: employee.email || "",
+            age: employee.age || "",
+            gender: employee.gender || "أنثى", // القيمة الافتراضية الآن "أنثى"
+          }}
+          onSubmit={(formData) => {
+            handleSubmit({
+              id: formData.id,
+              user_name: formData.user_name,
+              national_num: formData.national_num,
+              password: formData.password,
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              phone_num: formData.phone_num,
+              email: formData.email,
+              age: formData.age,
+              gender: formData.gender,
+            });
+          }}
+          onCancel={() => router.push("/adminDashboard/accounts")}
         />
       </div>
     </div>

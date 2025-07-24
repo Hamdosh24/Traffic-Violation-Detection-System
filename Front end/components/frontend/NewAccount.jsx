@@ -1,22 +1,33 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import Data from "../../Account.json";
 
-export default function NewAccountForm() {
+export default function NewAccount({ initialData = {}, isEditMode = false }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    Name: "",
-    Father: "",
-    Mother: "",
-    ID: "",
-    Email: "",
-    Position: "",
-    Status: "active",
-    Password: "",
+    id: "",
+    user_name: "",
+    national_num: "",
+    password: "",
+    first_name: "",
+    last_name: "",
+    phone_num: "",
+    email: "",
+    age: "",
+    gender: "",
+    ...initialData, // تجاوز القيم الافتراضية بالبيانات الأولية في حالة التعديل
   });
+
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      setFormData({
+        ...initialData,
+        password: "", // إعادة تعيين كلمة المرور في حالة التعديل
+      });
+    }
+  }, [initialData, isEditMode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,209 +39,209 @@ export default function NewAccountForm() {
     setIsSubmitting(true);
 
     try {
-      // التحقق من عدم تكرار الـ ID
-      const idExists = Data.some((emp) => emp.ID === formData.ID);
-      if (idExists) {
-        toast.error("Employee ID already exists");
-        return;
+      // هنا ستضيف استدعاء API مناسب حسب الوضع (إضافة/تعديل)
+      const apiUrl = isEditMode ? `/api/users/${formData.id}` : "/api/users";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(apiUrl, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("فشل في حفظ البيانات");
       }
 
-      // التحقق من عدم تكرار البريد الإلكتروني
-      const emailExists = Data.some((emp) => emp.Email === formData.Email);
-      if (emailExists) {
-        toast.error("Email already exists");
-        return;
-      }
-
-      // إنشاء الحساب الجديد
-      const newAccount = { ...formData };
-
-      // في تطبيق حقيقي، هنا ستضيف استدعاء API
-      Data.push(newAccount);
-
-      toast.success("Account created successfully!");
+      toast.success(
+        isEditMode ? "تم تحديث البيانات بنجاح" : "تم إنشاء الحساب بنجاح"
+      );
       router.push("/adminDashboard/accounts");
     } catch (error) {
-      toast.error("Failed to create account: " + error.message);
+      toast.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6">
+    <form onSubmit={handleSubmit} className="mt-6 max-w-4xl mx-auto">
       <div className="grid gap-6 mb-6 md:grid-cols-2">
-        {/* Name Field */}
+        {/* حقل معرف المستخدم */}
         <div>
-          <label
-            htmlFor="name"
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Full Name *
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            معرف المستخدم {!isEditMode && "*"}
           </label>
           <input
             type="text"
-            id="name"
-            name="Name"
-            value={formData.Name}
+            name="user_id"
+            value={formData.id}
             onChange={handleChange}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            required
-            placeholder="Enter full name"
+            className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left ${
+              isEditMode ? "cursor-not-allowed" : ""
+            }`}
+            disabled={isEditMode}
+            required={!isEditMode}
+            placeholder="أدخل المعرف الفريد"
           />
         </div>
 
-        {/* Father Field */}
+        {/* حقل اسم المستخدم */}
         <div>
-          <label
-            htmlFor="father"
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Father's Name *
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            اسم المستخدم *
           </label>
           <input
             type="text"
-            id="father"
-            name="Father"
-            value={formData.Father}
+            name="user_name"
+            value={formData.user_name}
             onChange={handleChange}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-right"
             required
-            placeholder="Enter father's name"
+            placeholder="أدخل اسم المستخدم"
+            dir="rtl"
           />
         </div>
 
-        {/* Mother Field */}
+        {/* حقل الرقم الوطني */}
         <div>
-          <label
-            htmlFor="mother"
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Mother's Name *
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            الرقم الوطني *
           </label>
           <input
             type="text"
-            id="mother"
-            name="Mother"
-            value={formData.Mother}
+            name="national_num"
+            value={formData.national_num}
             onChange={handleChange}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left"
             required
-            placeholder="Enter mother's name"
+            placeholder="أدخل الرقم الوطني"
           />
         </div>
 
-        {/* Position Field */}
+        {/* حقل كلمة المرور */}
         <div>
-          <label
-            htmlFor="position"
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Position *
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            كلمة المرور {!isEditMode && "*"}
+          </label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left"
+            required={!isEditMode}
+            minLength="6"
+            placeholder={
+              isEditMode
+                ? "اتركها فارغة للحفاظ على الحالية"
+                : "أدخل كلمة المرور"
+            }
+          />
+        </div>
+
+        {/* حقل الاسم الأول */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            الاسم الأول *
           </label>
           <input
             type="text"
-            id="position"
-            name="Position"
-            value={formData.Position}
+            name="first_name"
+            value={formData.first_name}
             onChange={handleChange}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-right"
             required
-            placeholder="Enter job position"
+            placeholder="أدخل الاسم الأول"
+            dir="rtl"
           />
         </div>
 
-        {/* ID Field - Manual Input */}
+        {/* حقل الاسم الأخير */}
         <div>
-          <label
-            htmlFor="id"
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Employee ID *
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            الاسم الأخير *
           </label>
           <input
             type="text"
-            id="id"
-            name="ID"
-            value={formData.ID}
+            name="last_name"
+            value={formData.last_name}
             onChange={handleChange}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-right"
             required
-            placeholder="Enter unique employee ID"
+            placeholder="أدخل الاسم الأخير"
+            dir="rtl"
           />
-          {Data.some((emp) => emp.ID === formData.ID) && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-500">
-              This ID is already in use
-            </p>
-          )}
         </div>
 
-        {/* Status Field */}
+        {/* حقل رقم الهاتف */}
         <div>
-          <label
-            htmlFor="status"
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            Status *
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            رقم الهاتف *
+          </label>
+          <input
+            type="tel"
+            name="phone_num"
+            value={formData.phone_num}
+            onChange={handleChange}
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left"
+            required
+            placeholder="أدخل رقم الهاتف"
+          />
+        </div>
+
+        {/* حقل البريد الإلكتروني */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            البريد الإلكتروني *
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left"
+            required
+            placeholder="example@domain.com"
+          />
+        </div>
+
+        {/* حقل العمر */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            العمر
+          </label>
+          <input
+            type="number"
+            name="age"
+            value={formData.age}
+            onChange={handleChange}
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left"
+            min="1"
+            max="120"
+            placeholder="أدخل العمر"
+          />
+        </div>
+
+        {/* حقل الجنس */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
+            الجنس *
           </label>
           <select
-            id="status"
-            name="Status"
-            value={formData.Status}
+            name="gender"
+            value={formData.gender}
             onChange={handleChange}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-right"
             required
           >
-            <option value="active">online</option>
-            <option value="inactive">offline</option>
+            <option value="">اختر الجنس</option>
+            <option value="male">ذكر</option>
+            <option value="female">أنثى</option>
           </select>
         </div>
-      </div>
-
-      {/* Email Field */}
-      <div className="mb-6">
-        <label
-          htmlFor="email"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Email *
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="Email"
-          value={formData.Email}
-          onChange={handleChange}
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-          required
-          placeholder="Enter email address"
-        />
-        {Data.some((emp) => emp.Email === formData.Email) && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-500">
-            This email is already registered
-          </p>
-        )}
-      </div>
-
-      {/* Password Field */}
-      <div className="mb-6">
-        <label
-          htmlFor="password"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Password *
-        </label>
-        <input
-          type="password"
-          id="password"
-          name="Password"
-          value={formData.Password}
-          onChange={handleChange}
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-          required
-          minLength="6"
-          placeholder="Enter password (min 6 characters)"
-        />
       </div>
 
       <div className="flex justify-end space-x-4">
@@ -239,14 +250,20 @@ export default function NewAccountForm() {
           onClick={() => router.push("/adminDashboard/accounts")}
           className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
         >
-          Cancel
+          إلغاء
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="text-white bg-customGreen hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "Creating..." : "Create Account"}
+          {isSubmitting
+            ? isEditMode
+              ? "جاري التحديث..."
+              : "جاري الحفظ..."
+            : isEditMode
+            ? "تحديث البيانات"
+            : "حفظ البيانات"}
         </button>
       </div>
     </form>

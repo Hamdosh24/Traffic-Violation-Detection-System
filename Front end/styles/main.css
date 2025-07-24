@@ -4,6 +4,10 @@
 body {
   min-height: 100vh;
   background-color: rgba(0, 255, 128, 0.7);
+  overflow-x: hidden;
+}
+html {
+  scroll-padding-top: 4rem; /* يتناسب مع ارتفاع النافبار */
 }
 @layer base {
   :root {

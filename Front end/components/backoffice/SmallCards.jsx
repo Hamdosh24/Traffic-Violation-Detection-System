@@ -7,25 +7,25 @@ export default function SmallCards() {
     {
       title: "Total Order",
       number: 150,
-      iconBg: "bg-green-600",
+      iconBg: "bg-iconGold",
       icon: ShoppingCart,
     },
     {
       title: "Orders Pending",
       number: 100,
-      iconBg: "bg-blue-600",
+      iconBg: "bg-iconGold",
       icon: Loader2,
     },
     {
       title: "Order Processing",
       number: 200,
-      iconBg: "bg-orange-600",
+      iconBg: "bg-iconGold",
       icon: RefreshCcw,
     },
     {
       title: "Orders Deliverd ",
       number: 300,
-      iconBg: "bg-purple-600",
+      iconBg: "bg-iconGold",
       icon: CheckCheck,
     },
   ];

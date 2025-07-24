@@ -6,22 +6,22 @@ export default function LargeCards() {
     {
       period: "Today Orders",
       sales: 110000,
-      color: "bg-green-600",
+      color: "bg-customGreen",
     },
     {
       period: "Yesterday Orders",
       sales: 130000,
-      color: "bg-orange-600",
+      color: "bg-customGreen",
     },
     {
       period: "This Month",
       sales: 3000000,
-      color: "bg-blue-600",
+      color: "bg-customGreen",
     },
     {
       period: "All Time Sales",
       sales: 5000000,
-      color: "bg-purple-600",
+      color: "bg-customGreen",
     },
     {
       period: "Today Orders",

@@ -1,28 +1,49 @@
 "use client";
 import React, { useState } from "react";
+import { useTheme } from "next-themes";
 import Sidebar from "@/components/backoffice/Sidebar";
 import Navbar from "@/components/backoffice/Navbar";
+import Image from "next/image";
 
 export default function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
+  const { theme } = useTheme(); // الحصول على الثيم الحالي
+
   return (
-    <div className="flex">
-      {/* Sidebar */}
+    <div className="flex min-h-screen">
       <Sidebar
-        type="admin"
+        type="شيةهى"
         showSidebar={showSidebar}
         setShowSidebar={setShowSidebar}
       />
-      {/* <div className="w-full"> */}
-      <div className="lg:ml-64 ml-0 flex-grow bg-slate-100 min-h-screen">
-        {/* Header */}
+      <div
+        className={`flex flex-col flex-grow transition-all duration-300 mt-16 ${
+          showSidebar ? "ml-64" : "ml-0"
+        }`}
+      >
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
-        <main className="p-8 bg-slate-100 dark:bg-slate-900 text-slate-50 min-h-screen mt-12">
+        <main className="p-8 text-slate-800 dark:text-slate-50 relative flex-grow">
+          {/* خلفية بيضاء للثيم الفاتح */}
+          {theme === "light" && (
+            <div className="absolute inset-0 -z-10 bg-milkColor" />
+          )}
+
+          {/* صورة الخلفية للثيم الداكن */}
+          {theme === "dark" && (
+            <div className="absolute inset-0 -z-10">
+              <Image
+                src="/page.jpg" // تأكد من وجود الصورة في مجلد public
+                alt="Background"
+                fill
+                className="object-cover"
+                quality={100}
+              />
+            </div>
+          )}
+
           {children}
         </main>
-        {/* Main */}
       </div>
-      {/* Main Body */}
     </div>
   );
 }
