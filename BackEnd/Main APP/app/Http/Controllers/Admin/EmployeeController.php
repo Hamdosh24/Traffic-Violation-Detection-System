@@ -12,24 +12,29 @@ use Illuminate\Support\Facades\Auth;
 
 class EmployeeController extends Controller
 {
+
     //  عرض جميع الموظفين
     public function index()
     {
-        $employees = User::with('roles')->get();
+        try {
+            $employees = User::with('roles')->get();
 
-        // سجل عملية عرض قائمة الموظفين
-        ActivityLog::create([
-            'user_id' => Auth::user() ? Auth::user()->user_id : null,
-            'action_type' => 'view_list',
-            'description' => 'Viewed employee list',
-            'model_type' => 'User',
-            'model_id' => null,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->header('User-Agent'),
-        ]);
+            ActivityLog::create([
+                'user_id' => Auth::user() ? Auth::user()->user_id : null,
+                'action_type' => 'view_list',
+                'description' => 'عرض قائمة الموظفين',
+                'model_type' => 'User',
+                'model_id' => null,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
 
-        return response()->json($employees);
+            return response()->json($employees);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'حدث خطأ أثناء جلب قائمة الموظفين: ' . $e->getMessage()], 500);
+        }
     }
+
 
     //  إضافة موظف جديد
     public function store(Request $request)
@@ -46,7 +51,7 @@ class EmployeeController extends Controller
                 'email' => 'required|email',
                 'age' => 'required|integer',
                 'gender' => 'required|in:male,female',
-                'role_id' => 'required|exists:roles,role_id',
+                // 'role_id' => 'required|exists:roles,role_id',
             ]);
 
             $employee = User::create([
@@ -62,11 +67,10 @@ class EmployeeController extends Controller
                 'gender' => $request->gender,
             ]);
 
-            
             // ربط role بالموظف
-            $employee->roles()->attach($request->role_id);
+            $employee->roles()->attach(2); // في حالة ان اي مستخدم يتم انشاءه هنا هو موظف
+            // $employee->roles()->attach($request->role_id); //  في حالة ان المنشأ يحدد دور المستخدم الذي يتم انشاءه هنا
 
-            // سجل إنشاء موظف جديد
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
                 'action_type' => 'create',
@@ -77,89 +81,101 @@ class EmployeeController extends Controller
                 'user_agent' => request()->header('User-Agent'),
             ]);
 
-            return response()->json(['message' => 'Employee created successfully', 'employee' => $employee]);
+            return response()->json(['message' => 'تم إضافة الموظف بنجاح', 'employee' => $employee]);
         } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['error' => 'حدث خطأ أثناء إضافة الموظف: ' . $e->getMessage()], 500);
+        }
     }
-    }
+
 
     //  عرض موظف محدد بالتفصيل
     public function show($user_id)
     {
-        $employee = User::with('roles')->findOrFail($user_id);
+        try {
+            $employee = User::with('roles')->findOrFail($user_id);
 
-        // سجل عرض تفاصيل موظف
-        ActivityLog::create([
-            'user_id' => Auth::user() ? Auth::user()->user_id : null,
-            'action_type' => 'view',
-            'description' => 'Viewed employee details with ID: ' . $employee->user_id,
-            'model_type' => 'User',
-            'model_id' => $employee->user_id,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->header('User-Agent'),
-        ]);
+            ActivityLog::create([
+                'user_id' => Auth::user() ? Auth::user()->user_id : null,
+                'action_type' => 'view',
+                'description' => 'عرض تفاصيل موظف برقم: ' . $employee->user_id,
+                'model_type' => 'User',
+                'model_id' => $employee->user_id,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
 
-        return response()->json($employee);
+            return response()->json($employee);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'حدث خطأ أثناء جلب بيانات الموظف: ' . $e->getMessage()], 500);
+        }
     }
 
 
     //  تعديل بيانات موظف
     public function update(Request $request, $user_id)
     {
-        $employee = User::findOrFail($user_id);
+        try {
+            $employee = User::findOrFail($user_id);
 
-        $employee->update($request->only([
-            'user_name',
-            'national_num',
-            'first_name',
-            'last_name',
-            'phone_num',
-            'email',
-            'age',
-            'gender',
-        ]));
+            $employee->update($request->only([
+                'user_name',
+                'national_num',
+                'first_name',
+                'last_name',
+                'phone_num',
+                'email',
+                'age',
+                'gender',
+            ]));
 
-        if($request->password){
-            $employee->password = Hash::make($request->password);
-            $employee->save();
+            if ($request->password) {
+                $employee->password = Hash::make($request->password);
+                $employee->save();
+            }
+
+            // if ($request->role_id) {
+            //     // تحديث الدور الحالي للموظف واستبداله بالدور الجديد
+            //     $employee->roles()->sync([$request->role_id]);
+            // }
+
+            ActivityLog::create([
+                'user_id' => Auth::user() ? Auth::user()->user_id : null,
+                'action_type' => 'update',
+                'description' => 'تم تعديل موظف برقم: ' . $employee->user_id,
+                'model_type' => 'User',
+                'model_id' => $employee->user_id,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
+            return response()->json(['message' => 'تم تعديل بيانات الموظف بنجاح', 'employee' => $employee]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'حدث خطأ أثناء تعديل بيانات الموظف: ' . $e->getMessage()], 500);
         }
-        if($request->role_id){
-            // تحديث الدور الحالي للموظف واستبداله بالدور الجديد
-            $employee->roles()->sync([$request->role_id]);
-        }
-
-        // سجل تعديل موظف
-        ActivityLog::create([
-            'user_id' => Auth::user() ? Auth::user()->user_id : null,
-            'action_type' => 'update',
-            'description' => 'Updated employee with ID: ' . $employee->user_id,
-            'model_type' => 'User',
-            'model_id' => $employee->user_id,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->header('User-Agent'),
-        ]);
-
-        return response()->json(['message' => 'Employee updated successfully', 'employee' => $employee]);
     }
+
 
     //  حذف موظف
     public function destroy($user_id)
     {
-        $employee = User::findOrFail($user_id);
-        $employee->roles()->detach();
-        $employee->delete();
+        try {
+            $employee = User::findOrFail($user_id);
+            $employee->roles()->detach();
+            $employee->delete();
 
-        // سجل حذف موظف
-        ActivityLog::create([
-            'user_id' => Auth::user() ? Auth::user()->user_id : null,
-            'action_type' => 'delete',
-            'description' => 'Deleted employee with ID: ' . $user_id,
-            'model_type' => 'User',
-            'model_id' => $user_id,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->header('User-Agent'),
-        ]);
+            ActivityLog::create([
+                'user_id' => Auth::user() ? Auth::user()->user_id : null,
+                'action_type' => 'delete',
+                'description' => 'تم حذف موظف برقم: ' . $user_id,
+                'model_type' => 'User',
+                'model_id' => $user_id,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
 
-        return response()->json(['message' => 'Employee deleted successfully']);
+            return response()->json(['message' => 'تم حذف الموظف بنجاح']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'حدث خطأ أثناء حذف الموظف: ' . $e->getMessage()], 500);
+        }
     }
 }
