@@ -4,50 +4,80 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Accident;
+use App\Services\CameraAPIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class AccidentController extends Controller
 {
     /**
      * Store a newly created accident in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, CameraAPIService $cameraService): JsonResponse
     {
-        // التحقق من صحة البيانات الواردة بعد التبسيط
+        // ... (your store method remains the same)
         $validator = Validator::make($request->all(), [
             'camera_id' => 'required|string|max:255',
             'timestamp' => 'required|date',
         ]);
 
-        // في حال فشل التحقق، أرجع رسالة خطأ
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // إنشاء سجل الحادث الجديد بالبيانات التي تم التحقق منها فقط
+        $cameraInfo = $cameraService->getCameraById($request->input('camera_id'));
+        if (!$cameraInfo) {
+            return response()->json(['message' => 'معرّف الكاميرا المدخل غير موجود في النظام.'], 422);
+        }
+
         $accident = Accident::create($validator->validated());
 
-        // إرجاع استجابة ناجحة
-        return response()->json($accident, 201);
+        $data = [
+            'accident' => $accident,
+            'camera_info' => $cameraInfo,
+        ];
+
+        return response()->json($data, 201);
     }
 
-      public function indexNew()
+    /**
+     * Get all new accidents and enrich them with camera info.
+     */
+    public function indexNew(CameraAPIService $cameraService): JsonResponse
     {
-        // ابحث عن كل الحوادث التي حالتها 'new'
+        // Step 1: Get all new accidents from your local database
         $newAccidents = Accident::where('status', 'new')->latest()->get();
 
-        // أرجعها كاستجابة JSON
-        return response()->json($newAccidents);
+        if ($newAccidents->isEmpty()) {
+            return response()->json([]); // Return an empty array if there are no new accidents
+        }
+
+        // Step 2 (Efficient): Get all camera info from the mock API in a single call
+        $allCameras = $cameraService->getAllCameras();
+        // Create a map for fast lookups, using camera_id as the key
+        $cameraMap = collect($allCameras)->keyBy('camera_id');
+
+        // Step 3: Combine the accident data with the camera data
+        $enrichedAccidents = $newAccidents->map(function ($accident) use ($cameraMap) {
+            return [
+                'accident' => $accident,
+                'camera_info' => $cameraMap->get($accident->camera_id), // Find the camera in the map
+            ];
+        });
+
+        // Step 4: Return the final, enriched list
+        return response()->json($enrichedAccidents);
     }
 
-    public function markAsViewed(Accident $accident)
+    /**
+     * Mark an accident's notification as viewed.
+     */
+    public function markAsViewed(Accident $accident): JsonResponse
     {
-        // نقوم بتحديث حقل الحالة فقط
+        // ... (your markAsViewed method remains the same)
         $accident->status = 'viewed';
         $accident->save();
-
-        // نرجع استجابة ناجحة مع بيانات الحادث المحدثة
         return response()->json($accident);
     }
 }

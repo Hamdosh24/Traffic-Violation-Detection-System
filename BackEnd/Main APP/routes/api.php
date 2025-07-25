@@ -20,7 +20,6 @@ use App\Models\ViolationType; // <-- السطر الثاني المطلوب إض
 Route::post('/login', [AuthController::class, 'login']);
 
 // --- مسارات محمية تتطلب Token للوصول ---
-Route::middleware('auth:sanctum')->group(function () {
 
     // APIs for the AI system to send data
     Route::post('/violations', [ViolationController::class, 'store']);
@@ -35,7 +34,9 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
-});
+
+    Route::get('/passing-cars/search/{plate_num}', [PassingCarController::class, 'searchByPlate']);
+
 
 // --- مسار لاختبار نظام الإشعارات ---
 Route::get('/test-notification', function () {
