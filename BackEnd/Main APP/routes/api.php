@@ -77,3 +77,11 @@ Route::middleware(['auth:sanctum', 'employee'])->group(function () {
     Route::post('/violations/hourly', [StatisticsController::class, 'getViolationsByHour']);
     Route::post('/violations/by-region', [StatisticsController::class, 'getViolationsByRegion']);
 });
+
+
+use App\Http\Controllers\ActivityLogController;
+
+Route::middleware(['auth:sanctum', 'manager'])->group(function () {
+    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('/activity-logs/search', [ActivityLogController::class, 'search']);
+});
