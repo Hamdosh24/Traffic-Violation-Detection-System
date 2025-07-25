@@ -8,6 +8,8 @@ use App\Models\Violation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException; // تأكد من استيرادها أعلى الملف
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
 
 class StatisticsController extends Controller
 {
@@ -64,6 +66,16 @@ class StatisticsController extends Controller
                 $result[$label] = $v->count;
             }
 
+            ActivityLog::create([
+                'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
+                'action_type' => 'Statistics Query',
+                'description' => 'Retrieved violations by hour statistics.',
+                'model_type'  => 'Violation',
+                'model_id'    => null, // لا يرتبط بسجل محدد هنا
+                'ip_address'  => $request->ip(),
+                'user_agent'  => $request->userAgent(),
+            ]);
+
             return response()->json([
                 'status' => true,
                 'data' => $result,
@@ -118,6 +130,16 @@ public function getViolationsByRegion(Request $request)
             ];
         }
 
+        ActivityLog::create([
+            'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
+            'action_type' => 'Statistics Query',
+            'description' => 'Retrieved violations by region statistics.',
+            'model_type'  => 'Violation',
+            'model_id'    => null, // لا يرتبط بسجل محدد هنا
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+        ]);
+
         return response()->json([
             'status' => true,
             'data'   => $result,
@@ -130,5 +152,4 @@ public function getViolationsByRegion(Request $request)
         ], 422);
     }
 }
-
 }
