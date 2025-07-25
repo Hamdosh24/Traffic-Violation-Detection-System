@@ -1,4 +1,4 @@
-import { AlignJustify, LogOut, UserRound } from "lucide-react";
+import { AlignJustify, BellRingIcon, LogOut, UserRound } from "lucide-react";
 import React from "react";
 import ThemeSwitcherBtn from "@/components/backoffice/ThemeSwitcherBtn";
 import {
@@ -37,6 +37,8 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
       {/* أيقونات اليمين: تبديل الثيم + البروفايل */}
       <div className="absolute right-6 flex items-center space-x-4">
         <ThemeSwitcherBtn />
+        <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
+
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none flex items-center">
             <button
