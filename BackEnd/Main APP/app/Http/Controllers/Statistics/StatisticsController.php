@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Violation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException; // تأكد من استيرادها أعلى الملف
+use Illuminate\Validation\ValidationException;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 
@@ -83,73 +83,83 @@ class StatisticsController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => false,
+                'message' => 'فشل التحقق من البيانات.',
                 'errors' => $e->errors(),
             ], 422);
+        } catch (\Exception $e) {
+            Log::error('خطأ في getViolationsByHour: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'حدث خطأ أثناء معالجة الطلب.',
+            ], 500);
         }
     }
 
 
+    public function getViolationsByRegion(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'type_name' => 'required|string',
+                'from_date' => 'required|date',
+                'to_date'   => 'required|date',
+            ]);
 
-public function getViolationsByRegion(Request $request)
-{
-    Log::info('AAA');
-    try {
-        $validated = $request->validate([
-            'type_name' => 'required|string',
-            'from_date' => 'required|date',
-            'to_date'   => 'required|date',
-        ]);
+            // بناء الاستعلام
+            $query = Violation::query()
+                ->join('violation_types', 'violations.v_type_id', '=', 'violation_types.v_type_id')
+                ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
+                ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
 
-        Log::info('BBB');
+            if (strtolower($validated['type_name']) !== 'all') {
+                $query->where('violation_types.type_name', $validated['type_name']);
+            }
 
-        // بناء الاستعلام
-        $query = Violation::query()
-            ->join('violation_types', 'violations.v_type_id', '=', 'violation_types.v_type_id')
-            ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
-            ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
+            // تحديد عدد المخالفات لكل منطقة
+            $violationsByRegion = $query->select(
+                    'cameras.region',
+                    DB::raw('COUNT(*) as count')
+                )
+                ->groupBy('cameras.region')
+                ->orderBy('cameras.region')
+                ->get();
 
-        if (strtolower($validated['type_name']) !== 'all') {
-            $query->where('violation_types.type_name', $validated['type_name']);
+            // تجهيز البيانات للإرجاع
+            $result = [];
+            foreach ($violationsByRegion as $item) {
+                $result[] = [
+                    'region' => $item->region,
+                    'count'  => $item->count,
+                ];
+            }
+
+            ActivityLog::create([
+                'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
+                'action_type' => 'Statistics Query',
+                'description' => 'Retrieved violations by region statistics.',
+                'model_type'  => 'Violation',
+                'model_id'    => null, // لا يرتبط بسجل محدد هنا
+                'ip_address'  => $request->ip(),
+                'user_agent'  => $request->userAgent(),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'data'   => $result,
+            ]);
+        } catch (ValidationException $e) {
+            Log::error('فشل التحقق من البيانات: ' . json_encode($e->errors()));
+            return response()->json([
+                'status' => false,
+                'message' => 'فشل التحقق من البيانات.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('خطأ في getViolationsByRegion: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'حدث خطأ أثناء معالجة الطلب.',
+            ], 500);
         }
-
-        // تحديد عدد المخالفات لكل منطقة
-        $violationsByRegion = $query->select(
-                'cameras.region',
-                DB::raw('COUNT(*) as count')
-            )
-            ->groupBy('cameras.region')
-            ->orderBy('cameras.region')
-            ->get();
-
-        // تجهيز البيانات للإرجاع
-        $result = [];
-        foreach ($violationsByRegion as $item) {
-            $result[] = [
-                'region' => $item->region,
-                'count'  => $item->count,
-            ];
-        }
-
-        ActivityLog::create([
-            'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
-            'action_type' => 'Statistics Query',
-            'description' => 'Retrieved violations by region statistics.',
-            'model_type'  => 'Violation',
-            'model_id'    => null, // لا يرتبط بسجل محدد هنا
-            'ip_address'  => $request->ip(),
-            'user_agent'  => $request->userAgent(),
-        ]);
-
-        return response()->json([
-            'status' => true,
-            'data'   => $result,
-        ]);
-    } catch (ValidationException $e) {
-        Log::error('Validation failed: ' . json_encode($e->errors()));
-        return response()->json([
-            'status' => false,
-            'errors' => $e->errors(),
-        ], 422);
     }
-}
 }

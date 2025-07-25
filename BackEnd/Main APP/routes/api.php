@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ViolationController;
 use App\Http\Controllers\Api\PassingCarController;
 use App\Http\Controllers\Api\AccidentController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Statistics\StatisticsController;
+use App\Http\Controllers\ActivityLogController;
 use App\Models\User;
 use App\Models\Violation; // <-- السطر الأول المطلوب إضافته
 use App\Models\ViolationType; // <-- السطر الثاني المطلوب إضافته
@@ -28,7 +31,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/accidents', [AccidentController::class, 'store']);
     Route::get('/accidents/new', [AccidentController::class, 'indexNew']);
     Route::patch('/accidents/{accident}/viewed', [AccidentController::class, 'markAsViewed']);
-
 
     // API to get authenticated user info
     Route::get('/user', function (Request $request) {
@@ -61,8 +63,7 @@ Route::get('/test-notification', function () {
     return "تم إنشاء مخالفة اختبار! تم تفعيل عملية الإشعار. تحقق من بريدك الإلكتروني أو Mailtrap.";
 });
 
-use App\Http\Controllers\Admin\EmployeeController;
-
+// CRUD System
 Route::prefix('admin')->middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::get('employees', [EmployeeController::class, 'index']);
     Route::post('employees', [EmployeeController::class, 'store']);
@@ -71,16 +72,13 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'manager'])->group(function 
     Route::delete('employees/{user_id}', [EmployeeController::class, 'destroy']);
 });
 
-use App\Http\Controllers\Statistics\StatisticsController;
-
+// Statistics
 Route::middleware(['auth:sanctum', 'employee'])->group(function () {
     Route::post('/violations/hourly', [StatisticsController::class, 'getViolationsByHour']);
     Route::post('/violations/by-region', [StatisticsController::class, 'getViolationsByRegion']);
 });
 
-
-use App\Http\Controllers\ActivityLogController;
-
+// Activity Log
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     Route::get('/activity-logs/search', [ActivityLogController::class, 'search']);
