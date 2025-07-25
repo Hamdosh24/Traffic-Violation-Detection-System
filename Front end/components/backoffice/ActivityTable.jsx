@@ -103,7 +103,7 @@ export default function ActivityTable() {
 
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
-      <div className="p-4 bg-white dark:bg-gray-800 flex justify-start items-center">
+      <div className="p-4 bg-white dark:bg-customDarkGreenbg flex justify-start items-center">
         <div className="relative w-80">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <svg
@@ -133,7 +133,7 @@ export default function ActivityTable() {
       </div>
 
       <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <thead className="text-xs uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-400">
           <tr>
             <th className="px-6 py-3">Name</th>
             <th className="px-6 py-3">Time</th>
@@ -145,7 +145,7 @@ export default function ActivityTable() {
             currentPageData.map((employee, index) => (
               <tr
                 key={index}
-                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                className="bg-white border-b dark:bg-customDarkGreenbg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
               >
                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                   {employee.Name}
@@ -174,7 +174,7 @@ export default function ActivityTable() {
 
       {/* Pagination */}
       <nav
-        className="flex items-center dark:bg-gray-700 flex-column flex-wrap md:flex-row justify-between pt-4 p-5"
+        className="flex items-center dark:bg-customDarkGreen flex-column flex-wrap md:flex-row justify-between pt-4 p-5"
         aria-label="Table navigation"
       >
         <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
