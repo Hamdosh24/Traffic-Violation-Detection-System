@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\ActivityLog; // استدعاء موديل activity log
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+
 
 class EmployeeController extends Controller
 {
@@ -13,6 +16,18 @@ class EmployeeController extends Controller
     public function index()
     {
         $employees = User::with('roles')->get();
+
+        // سجل عملية عرض قائمة الموظفين
+        ActivityLog::create([
+            'user_id' => Auth::user() ? Auth::user()->user_id : null,
+            'action_type' => 'view_list',
+            'description' => 'Viewed employee list',
+            'model_type' => 'User',
+            'model_id' => null,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
+
         return response()->json($employees);
     }
 
@@ -51,6 +66,17 @@ class EmployeeController extends Controller
             // ربط role بالموظف
             $employee->roles()->attach($request->role_id);
 
+            // سجل إنشاء موظف جديد
+            ActivityLog::create([
+                'user_id' => Auth::user() ? Auth::user()->user_id : null,
+                'action_type' => 'create',
+                'description' => 'Created employee with ID: ' . $employee->user_id,
+                'model_type' => 'User',
+                'model_id' => $employee->user_id,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->header('User-Agent'),
+            ]);
+
             return response()->json(['message' => 'Employee created successfully', 'employee' => $employee]);
         } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
@@ -61,6 +87,18 @@ class EmployeeController extends Controller
     public function show($user_id)
     {
         $employee = User::with('roles')->findOrFail($user_id);
+
+        // سجل عرض تفاصيل موظف
+        ActivityLog::create([
+            'user_id' => Auth::user() ? Auth::user()->user_id : null,
+            'action_type' => 'view',
+            'description' => 'Viewed employee details with ID: ' . $employee->user_id,
+            'model_type' => 'User',
+            'model_id' => $employee->user_id,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
+
         return response()->json($employee);
     }
 
@@ -90,6 +128,16 @@ class EmployeeController extends Controller
             $employee->roles()->sync([$request->role_id]);
         }
 
+        // سجل تعديل موظف
+        ActivityLog::create([
+            'user_id' => Auth::user() ? Auth::user()->user_id : null,
+            'action_type' => 'update',
+            'description' => 'Updated employee with ID: ' . $employee->user_id,
+            'model_type' => 'User',
+            'model_id' => $employee->user_id,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
 
         return response()->json(['message' => 'Employee updated successfully', 'employee' => $employee]);
     }
@@ -100,6 +148,17 @@ class EmployeeController extends Controller
         $employee = User::findOrFail($user_id);
         $employee->roles()->detach();
         $employee->delete();
+
+        // سجل حذف موظف
+        ActivityLog::create([
+            'user_id' => Auth::user() ? Auth::user()->user_id : null,
+            'action_type' => 'delete',
+            'description' => 'Deleted employee with ID: ' . $user_id,
+            'model_type' => 'User',
+            'model_id' => $user_id,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
 
         return response()->json(['message' => 'Employee deleted successfully']);
     }
