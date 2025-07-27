@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityLogController extends Controller
 {
 
     // عرض جميع الlogs مع اسم المستخدم.
-    public function index()
+    public function index(Request $request)
     {
         try {
             $logs = ActivityLog::with('user')
@@ -26,7 +27,17 @@ class ActivityLogController extends Controller
                     ];
                 });
 
-        return response()->json($logs);
+            ActivityLog::create([
+                'user_id'     => Auth::user()->id ?? null,
+                'action_type' => 'view',
+                'description' => 'Viewed activity logs.',
+                'model_type'  => 'ActivityLog',
+                'model_id'    => null,
+                'ip_address'  => $request->ip(),
+                'user_agent'  => $request->userAgent(),
+            ]);
+
+            return response()->json($logs);
         } catch (\Exception $e) {
             return response()->json(['error' => 'حدث خطأ أثناء جلب السجلات: ' . $e->getMessage()], 500);
         }
@@ -58,6 +69,16 @@ class ActivityLogController extends Controller
                         'time' => $log->created_at->toDateTimeString(),
                     ];
                 });
+
+            ActivityLog::create([
+                'user_id'     => Auth::user()->id ?? null,
+                'action_type' => 'view',
+                'description' => 'Searched activity logs for user: ' . $search,
+                'model_type'  => 'ActivityLog',
+                'model_id'    => null,
+                'ip_address'  => $request->ip(),
+                'user_agent'  => $request->userAgent(),
+            ]);
 
             return response()->json($logs);
         } catch (\Exception $e) {

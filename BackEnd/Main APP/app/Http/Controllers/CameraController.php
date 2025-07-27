@@ -22,6 +22,7 @@ class CameraController extends Controller
             'ip_address'  => $request->ip(),
             'user_agent'  => $request->userAgent(),
         ]);
+
         return response()->json(Camera::all(), 200);
     }
 
