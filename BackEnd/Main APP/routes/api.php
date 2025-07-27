@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AccidentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Statistics\StatisticsController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\CameraController;
 use App\Models\User;
 use App\Models\Violation; // <-- السطر الأول المطلوب إضافته
 use App\Models\ViolationType; // <-- السطر الثاني المطلوب إضافته
@@ -82,4 +83,13 @@ Route::middleware(['auth:sanctum', 'employee'])->group(function () {
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     Route::get('/activity-logs/search', [ActivityLogController::class, 'search']);
+});
+
+// Log out
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+
+// Cameras list
+Route::middleware(['auth:sanctum', 'employee'])->group(function () {
+    Route::get('/cameras', [CameraController::class, 'index']);
+    Route::get('/cameras/{id}', [CameraController::class, 'show']);
 });

@@ -13,10 +13,10 @@ class Camera extends Model
     protected $primaryKey = 'camera_id';
 
     // المفتاح ليس auto-increment
-    public $incrementing = false;
+    public $incrementing = true;
 
     // نوع المفتاح الأساسي
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     // الحقول القابلة للتعبئة (تعديل حسب الحقول الموجودة لديك)
     protected $fillable = [
