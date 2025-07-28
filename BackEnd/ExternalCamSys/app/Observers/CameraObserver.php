@@ -23,12 +23,6 @@ class CameraObserver
                 'Authorization' => 'Bearer ' . env('CAMERA_RECEIVER_TOKEN'),
             ])->post(env('CAMERA_RECEIVER_URL'), $data);
 
-            Log::info('🚀 تم إرسال الطلب إلى النظام الآخر', [
-                'url' => env('CAMERA_RECEIVER_URL'),
-                'token' => env('CAMERA_RECEIVER_TOKEN'),
-                'data' => $data,
-            ]);
-
             if ($response->failed()) {
                 Log::error('Failed to send camera data', [
                     'response' => $response->body(),

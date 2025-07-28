@@ -12,16 +12,10 @@ class CameraReceiverController extends Controller
 {
     public function receive(Request $request)
     {
-
-        Log::info('🔐 Authorization Header: ' . $request->header('Authorization'));
-        Log::info('🔑 Bearer Token: ' . $request->bearerToken());
-
         if ($request->bearerToken() !== env('CAMERA_RECEIVER_TOKEN')) {
-            Log::warning('❌ فشل التحقق من التوكن');
+            Log::warning(' فشل التحقق من التوكن');
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-
-        Log::info('✅ تم التحقق من التوكن بنجاح');
 
         // التحقق من البيانات
         $validated = Validator::make($request->all(), [
@@ -48,3 +42,4 @@ class CameraReceiverController extends Controller
         ]);
     }
 }
+    
