@@ -10,9 +10,11 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Statistics\StatisticsController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CameraController;
+use App\Http\Controllers\Api\CameraReceiverController;
 use App\Models\User;
 use App\Models\Violation; // <-- السطر الأول المطلوب إضافته
 use App\Models\ViolationType; // <-- السطر الثاني المطلوب إضافته
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,3 +95,6 @@ Route::middleware(['auth:sanctum', 'employee'])->group(function () {
     Route::get('/cameras', [CameraController::class, 'index']);
     Route::get('/cameras/{id}', [CameraController::class, 'show']);
 });
+
+// استقبال بيانات الكاميرات الجديدة من النظام الخارجي
+Route::post('/ex_cameras', [CameraReceiverController::class, 'receive']);

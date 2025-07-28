@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use App\Models\camera;
+
+class CameraReceiverController extends Controller
+{
+    public function receive(Request $request)
+    {
+
+        Log::info('🔐 Authorization Header: ' . $request->header('Authorization'));
+        Log::info('🔑 Bearer Token: ' . $request->bearerToken());
+
+        if ($request->bearerToken() !== env('CAMERA_RECEIVER_TOKEN')) {
+            Log::warning('❌ فشل التحقق من التوكن');
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        Log::info('✅ تم التحقق من التوكن بنجاح');
+
+        // التحقق من البيانات
+        $validated = Validator::make($request->all(), [
+            'region' => 'nullable|string',
+            'governorate' => 'required|string',
+            'street' => 'nullable|string',
+            'coordinates' => 'nullable|string',
+            'key' => 'required|string',
+        ]);
+
+        if ($validated->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validated->errors()
+            ], 422);
+        }
+
+        // تخزين البيانات في قاعدة البيانات
+        Camera::create($validated->validated());
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم استقبال البيانات بنجاح'
+        ]);
+    }
+}
