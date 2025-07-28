@@ -29,8 +29,6 @@ class CameraController extends Controller
             // إنشاء الكاميرا
             $camera = Camera::create($validated);
 
-            // هنا ممكن تضيف كود ارسال البيانات للنظام الآخر (API Call)
-
             return response()->json([
                 'message' => 'Camera created successfully',
                 'data' => $camera
