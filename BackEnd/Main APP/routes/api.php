@@ -90,10 +90,10 @@ Route::middleware(['auth:sanctum', 'manager'])->group(function () {
 // Log out
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-// Cameras list
+// Cameras
 Route::middleware(['auth:sanctum', 'employee'])->group(function () {
     Route::get('/cameras', [CameraController::class, 'index']);
-    Route::get('/cameras/{id}', [CameraController::class, 'show']);
+    Route::get('/camera/{id}', [CameraController::class, 'show']);
 });
 
 // استقبال بيانات الكاميرات الجديدة من النظام الخارجي

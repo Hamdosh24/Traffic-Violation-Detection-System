@@ -13,7 +13,6 @@ class CameraReceiverController extends Controller
     public function receive(Request $request)
     {
         if ($request->bearerToken() !== env('CAMERA_RECEIVER_TOKEN')) {
-            Log::warning(' فشل التحقق من التوكن');
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -23,7 +22,8 @@ class CameraReceiverController extends Controller
             'governorate' => 'required|string',
             'street' => 'nullable|string',
             'coordinates' => 'nullable|string',
-            'key' => 'required|string',
+            'rtsp_url' => 'required|string',
+            'hls_path' => 'required|string',
         ]);
 
         if ($validated->fails()) {
