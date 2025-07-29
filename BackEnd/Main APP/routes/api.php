@@ -85,6 +85,7 @@ Route::middleware(['auth:sanctum', 'employee'])->group(function () {
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     Route::get('/activity-logs/search', [ActivityLogController::class, 'search']);
+    Route::get('/activity-logs/filter', [ActivityLogController::class, 'filteredLogs']);
 });
 
 // Log out

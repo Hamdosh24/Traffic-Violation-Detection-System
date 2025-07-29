@@ -85,4 +85,53 @@ class ActivityLogController extends Controller
             return response()->json(['error' => 'حدث خطأ أثناء البحث في السجلات: ' . $e->getMessage()], 500);
         }
     }
+
+    
+    // فلترة النشاطات حسب خيارات المستخدم (اسم، اجراء، كلاهما)
+    public function filteredLogs(Request $request)
+    {
+        try {
+            $query = ActivityLog::query()->with('user');
+
+            // فلترة حسب اسم المستخدم
+            if ($request->username && $request->username !== 'all') {
+                $query->whereHas('user', function ($q) use ($request) {
+                    $q->where('name', $request->username);
+                });
+            }
+
+            // فلترة حسب نوع الإجراء
+            if ($request->action && $request->action !== 'all') {
+                $query->where('action_type', $request->action);
+            }
+
+            // تنفيذ الاستعلام
+            $logs = $query->orderBy('created_at', 'desc')->get();
+
+            // تنسيق البيانات للإرجاع
+            $result = $logs->map(function ($log) {
+                return [
+                    'user_name'    => $log->user?->name ?? 'Unknown',
+                    'action'       => $log->action_type,
+                    'description'  => $log->description,
+                    'model_type'   => $log->model_type,
+                    'time'         => $log->created_at->toDateTimeString(),
+                ];
+            });
+
+            ActivityLog::create([
+                'user_id'     => Auth::user()->id ?? null,
+                'action_type' => 'view',
+                'description' => 'Viewed activity logs.',
+                'model_type'  => 'ActivityLog',
+                'model_id'    => null,
+                'ip_address'  => $request->ip(),
+                'user_agent'  => $request->userAgent(),
+            ]);
+
+            return response()->json($result, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
+        }
+    }
 }
