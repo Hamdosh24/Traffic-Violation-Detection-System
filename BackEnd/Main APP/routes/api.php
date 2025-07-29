@@ -85,15 +85,16 @@ Route::middleware(['auth:sanctum', 'employee'])->group(function () {
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     Route::get('/activity-logs/search', [ActivityLogController::class, 'search']);
+    Route::get('/activity-logs/filter', [ActivityLogController::class, 'filteredLogs']);
 });
 
 // Log out
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-// Cameras list
+// Cameras
 Route::middleware(['auth:sanctum', 'employee'])->group(function () {
     Route::get('/cameras', [CameraController::class, 'index']);
-    Route::get('/cameras/{id}', [CameraController::class, 'show']);
+    Route::get('/camera/{id}', [CameraController::class, 'show']);
 });
 
 // استقبال بيانات الكاميرات الجديدة من النظام الخارجي
