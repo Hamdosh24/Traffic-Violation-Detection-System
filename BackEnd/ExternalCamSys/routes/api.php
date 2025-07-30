@@ -8,4 +8,5 @@ use App\Http\Controllers\StreamController;
 
 Route::post('/camera', [CameraController::class, 'store']);
 
-Route::get('/stream/id/{id}', [StreamController::class, 'startById']);
+Route::GET('/stream/{id}', [StreamController::class, 'streamById']);
+// Route::GET('/stream', [StreamController::class, 'streamById']);
