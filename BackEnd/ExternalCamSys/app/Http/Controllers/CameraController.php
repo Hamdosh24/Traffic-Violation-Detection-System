@@ -18,13 +18,15 @@ class CameraController extends Controller
                 'governorate' => 'required|string',
                 'street' => 'required|string',
                 'coordinates' => 'nullable|string',
-                'key' => 'required|string|unique:cameras,key',
+                'hls_path' => 'nullable|string|unique:cameras,hls_path',
+                'rtsp_url' => 'required|string|unique:cameras,rtsp_url',
                 'ip_address' => 'required|ip|unique:cameras,ip_address',
-                'status' => 'required|string',
+                'status' => 'required|in:active,inactive',
                 'model' => 'required|string',
                 'installation_date' => 'required|date',
                 'description' => 'nullable|string',
             ]);
+
 
             // إنشاء الكاميرا
             $camera = Camera::create($validated);

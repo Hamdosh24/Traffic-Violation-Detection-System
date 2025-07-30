@@ -24,6 +24,7 @@ class CameraReceiverController extends Controller
             'coordinates' => 'nullable|string',
             'rtsp_url' => 'required|string',
             'hls_path' => 'required|string',
+            'status' => 'nullable|in:active,inactive',
         ]);
 
         if ($validated->fails()) {
@@ -38,7 +39,7 @@ class CameraReceiverController extends Controller
         
         return response()->json([
             'status' => 'success',
-            'message' => 'تم استقبال البيانات بنجاح'
+            'message' => 'تم استقبال البيانات و تخزينها بنجاح'
         ]);
     }
 }
