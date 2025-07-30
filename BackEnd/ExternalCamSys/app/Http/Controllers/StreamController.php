@@ -1,87 +1,88 @@
 <?php
 
-// namespace App\Http\Controllers;
-
-// use App\Models\Camera;
-// use Illuminate\Support\Facades\Artisan;
-
-// class StreamController extends Controller
-// {
-//     public function startById($id)
-//     {
-//         $camera = Camera::findOrFail($id);
-
-//         Artisan::call('stream:hls-id', ['id' => $id]);
-
-//         return response()->json([
-//             'stream_url' => url("hls/{$id}/index.m3u8")
-//         ]);
-//     }
-// }
-
-
 namespace App\Http\Controllers;
 
 use App\Models\Camera;
 use Illuminate\Http\Request;
 use Symfony\Component\Process\Process;
 
+use Symfony\Component\Process\Exception\ProcessFailedException;
+
 class StreamController extends Controller
 {
-    /**
-     * بدء بث HLS لكاميرا معيّنة حسب الـ ID
-     * 
-     * @param int $id معرف الكاميرا
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function streamById($id)
     {
         // جلب بيانات الكاميرا من قاعدة البيانات
         $camera = Camera::find($id);
 
-        // تحقق من وجود الكاميرا
         if (!$camera) {
             return response()->json(['error' => 'Camera not found'], 404);
         }
 
-        // مسار حفظ ملفات بث HLS داخل public/hls/{cameraId}
-        $hlsPath = public_path("hls/{$camera->id}");
-
-        // إذا مجلد البث غير موجود، أنشئه مع صلاحيات مناسبة
-        if (!file_exists($hlsPath)) {
-            mkdir($hlsPath, 0755, true);
+        $ffmpegPath = 'C:\ffmpeg\bin\ffmpeg.exe';
+        $streamUrl = $camera->rtsp_url;
+        if (!$streamUrl) {
+            return response()->json(['error' => 'RTSP URL not configured'], 400);
         }
 
-        // رابط البث الذي سيُعاد للواجهة الأمامية (React مثلا)
-        $hlsUrl = url("hls/{$camera->id}/index.m3u8");
+        $outputDir = public_path("hls/{$camera->camera_id}");
+        $outputFile = $outputDir . DIRECTORY_SEPARATOR . 'index.m3u8';
 
-        // بعد التأكد من إنشاء المجلد أو بدء البث
-        $camera->hls_path = $hlsUrl;
-        $camera->save();
-
-        // تحقق إذا ملف البث موجود (يعني البث شغال مسبقًا)
-        if (!file_exists($hlsPath . '/index.m3u8')) {
-            // إعداد أمر ffmpeg لتحويل RTSP إلى HLS
-            $cmd = [
-                'ffmpeg',           // برنامج ffmpeg
-                '-i', $camera->rtsp_url,  // رابط البث الأصلي (RTSP)
-                '-c:v', 'libx264',  // ترميز الفيديو
-                '-f', 'hls',        // صيغة الإخراج: HLS
-                '-hls_time', '2',   // مدة كل قطعة فيديو (ثانيتين)
-                '-hls_list_size', '5', // عدد القطع في قائمة التشغيل
-                '-hls_flags', 'delete_segments', // حذف القطع القديمة للحفاظ على التخزين
-                "{$hlsPath}/index.m3u8"  // ملف قائمة التشغيل النهائي
-            ];
-
-            // تشغيل الأمر في الخلفية (بدون انتظار انتهاء العملية)
-            $process = new Process($cmd);
-            $process->start();
+        // تأكد من وجود المجلد
+        if (!file_exists($outputDir)) {
+            mkdir($outputDir, 0777, true);
         }
 
-        // إعادة رابط البث للعميل بصيغة JSON
-        return response()->json([
-            'camera_id' => $camera->id,
-            'hls_url' => $hlsUrl
-        ]);
+        // $command = "\"$ffmpegPath\" -rtsp_transport tcp -i \"$streamUrl\" -c:v libx264 -f hls -hls_time 2 -hls_list_size 5 -hls_flags delete_segments \"$outputFile\"";
+
+        $command = [
+            $ffmpegPath,
+            '-rtsp_transport', 'udp',
+            '-i', $streamUrl,
+            '-c:v', 'libx264',
+            '-f', 'hls',
+            '-hls_time', '2',
+            '-hls_list_size', '5',
+            '-hls_flags', 'delete_segments',
+            $outputFile,
+        ];
+
+        // تشغيل عبر cmd.exe لتفادي مشاكل Winsock على ويندوز
+        // $process = new Process(['cmd', '/C', $command]);
+        $process = new Process($command);
+        $process->setTimeout(null); // بدون وقت انتهاء
+        try {
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                return response()->json([
+                    'error' => 'فشل تشغيل FFmpeg',
+                    'output' => $process->getErrorOutput(),
+                ], 500);
+            }
+
+            return response()->json(['message' => 'تم بدء البث بنجاح']);
+
+        } catch (ProcessFailedException $e) {
+            return response()->json([
+                'error' => 'حدث استثناء أثناء تشغيل FFmpeg',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+
     }
 }
+
+    //     $ffmpegCommand = 'C:/ffmpeg/bin/ffmpeg.exe -rtsp_transport tcp -i rtsp://127.0.0.1:8554/mystream -c:v libx264 -f hls -hls_time 2 -hls_list_size 5 -hls_flags delete_segments "C:\Users\Dell\Documents\GitHub\Traffic-Violation-Detection-System\BackEnd\ExternalCamSys\public\hls\1\index.m3u8"';
+
+
+    //     // حفظ رابط HLS في قاعدة البيانات إن رغبت
+    //     $camera->hls_path = asset("hls/{$camera->camera_id}/index.m3u8");
+    //     $camera->save();
+
+    //     return response()->json([
+    //         'camera_id' => $camera->camera_id,
+    //         'hls_url' => $camera->hls_path
+    //     ]);
+    // }
+
