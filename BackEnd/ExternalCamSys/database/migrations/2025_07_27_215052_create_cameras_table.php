@@ -17,9 +17,11 @@ return new class extends Migration
             $table->string('governorate');
             $table->string('street')->nullable();
             $table->string('coordinates')->nullable();
-            $table->string('key');
             $table->string('ip_address')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->string('hls_path')->nullable();
+            $table->string('rtsp_url')->nullable(); 
+            $table->boolean('ai_enabled')->default(false); // لتفعيل البث للذكاء الاصطناعي 
             $table->string('model')->nullable();
             $table->date('installation_date')->nullable();
             $table->text('description')->nullable();

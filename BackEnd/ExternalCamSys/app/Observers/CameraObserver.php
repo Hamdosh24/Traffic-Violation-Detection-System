@@ -15,8 +15,9 @@ class CameraObserver
             'governorate' => $camera->governorate,
             'street' => $camera->street,
             'coordinates' => $camera->coordinates,
-            'hls_path' => $camera->hls_path,
             'rtsp_url' => $camera->rtsp_url,
+            'hls_path' => $camera->hls_path,
+            'status' => $camera->status,
         ];
 
         try {

@@ -11,7 +11,7 @@ use App\Http\Controllers\Statistics\StatisticsController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Api\CameraReceiverController;
-use App\Http\Controllers\Api\StreamController;
+use App\Http\Controllers\Api\AiController;
 use App\Models\User;
 use App\Models\Violation; // <-- السطر الأول المطلوب إضافته
 use App\Models\ViolationType; // <-- السطر الثاني المطلوب إضافته
@@ -100,5 +100,5 @@ Route::middleware(['auth:sanctum', 'employee'])->group(function () {
 // استقبال بيانات الكاميرات الجديدة من النظام الخارجي
 Route::post('/ex_cameras', [CameraReceiverController::class, 'receive']);
 
-// stream
-Route::middleware(['auth:sanctum', 'employee'])->get('/camera/{id}/stream', [StreamController::class, 'stream']);
+// cameras for AI
+Route::get('AI/cameras', [AiController::class, 'index']);

@@ -17,11 +17,18 @@ class Camera extends Model
         'governorate',
         'street',
         'coordinates',
-        'key',
         'ip_address',
         'status',
+        'hls_path',
+        'rtsp_url',
+        'ai_enabled',
         'model',
         'installation_date',
         'description',
+    ];
+
+    protected $casts = [
+        'ai_enabled' => 'boolean',
+        'installation_date' => 'date',
     ];
 }
