@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Heading from "@/components/backoffice/Heading";
-import NewAccount from "@/components/frontend/NewAccount";
+import NewAccount from "@/components/FormInputs/NewAccount";
 
 export default function page() {
   return (
