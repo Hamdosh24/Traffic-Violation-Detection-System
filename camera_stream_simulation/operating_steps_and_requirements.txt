@@ -2,14 +2,13 @@ requirements:
 1- video
 2- batch file
 3- which program supports viewing RTSP video. (download link: "https://www.videolan.org/vlc/")
-4- ffmpeg-7.1.1. (download link: "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip")
 
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 operating steps:
 
-1- Open the batch file ("start_stream_and_record.bat") in edit mode and modify VIDEO_PATH, VLC_PATH, and FFMPEG_PATH as it is on your device
+1- Open the batch file ("start_stream_and_record.bat") in edit mode and modify VIDEO_PATH, and VLC_PATH as it is on your device
 
 2- open "start_stream_and_record.bat" --> This starts streaming from the video "sample.mp4"
 
