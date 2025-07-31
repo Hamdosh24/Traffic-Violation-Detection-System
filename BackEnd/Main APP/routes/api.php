@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PassingCarController;
 use App\Http\Controllers\Api\AccidentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Statistics\StatisticsController;
+use App\Http\Controllers\Statistics\FiltersController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Api\CameraReceiverController;
@@ -76,9 +77,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'manager'])->group(function 
 });
 
 // Statistics
-Route::middleware(['auth:sanctum', 'employee'])->group(function () {
-    Route::post('/violations/hourly', [StatisticsController::class, 'getViolationsByHour']);
-    Route::post('/violations/by-region', [StatisticsController::class, 'getViolationsByRegion']);
+Route::prefix('violations')->middleware(['auth:sanctum', 'employee'])->group(function () {
+    Route::post('hourly', [StatisticsController::class, 'getViolationsByHour']);
+    Route::post('by-region', [StatisticsController::class, 'getViolationsByRegion']);
+    Route::get('filters/by-hour', [FiltersController::class, 'getViolationsByHour']);
+    Route::get('filters/by-region', [FiltersController::class, 'getViolationsByRegion']);
 });
 
 // Activity Log

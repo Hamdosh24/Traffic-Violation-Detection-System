@@ -133,6 +133,14 @@ class StatisticsController extends Controller
                 ];
             }
 
+            // إذا كانت النتيجة فارغة، ضع القيمة الافتراضية
+            if (empty($result)) {
+                $result[] = [
+                    'region' => 'كل المناطق',
+                    'count'  => 0,
+                ];
+            }
+
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
                 'action_type' => 'Statistics Query',
