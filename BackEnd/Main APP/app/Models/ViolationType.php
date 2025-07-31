@@ -25,4 +25,10 @@ class ViolationType extends Model
         'key',
         'fine_amount',
     ];
+
+
+    public function violations()
+    {
+        return $this->hasMany(Violation::class, 'v_type_id', 'v_type_id');
+    }
 }

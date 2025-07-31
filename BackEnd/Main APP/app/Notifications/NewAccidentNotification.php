@@ -2,50 +2,43 @@
 
 namespace App\Notifications;
 
-use App\Models\Violation;
+use App\Models\Accident;
 use Illuminate\Bus\Queueable;
+// ADD THIS
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NewAccidentNotification extends Notification
+// MODIFY THIS to implement ShouldQueue
+class NewAccidentNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    private Violation $violation;
+    private Accident $accident;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(Violation $violation)
+    public function __construct(Accident $accident)
     {
-        $this->violation = $violation;
+        $this->accident = $accident;
     }
 
     /**
      * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
      */
     public function via(object $notifiable): array
     {
-        // إشعارات الموظفين الداخلية ستكون عبر قاعدة البيانات فقط
-        return ['database'];
+        // MODIFY THIS to send to the database channel
+        return [];
     }
 
     /**
      * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-        // البيانات التي نريد تخزينها في قاعدة البيانات لتظهر في لوحة التحكم
         return [
-            'accident_id' => $this->violation->v_id,
+            'accident_id' => $this->accident->id,
             'message' => 'تنبيه: تم رصد حادث مروري جديد.',
-            'camera_id' => $this->violation->camera_id,
-            'timestamp' => $this->violation->timestamp,
+            'camera_id' => $this->accident->camera_id,
+            'timestamp' => $this->accident->timestamp,
         ];
     }
 }

@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('personal_access_tokens', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('tokenable');
+            // This is the complete and correct structure for UUIDs with Sanctum
+            $table->uuid('id')->primary();    // The primary key itself is now a UUID
+            $table->uuidMorphs('tokenable'); // Use uuidMorphs for the relationship
             $table->string('name');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();

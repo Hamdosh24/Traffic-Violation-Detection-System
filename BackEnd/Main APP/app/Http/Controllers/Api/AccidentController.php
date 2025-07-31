@@ -4,80 +4,95 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Accident;
-use App\Services\CameraAPIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Event;
 
 class AccidentController extends Controller
 {
     /**
      * Store a newly created accident in storage.
+     * This is called by the AI system.
      */
-    public function store(Request $request, CameraAPIService $cameraService): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        // ... (your store method remains the same)
         $validator = Validator::make($request->all(), [
-            'camera_id' => 'required|string|max:255',
+            'camera_id' => 'required|string|max:255|exists:cameras,camera_id',
             'timestamp' => 'required|date',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
-        $cameraInfo = $cameraService->getCameraById($request->input('camera_id'));
-        if (!$cameraInfo) {
-            return response()->json(['message' => 'معرّف الكاميرا المدخل غير موجود في النظام.'], 422);
-        }
-
+        
         $accident = Accident::create($validator->validated());
 
-        $data = [
-            'accident' => $accident,
-            'camera_info' => $cameraInfo,
-        ];
-
-        return response()->json($data, 201);
+        return response()->json($accident->load('camera'), 201);
     }
 
     /**
-     * Get all new accidents and enrich them with camera info.
+     * Display a listing of new accidents.
+     * This is called by the frontend on page load.
      */
-    public function indexNew(CameraAPIService $cameraService): JsonResponse
+    public function indexNew(): JsonResponse
     {
-        // Step 1: Get all new accidents from your local database
-        $newAccidents = Accident::where('status', 'new')->latest()->get();
+        $newAccidents = Accident::with('camera')
+            ->where('status', 'new')
+            ->latest()
+            ->get();
 
-        if ($newAccidents->isEmpty()) {
-            return response()->json([]); // Return an empty array if there are no new accidents
-        }
-
-        // Step 2 (Efficient): Get all camera info from the mock API in a single call
-        $allCameras = $cameraService->getAllCameras();
-        // Create a map for fast lookups, using camera_id as the key
-        $cameraMap = collect($allCameras)->keyBy('camera_id');
-
-        // Step 3: Combine the accident data with the camera data
-        $enrichedAccidents = $newAccidents->map(function ($accident) use ($cameraMap) {
-            return [
-                'accident' => $accident,
-                'camera_info' => $cameraMap->get($accident->camera_id), // Find the camera in the map
-            ];
-        });
-
-        // Step 4: Return the final, enriched list
-        return response()->json($enrichedAccidents);
+        return response()->json($newAccidents);
     }
-
+    
     /**
-     * Mark an accident's notification as viewed.
+     * Update the specified accident's status to 'viewed'.
      */
     public function markAsViewed(Accident $accident): JsonResponse
     {
-        // ... (your markAsViewed method remains the same)
         $accident->status = 'viewed';
         $accident->save();
-        return response()->json($accident);
+        return response()->json($accident->load('camera'));
     }
+
+    /**
+     * Stream new accidents in real-time using Server-Sent Events.
+     */
+    public function streamNewAccidents(): StreamedResponse
+{
+    $response = new StreamedResponse(function() {
+        // --- ADD THIS LINE ---
+        // Disable the PHP time limit for this long-running script
+        set_time_limit(0);
+
+        $listener = function ($event) {
+            $accidentData = $event->accident->load('camera');
+
+            echo "event: new-accident\n";
+            echo 'data: ' . json_encode($accidentData) . "\n\n";
+
+            ob_flush();
+            flush();
+        };
+
+        Event::listen(
+            \App\Events\NewAccidentDetected::class,
+            $listener
+        );
+
+        while (true) {
+            echo ": ping\n\n";
+            ob_flush();
+            flush();
+            sleep(15);
+        }
+    });
+
+    $response->headers->set('Content-Type', 'text/event-stream');
+    $response->headers->set('X-Accel-Buffering', 'no');
+    $response->headers->set('Cache-Control', 'no-cache');
+    
+    return $response;
+}
 }

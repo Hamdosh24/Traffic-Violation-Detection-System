@@ -31,4 +31,9 @@ class PassingCar extends Model
             }
         });
     }
+
+    public function camera()
+    {
+        return $this->belongsTo(Camera::class, 'camera_id', 'camera_id');
+    }
 }

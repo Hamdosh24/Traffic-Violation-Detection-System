@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
-            $table->id('role_id'); // Primary Key
-            $table->string('name')->unique(); // The machine-readable name (e.g., 'admin')
-            $table->string('display_name'); // The human-readable name (e.g., 'Administrator')
-            $table->text('description')->nullable();
+        Schema::create('cameras', function (Blueprint $table) {
+            $table->id('camera_id')->primary();
+            $table->string('location');
+            $table->string('key');
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('cameras');
     }
 };
