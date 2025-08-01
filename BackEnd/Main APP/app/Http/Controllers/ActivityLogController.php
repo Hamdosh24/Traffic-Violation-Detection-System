@@ -11,6 +11,7 @@ class ActivityLogController extends Controller
 {
 
     // عرض جميع الlogs مع اسم المستخدم.
+
     public function index(Request $request)
     {
         try {
@@ -86,7 +87,6 @@ class ActivityLogController extends Controller
         }
     }
 
-    
     // فلترة النشاطات حسب خيارات المستخدم (اسم، اجراء، كلاهما)
     public function filteredLogs(Request $request)
     {

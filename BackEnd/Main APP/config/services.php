@@ -35,4 +35,7 @@ return [
         ],
     ],
 
+    'traffic_api' => [
+    'url' => env('TRAFFIC_API_URL'),
+],
 ];

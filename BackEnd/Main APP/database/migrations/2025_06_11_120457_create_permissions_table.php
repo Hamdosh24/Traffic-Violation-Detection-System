@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('permissions', function (Blueprint $table) {
-            $table->id('permission_id'); // ERD specifies permission_id as INT PK
-            $table->string('permission_name')->unique();
-            $table->string('guard_name');
-            $table->string('description')->nullable();
-            $table->timestamps(); // 'created at' and 'updated at' in ERD
+            $table->id('permission_id'); // Primary Key
+            $table->string('name')->unique(); // The machine-readable name (e.g., 'manage_users')
+            $table->string('display_name'); // The human-readable name (e.g., 'Manage Users')
+            $table->text('description')->nullable();
+            $table->timestamps();
         });
     }
 
