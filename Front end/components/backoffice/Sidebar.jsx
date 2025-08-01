@@ -20,10 +20,36 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useRouter } from "next/navigation";
+import { StandardApi } from "@/app/api/StandarApi";
 
 export default function Sidebar({ role, showSidebar }) {
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
   const [openMenu, setOpenMenu] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const { success, error } = await StandardApi.logout();
+
+      if (success) {
+        // مسح token وإعادة التوجيه
+        localStorage.removeItem("token");
+        console.log("token: was deleted");
+        router.push("/"); // توجيه إلى صفحة تسجيل الدخول
+      } else {
+        console.error("Logout error:", error);
+        alert(`فشل تسجيل الخروج: ${error}`);
+      }
+    } catch (err) {
+      console.error("Logout failed:", err);
+      alert("حدث خطأ غير متوقع أثناء تسجيل الخروج");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   // روابط الإحصائيات (للموظفين فقط)
   const statisticsLinks =
@@ -171,12 +197,20 @@ export default function Sidebar({ role, showSidebar }) {
 
         {/* زر تسجيل الخروج */}
         <div className="m-auto py-4">
-          <Link href="/">
-            <button className="bg-customGreen text-white justify-center flex items-center space-x-1 px-16 py-3 rounded-md text-sm hover:bg-emerald-700">
-              <LogOut />
-              <span className="font-bold">تسجيل الخروج</span>
-            </button>
-          </Link>
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="bg-customGreen text-white justify-center flex items-center space-x-1 px-16 py-3 rounded-md text-sm hover:bg-emerald-700 disabled:opacity-70"
+          >
+            {isLoggingOut ? (
+              <span>جاري تسجيل الخروج...</span>
+            ) : (
+              <>
+                <LogOut className="w-5 h-5" />
+                <span className="font-bold">تسجيل الخروج</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

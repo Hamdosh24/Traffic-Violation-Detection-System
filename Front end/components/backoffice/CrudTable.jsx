@@ -135,7 +135,7 @@ export default function CrudTable() {
     );
   }
   return (
-    <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div className="relative overflow-x-auto shadow-md sm:rounded-lg w-full">
       {/* Search and Add New Button */}
       <div className="p-4 bg-white dark:bg-customDarkGreenbg flex justify-between items-center">
         <div className="relative w-80">

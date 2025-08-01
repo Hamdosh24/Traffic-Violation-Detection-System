@@ -52,32 +52,27 @@ const getActionColor = (action) => {
 
 export default function ActivityTable() {
   const [activities, setActivities] = useState([]);
+  const [filteredActivities, setFilteredActivities] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 6;
 
-  const fetchActivities = useCallback(async (query = "") => {
+  const fetchActivities = useCallback(async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      let endpoint = "/activity-logs";
-      if (query) {
-        endpoint = `/activity-logs/search?query=${encodeURIComponent(query)}`;
-      }
-
       const {
         success,
         data,
         error: apiError,
-      } = await StandardApi.get(endpoint);
+      } = await StandardApi.get("/activity-logs");
 
       if (success) {
         setActivities(data);
-        setTotalItems(data.length);
+        setFilteredActivities(data);
       } else {
         setError(apiError || "Failed to fetch activities");
       }
@@ -91,30 +86,131 @@ export default function ActivityTable() {
     }
   }, []);
 
-  // البحث مع إلغاء الطلبات السريعة
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchActivities(searchTerm);
+    if (searchTerm.trim() === "") {
+      setFilteredActivities(activities);
       setCurrentPage(1);
-    }, 500);
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [searchTerm, fetchActivities]);
+    const filtered = activities.filter((activity) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        activity.user_name?.toLowerCase().includes(searchLower) ||
+        activity.action?.toLowerCase().includes(searchLower)
+      );
+    });
 
-  // جلب البيانات الأولية
+    setFilteredActivities(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, activities]);
+
   useEffect(() => {
     fetchActivities();
   }, [fetchActivities]);
 
-  // التقسيم المحلي للبيانات
+  const totalItems = filteredActivities.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const itemStartIndex = (currentPage - 1) * itemsPerPage;
   const itemEndIndex = Math.min(currentPage * itemsPerPage, totalItems);
-  const currentPageData = activities.slice(itemStartIndex, itemEndIndex);
+  const currentPageData = filteredActivities.slice(
+    itemStartIndex,
+    itemEndIndex
+  );
 
   const goToPage = (page) => {
     const newPage = Math.max(1, Math.min(page, totalPages));
     setCurrentPage(newPage);
+  };
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    // Always show first page
+    pages.push(
+      <li key={1}>
+        <button
+          onClick={() => goToPage(1)}
+          className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+            currentPage === 1
+              ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
+              : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+          }`}
+        >
+          1
+        </button>
+      </li>
+    );
+
+    // Show ellipsis if needed after first page
+    if (currentPage > 3 && totalPages > maxVisiblePages) {
+      pages.push(
+        <li key="ellipsis-start" className="flex items-center px-2">
+          ...
+        </li>
+      );
+    }
+
+    // Calculate range of pages to show around current page
+    let startPage = Math.max(2, currentPage - 1);
+    let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    // Adjust if we're near the start or end
+    if (currentPage <= 3) {
+      endPage = Math.min(4, totalPages - 1);
+    } else if (currentPage >= totalPages - 2) {
+      startPage = Math.max(totalPages - 3, 2);
+    }
+
+    // Add page numbers in range
+    for (let i = startPage; i <= endPage; i++) {
+      if (i > 1 && i < totalPages) {
+        pages.push(
+          <li key={i}>
+            <button
+              onClick={() => goToPage(i)}
+              className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+                currentPage === i
+                  ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
+                  : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+              }`}
+            >
+              {i}
+            </button>
+          </li>
+        );
+      }
+    }
+
+    // Show ellipsis before last page if needed
+    if (currentPage < totalPages - 2 && totalPages > maxVisiblePages) {
+      pages.push(
+        <li key="ellipsis-end" className="flex items-center px-2">
+          ...
+        </li>
+      );
+    }
+
+    // Show last page if there is more than one page
+    if (totalPages > 1) {
+      pages.push(
+        <li key={totalPages}>
+          <button
+            onClick={() => goToPage(totalPages)}
+            className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+              currentPage === totalPages
+                ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
+                : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+            }`}
+          >
+            {totalPages}
+          </button>
+        </li>
+      );
+    }
+
+    return pages;
   };
 
   if (isLoading && activities.length === 0) {
@@ -153,7 +249,7 @@ export default function ActivityTable() {
           <input
             type="text"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 pl-10 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-            placeholder="Search by name or action..."
+            placeholder="Search by user name or action..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -204,7 +300,6 @@ export default function ActivityTable() {
         </tbody>
       </table>
 
-      {/* Pagination */}
       {totalItems > 0 && (
         <nav className="flex items-center dark:bg-customDarkGreen flex-column flex-wrap md:flex-row justify-between pt-4 p-5">
           <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
@@ -227,20 +322,7 @@ export default function ActivityTable() {
                 <ChevronLeft />
               </button>
             </li>
-            {Array.from({ length: totalPages }, (_, index) => (
-              <li key={index}>
-                <button
-                  onClick={() => goToPage(index + 1)}
-                  className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
-                    currentPage === index + 1
-                      ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
-                      : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              </li>
-            ))}
+            {renderPageNumbers()}
             <li>
               <button
                 onClick={() => goToPage(currentPage + 1)}

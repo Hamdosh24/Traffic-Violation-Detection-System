@@ -14,6 +14,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { utils, writeFile } from "xlsx";
 import { useReactToPrint } from "react-to-print";
+import { StandardApi } from "@/app/api/StandarApi";
 
 ChartJS.register(
   CategoryScale,
@@ -50,152 +51,86 @@ export default function TrafficViolationsChartByTime() {
     "القنيطرة",
   ];
 
-  // إنشاء بيانات وهمية لـ 150 منطقة مع المحافظات
-  const generateMockData = useMemo(() => {
-    const mockData = [];
-
-    governorates.forEach((governorate) => {
-      const locationsInGovernorate = Math.floor(Math.random() * 15) + 5;
-
-      for (let i = 1; i <= locationsInGovernorate; i++) {
-        const location = `${governorate} - المنطقة ${i}`;
-
-        violationTypes.forEach((type) => {
-          // توزيع المخالفات على أشهر السنة وساعات اليوم
-          for (let month = 0; month < 12; month++) {
-            for (let hour = 0; hour < 24; hour++) {
-              mockData.push({
-                governorate,
-                location,
-                type,
-                date: new Date(2023, month, 1, hour), // إضافة ساعة اليوم
-                hour, // تخزين ساعة اليوم كحقل منفصل
-                count: Math.floor(Math.random() * 10) + 1, // 1-10 مخالفة لكل نوع في كل ساعة
-              });
-            }
-          }
-        });
-      }
-    });
-
-    return mockData;
-  }, []);
-
-  const [filteredData, setFilteredData] = useState([]);
-  const [selectedType, setSelectedType] = useState("كل الأنواع");
-  const [selectedGovernorate, setSelectedGovernorate] = useState("دمشق");
-  const [selectedLocation, setSelectedLocation] = useState("كل المناطق");
-  const [startDate, setStartDate] = useState(new Date(2023, 0, 1));
-  const [endDate, setEndDate] = useState(new Date(2023, 11, 31));
-  const [currentPage, setCurrentPage] = useState(0);
-  const [viewMode, setViewMode] = useState("time"); // 'locations' or 'time'
-  const itemsPerPage = 30;
+  const [hourlyData, setHourlyData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedType, setSelectedType] = useState("all");
+  const [selectedGovernorate, setSelectedGovernorate] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const chartRef = useRef();
   const componentRef = useRef();
 
-  // استخراج المناطق المتاحة بناءً على المحافظة المحددة
   const availableLocations = useMemo(() => {
-    const locations = new Set();
-    generateMockData.forEach((item) => {
-      if (
-        selectedGovernorate === "كل المحافظات" ||
-        item.governorate === selectedGovernorate
-      ) {
-        locations.add(item.location);
-      }
-    });
-    return ["كل المناطق", ...Array.from(locations)];
-  }, [generateMockData, selectedGovernorate]);
+    // في التطبيق الحقيقي، يمكن جلب هذه البيانات من API
+    return ["all", "دمشق - المنطقة 1", "دمشق - المنطقة 2", "حلب - المنطقة 1"];
+  }, []);
 
   useEffect(() => {
-    const filtered = generateMockData.filter((item) => {
-      const typeMatch =
-        selectedType === "كل الأنواع" || item.type === selectedType;
-      const governorateMatch = item.governorate === selectedGovernorate; // إزالة التحقق من "كل المحافظات"
-      const locationMatch =
-        selectedLocation === "كل المناطق" || item.location === selectedLocation;
-      const dateMatch = item.date >= startDate && item.date <= endDate;
+    fetchHourlyViolations();
+  }, [selectedType, selectedGovernorate, selectedLocation, startDate, endDate]);
 
-      return typeMatch && governorateMatch && locationMatch && dateMatch;
+  const fetchHourlyViolations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = {
+        type_name: selectedType,
+        governorate: selectedGovernorate,
+        region: selectedLocation,
+        from_date: formatDate(startDate),
+        to_date: formatDate(endDate),
+      };
+
+      const response = await StandardApi.fetchViolationsByHour(params);
+
+      if (!response.success) {
+        throw new Error(response.error || "Failed to fetch data");
+      }
+
+      setHourlyData(response.data);
+    } catch (err) {
+      console.error("Error fetching hourly violations:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const prepareChartData = () => {
+    if (!hourlyData) return null;
+
+    const labels = Object.keys(hourlyData).map((hourRange) => {
+      const [startHour, endHour] = hourRange.split("-");
+      return `${startHour}:00 - ${endHour}:00`;
     });
 
-    setFilteredData(filtered);
-    setCurrentPage(0);
-  }, [
-    generateMockData,
-    selectedType,
-    selectedGovernorate,
-    selectedLocation,
-    startDate,
-    endDate,
-  ]);
+    const data = Object.values(hourlyData);
 
-  // تجميع البيانات حسب الوقت
-  const aggregatedData = useMemo(() => {
-    if (viewMode === "locations" && selectedLocation === "كل المناطق") {
-      // تجميع حسب الموقع (يبقى كما هو)
-      const aggregation = {};
-      filteredData.forEach((item) => {
-        if (!aggregation[item.location]) {
-          aggregation[item.location] = 0;
-        }
-        aggregation[item.location] += item.count;
-      });
-      const sorted = Object.entries(aggregation)
-        .map(([location, count]) => ({ location, count }))
-        .sort((a, b) => b.count - a.count);
-      return {
-        type: "locations",
-        allData: sorted,
-        paginatedData: sorted.slice(
-          currentPage * itemsPerPage,
-          (currentPage + 1) * itemsPerPage
-        ),
-        totalPages: Math.ceil(sorted.length / itemsPerPage),
-      };
-    } else {
-      // تجميع حسب ساعات اليوم
-      const hourlyData = Array(24)
-        .fill(0)
-        .map((_, hour) => ({
-          hour,
-          hourLabel: `${hour}:00 - ${hour + 1}:00`, // تسمية لكل ساعة
-          count: 0,
-        }));
-
-      filteredData.forEach((item) => {
-        hourlyData[item.hour].count += item.count;
-      });
-
-      return {
-        type: "time",
-        allData: hourlyData,
-        paginatedData: hourlyData,
-        totalPages: 1,
-      };
-    }
-  }, [filteredData, currentPage, viewMode, selectedLocation]);
-
-  const chartData = {
-    labels: aggregatedData.paginatedData.map((item) =>
-      aggregatedData.type === "locations" ? item.location : item.hourLabel
-    ),
-    datasets: [
-      {
-        label: "عدد المخالفات",
-        data: aggregatedData.paginatedData.map((item) => item.count),
-        backgroundColor:
-          aggregatedData.type === "locations"
-            ? "rgb(13, 158, 109)"
-            : "rgba(54, 162, 235, 0.7)",
-        borderColor:
-          aggregatedData.type === "locations"
-            ? "rgb(13, 158, 109, 0.7)"
-            : "rgba(54, 162, 235, 1)",
-        borderWidth: 1,
-      },
-    ],
+    return {
+      labels,
+      datasets: [
+        {
+          label: "عدد المخالفات",
+          data,
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1,
+        },
+      ],
+    };
   };
+
+  const chartData = prepareChartData();
 
   const options = {
     responsive: true,
@@ -206,7 +141,7 @@ export default function TrafficViolationsChartByTime() {
       title: {
         display: true,
         text: `توزيع المخالفات المرورية حسب ساعات اليوم ${
-          selectedLocation !== "كل المناطق" ? `في ${selectedLocation}` : ""
+          selectedLocation !== "all" ? `في ${selectedLocation}` : ""
         }`,
         font: {
           size: 16,
@@ -252,17 +187,17 @@ export default function TrafficViolationsChartByTime() {
   };
 
   const exportToExcel = () => {
+    if (!hourlyData) return;
+
     // تحضير البيانات الرئيسية مع الساعات
-    const mainData = aggregatedData.allData.map((item) => ({
-      "الفترة الزمنية": item.hourLabel || item.monthName, // استخدام hourLabel إذا كان موجوداً
-      "عدد المخالفات": item.count,
-      "نوع المخالفة":
-        selectedType === "كل الأنواع" ? "جميع الأنواع" : selectedType,
-      المحافظة: selectedGovernorate,
-      المنطقة: selectedLocation,
-      التاريخ: `من ${startDate.toLocaleDateString(
-        "ar-EG"
-      )} إلى ${endDate.toLocaleDateString("ar-EG")}`,
+    const mainData = Object.entries(hourlyData).map(([hourRange, count]) => ({
+      "الفترة الزمنية": hourRange.replace("-", ":00 - ") + ":00",
+      "عدد المخالفات": count,
+      "نوع المخالفة": selectedType === "all" ? "جميع الأنواع" : selectedType,
+      المحافظة:
+        selectedGovernorate === "all" ? "جميع المحافظات" : selectedGovernorate,
+      المنطقة: selectedLocation === "all" ? "جميع المناطق" : selectedLocation,
+      التاريخ: `من ${formatDate(startDate)} إلى ${formatDate(endDate)}`,
     }));
 
     // تحضير قائمة أنواع المخالفات
@@ -283,26 +218,21 @@ export default function TrafficViolationsChartByTime() {
     utils.book_append_sheet(wb, wsViolations, "أنواع المخالفات");
 
     // ورقة ملخص البيانات
+    const totalViolations = Object.values(hourlyData).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    const averageViolations = totalViolations / Object.keys(hourlyData).length;
+    const maxHour = Object.entries(hourlyData).reduce(
+      (max, [hour, count]) => (count > max.count ? { hour, count } : max),
+      { hour: "", count: 0 }
+    );
+
     const summaryData = [
-      [
-        "إجمالي المخالفات",
-        aggregatedData.allData.reduce((sum, item) => sum + item.count, 0),
-      ],
-      [
-        "متوسط المخالفات لكل ساعة",
-        (
-          aggregatedData.allData.reduce((sum, item) => sum + item.count, 0) /
-          aggregatedData.allData.length
-        ).toFixed(2),
-      ],
-      [
-        "أعلى ساعة في المخالفات",
-        aggregatedData.allData.reduce(
-          (max, item) => (item.count > max.count ? item : max),
-          aggregatedData.allData[0]
-        ).hourLabel,
-      ],
-      ["عدد الساعات", aggregatedData.allData.length],
+      ["إجمالي المخالفات", totalViolations],
+      ["متوسط المخالفات لكل ساعة", averageViolations.toFixed(2)],
+      ["أعلى ساعة في المخالفات", maxHour.hour.replace("-", ":00 - ") + ":00"],
+      ["عدد الساعات", Object.keys(hourlyData).length],
     ];
 
     const wsSummary = utils.aoa_to_sheet(summaryData);
@@ -405,55 +335,48 @@ export default function TrafficViolationsChartByTime() {
           <div className="print-filters">
             <div className="print-filter-item">
               <strong>نوع المخالفة: </strong>
-              {selectedType}
+              {selectedType === "all" ? "جميع الأنواع" : selectedType}
             </div>
             <div className="print-filter-item">
               <strong>المحافظة: </strong>
-              {selectedGovernorate}
+              {selectedGovernorate === "all"
+                ? "جميع المحافظات"
+                : selectedGovernorate}
             </div>
             <div className="print-filter-item">
               <strong>المنطقة: </strong>
-              {selectedLocation}
+              {selectedLocation === "all" ? "جميع المناطق" : selectedLocation}
             </div>
             <div className="print-filter-item">
               <strong>الفترة الزمنية: </strong>
-              من {startDate.toLocaleDateString("ar-EG")} إلى{" "}
-              {endDate.toLocaleDateString("ar-EG")}
+              من {formatDate(startDate)} إلى {formatDate(endDate)}
             </div>
           </div>
 
-          <div className="print-chart-container">
-            <Bar data={chartData} options={options} />
-          </div>
+          {chartData && (
+            <div className="print-chart-container">
+              <Bar data={chartData} options={options} />
+            </div>
+          )}
 
-          <table className="print-data-table">
-            <thead>
-              <tr>
-                <th>
-                  {aggregatedData.type === "locations" ? "المنطقة" : "الشهر"}
-                </th>
-                <th>عدد المخالفات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {aggregatedData.allData.map((item) => (
-                <tr
-                  key={
-                    aggregatedData.type === "locations"
-                      ? item.location
-                      : item.monthName
-                  }
-                >
-                  <td>
-                    {aggregatedData.type === "locations"
-                      ? item.location
-                      : item.monthName}
-                  </td>
-                  <td>{item.count}</td>
+          {hourlyData && (
+            <table className="print-data-table">
+              <thead>
+                <tr>
+                  <th>الفترة الزمنية</th>
+                  <th>عدد المخالفات</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Object.entries(hourlyData).map(([hourRange, count]) => (
+                  <tr key={hourRange}>
+                    <td>{hourRange.replace("-", ":00 - ") + ":00"}</td>
+                    <td>{count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
@@ -461,7 +384,8 @@ export default function TrafficViolationsChartByTime() {
         <div className="flex gap-2">
           <button
             onClick={exportToExcel}
-            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+            disabled={!hourlyData}
+            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -481,7 +405,8 @@ export default function TrafficViolationsChartByTime() {
           </button>
           <button
             onClick={handlePrint}
-            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+            disabled={!hourlyData}
+            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -516,7 +441,7 @@ export default function TrafficViolationsChartByTime() {
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
           >
-            <option value="كل الأنواع">كل الأنواع</option>
+            <option value="all">كل الأنواع</option>
             {violationTypes.map((type) => (
               <option key={type} value={type}>
                 {type}
@@ -534,9 +459,10 @@ export default function TrafficViolationsChartByTime() {
             value={selectedGovernorate}
             onChange={(e) => {
               setSelectedGovernorate(e.target.value);
-              setSelectedLocation("كل المناطق");
+              setSelectedLocation("all");
             }}
           >
+            <option value="all">كل المحافظات</option>
             {governorates.map((gov) => (
               <option key={gov} value={gov}>
                 {gov}
@@ -552,19 +478,17 @@ export default function TrafficViolationsChartByTime() {
           <select
             className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={selectedLocation}
-            onChange={(e) => {
-              setSelectedLocation(e.target.value);
-              setViewMode(
-                e.target.value === "كل المناطق" ? "locations" : "time"
-              );
-            }}
+            onChange={(e) => setSelectedLocation(e.target.value)}
             disabled={availableLocations.length <= 1}
           >
-            {availableLocations.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
-              </option>
-            ))}
+            <option value="all">كل المناطق</option>
+            {availableLocations
+              .filter((loc) => loc !== "all")
+              .map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
           </select>
         </div>
       </div>
@@ -600,87 +524,61 @@ export default function TrafficViolationsChartByTime() {
         </div>
       </div>
 
-      {/* المخطط مع التمرير */}
+      {/* حالة التحميل والخطأ */}
+      {loading && (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-2">جاري تحميل البيانات...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <strong>خطأ!</strong> {error}
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+          >
+            <svg
+              className="fill-current h-6 w-6 text-red-500"
+              role="button"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+            >
+              <title>إغلاق</title>
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* المخطط */}
       <div className="relative">
         <div
           className="bg-white dark:bg-customDarkGreenbg p-4 rounded-lg overflow-x-auto"
           ref={chartRef}
         >
-          <div className="min-w-[200px] h-[300px]">
-            <Bar data={chartData} options={options} />
-          </div>
-        </div>
-
-        {/* تنقل بين الصفحات */}
-        {aggregatedData.type === "locations" &&
-          aggregatedData.totalPages > 1 && (
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))}
-                disabled={currentPage === 0}
-                className="px-4 py-2 mx-1 bg-gray-200 text-black rounded disabled:opacity-50"
-              >
-                السابق
-              </button>
-
-              {Array.from(
-                { length: Math.min(5, aggregatedData.totalPages) },
-                (_, i) => {
-                  const page =
-                    currentPage < 3
-                      ? i
-                      : currentPage > aggregatedData.totalPages - 4
-                      ? aggregatedData.totalPages - 5 + i
-                      : currentPage - 2 + i;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-4 py-2 mx-1 rounded ${
-                        currentPage === page
-                          ? "bg-customGreen text-white"
-                          : "bg-gray-200 text-black"
-                      }`}
-                    >
-                      {page + 1}
-                    </button>
-                  );
-                }
-              )}
-
-              <button
-                onClick={() =>
-                  setCurrentPage((p) =>
-                    Math.min(p + 1, aggregatedData.totalPages - 1)
-                  )
-                }
-                disabled={currentPage === aggregatedData.totalPages - 1}
-                className="px-4 py-2 mx-1 bg-gray-200 text-black rounded disabled:opacity-50"
-              >
-                التالي
-              </button>
+          {chartData ? (
+            <div className="min-w-[200px] h-[300px]">
+              <Bar data={chartData} options={options} />
             </div>
+          ) : (
+            !loading && (
+              <div className="text-center py-8 text-gray-500">
+                لا توجد بيانات متاحة لعرضها
+              </div>
+            )
           )}
+        </div>
       </div>
 
       {/* ملخص النتائج */}
-      <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-        {aggregatedData.type === "locations" ? (
-          <>
-            عرض المناطق من {currentPage * itemsPerPage + 1} إلى{" "}
-            {Math.min(
-              (currentPage + 1) * itemsPerPage,
-              aggregatedData.allData.length
-            )}{" "}
-            من أصل {aggregatedData.allData.length} منطقة
-          </>
-        ) : (
-          <>
-            عرض التوزيع الزمني للمخالفات حسب ساعات اليوم{" "}
-            {selectedLocation !== "كل المناطق" ? `في ${selectedLocation}` : ""}
-          </>
-        )}
-      </div>
+      {hourlyData && (
+        <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+          عرض التوزيع الزمني للمخالفات حسب ساعات اليوم{" "}
+          {selectedLocation !== "all" ? `في ${selectedLocation}` : ""}
+        </div>
+      )}
     </div>
   );
 }

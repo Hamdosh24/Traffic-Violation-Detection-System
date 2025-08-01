@@ -37,7 +37,7 @@ export default function page() {
           <div className="absolute inset-20 bg-milkColor rounded-lg"></div>
         </div>
         {/* the main content */}
-        <div className="container mx-auto px-4 z-10 flex flex-col lg:flex-row justify-center items-center gap-8">
+        <div className="container mx-auto px-4 z-10 flex flex-col lg:flex-row lg:justify-center md:flex-col md:items-center items-center gap-8">
           <div className="mr-24 pb-28 flex flex-col justify-center items-center lg:items-end">
             <Image
               src="/Logo1.png"
