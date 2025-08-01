@@ -30,15 +30,15 @@ class StatisticsController extends Controller
                 ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
                 ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
 
-            if (strtolower($validated['type_name']) !== 'all') {
+            if (strtolower($validated['type_name']) !== 'كل المخالفات') {
                 $query->where('violation_types.type_name', $validated['type_name']);
             }
 
-            if (strtolower($validated['governorate']) !== 'all') {
+            if (strtolower($validated['governorate']) !== 'كل المحافظات') {
                 $query->where('cameras.governorate', $validated['governorate']);
             }
 
-            if (strtolower($validated['region']) !== 'all') {
+            if (strtolower($validated['region']) !== 'كل المناطق') {
                 $query->where('cameras.region', $validated['region']);
             }
 
@@ -111,7 +111,7 @@ class StatisticsController extends Controller
                 ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
                 ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
 
-            if (strtolower($validated['type_name']) !== 'all') {
+            if (strtolower($validated['type_name']) !== 'كل المخالفات') {
                 $query->where('violation_types.type_name', $validated['type_name']);
             }
 
