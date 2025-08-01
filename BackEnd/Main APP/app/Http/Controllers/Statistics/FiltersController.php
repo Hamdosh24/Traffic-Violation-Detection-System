@@ -12,11 +12,12 @@ class FiltersController extends Controller
     public function getViolationsByHour()
     {
         $regions = Camera::select('region')->distinct()->pluck('region');
-
+        $regions->prepend('كل المناطق');
         $governorates = Camera::select('governorate')->distinct()->pluck('governorate');
+        $governorates->prepend('كل المحافظات');
 
         $violationTypes = ViolationType::select('type_name')->get()->pluck('type_name');
-
+        $violationTypes->prepend('كل المخالفات');
         return response()->json([
             'regions' => $regions,
             'governorates' => $governorates,
@@ -28,6 +29,7 @@ class FiltersController extends Controller
     public function getViolationsByRegion()
     {
         $violationTypes = ViolationType::select('type_name')->get()->pluck('type_name');
+        $violationTypes->prepend('كل المخالفات');
 
         return response()->json([
             'violation_types' => $violationTypes,
