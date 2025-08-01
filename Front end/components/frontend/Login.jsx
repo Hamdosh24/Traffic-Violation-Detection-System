@@ -1,81 +1,129 @@
-import React from "react";
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { StandardApi } from "@/app/api/StandarApi";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const {
+        success,
+        data,
+        error: apiError,
+      } = await StandardApi.post("/login", { email, password });
+      if (!success) {
+        throw new Error(apiError || "Login failed, please try again");
+      }
+
+      localStorage.setItem("token", data.access_token);
+      console.log("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify({ role: data.role }));
+      console.log("user", JSON.stringify({ role: data.role }));
+
+      router.push(
+        data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow-sm sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700">
-      <form class="space-y-6" action="#">
-        <h5 class="text-xl font-medium text-gray-900 dark:text-white">
-          Sign in to our platform
+    <div className="w-full p-8 bg-customDarkGreenbg rounded-lg shadow-lg">
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <h5 className="text-2xl text-center font-bold text-milkColor">
+          Sign in to your account
         </h5>
+
+        {error && (
+          <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
+
         <div>
           <label
-            for="email"
-            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            htmlFor="email"
+            className="block mb-2 text-sm font-medium text-gray-700"
           >
-            Your email
+            Email address
           </label>
           <input
             type="email"
-            name="email"
             id="email"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b7a579] focus:border-[#b7a579]"
             placeholder="name@company.com"
             required
+            disabled={isLoading}
           />
         </div>
+
         <div>
           <label
-            for="password"
-            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            htmlFor="password"
+            className="block mb-2 text-sm font-medium text-gray-700"
           >
-            Your password
+            Password
           </label>
           <input
             type="password"
-            name="password"
             id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+            className="w-full p-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b7a579] focus:border-[#b7a579]"
             required
+            disabled={isLoading}
           />
         </div>
-        <div class="flex items-start">
-          <div class="flex items-start">
-            <div class="flex items-center h-5">
-              <input
-                id="remember"
-                type="checkbox"
-                value=""
-                class="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
-                required
-              />
-            </div>
-            <label
-              for="remember"
-              class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-            >
-              Remember me
-            </label>
-          </div>
-          <a
-            href="#"
-            class="ms-auto text-sm text-blue-700 hover:underline dark:text-blue-500"
-          >
-            Lost Password?
-          </a>
-        </div>
+
         <button
           type="submit"
-          class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          disabled={isLoading}
+          className="w-full px-5 py-3 text-sm font-medium text-white bg-customDarkGreen rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#b7a579] focus:ring-opacity-50 disabled:opacity-50 flex items-center justify-center transition-colors duration-300"
         >
-          Login to your account
+          {isLoading ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              جاري المعالجة...
+            </>
+          ) : (
+            "Login to your account"
+          )}
         </button>
-        <div class="text-sm font-medium text-gray-500 dark:text-gray-300">
-          Not registered?{" "}
-          <a href="#" class="text-blue-700 hover:underline dark:text-blue-500">
-            Create account
-          </a>
-        </div>
       </form>
     </div>
   );

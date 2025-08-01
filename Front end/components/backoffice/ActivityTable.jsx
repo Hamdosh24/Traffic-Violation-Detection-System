@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import Data from "../../Activity.json";
+"use client";
+import React, { useState, useEffect, useCallback } from "react";
+import { StandardApi } from "@/app/api/StandarApi";
 
 const ChevronLeft = () => (
   <svg
@@ -8,7 +9,6 @@ const ChevronLeft = () => (
     stroke="currentColor"
     strokeWidth="2"
     viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
   >
     <path
       strokeLinecap="round"
@@ -25,92 +25,219 @@ const ChevronRight = () => (
     stroke="currentColor"
     strokeWidth="2"
     viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
   >
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"></path>
   </svg>
 );
 
-// Helper function to determine action color
 const getActionColor = (action) => {
   const actionType = action.toLowerCase();
+  const colorMap = {
+    login: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    view: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    create: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    update:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+    delete: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+  };
 
-  if (actionType.includes("watch") || actionType.includes("camera")) {
-    return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-  } else if (actionType.includes("review") || actionType.includes("footage")) {
-    return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
-  } else if (actionType.includes("check") || actionType.includes("logs")) {
-    return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-  } else if (actionType.includes("monitor") || actionType.includes("alarm")) {
-    return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-  } else if (actionType.includes("update") || actionType.includes("system")) {
-    return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200";
-  } else if (actionType.includes("inspect")) {
-    return "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200";
-  } else if (
-    actionType.includes("calibrate") ||
-    actionType.includes("sensors")
-  ) {
-    return "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200";
-  } else if (
-    actionType.includes("test") ||
-    actionType.includes("connectivity")
-  ) {
-    return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
-  } else if (actionType.includes("restart")) {
-    return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-  } else {
-    return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
-  }
+  if (actionType.includes("login")) return colorMap.login;
+  if (actionType.includes("view")) return colorMap.view;
+  if (actionType.includes("create")) return colorMap.create;
+  if (actionType.includes("update")) return colorMap.update;
+  if (actionType.includes("delete")) return colorMap.delete;
+  return colorMap.default;
 };
 
 export default function ActivityTable() {
+  const [activities, setActivities] = useState([]);
+  const [filteredActivities, setFilteredActivities] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const itemsPerPage = 6;
 
-  const employees = Data;
+  const fetchActivities = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
 
-  // Filter on both Name and Action
-  const filteredEmployees = employees.filter(
-    (employee) =>
-      employee.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.Action.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    try {
+      const {
+        success,
+        data,
+        error: apiError,
+      } = await StandardApi.get("/activity-logs");
 
-  // Calculate total number of pages
-  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+      if (success) {
+        setActivities(data);
+        setFilteredActivities(data);
+      } else {
+        setError(apiError || "Failed to fetch activities");
+      }
+    } catch (err) {
+      const errorMessage =
+        err?.message || err?.toString() || "An unexpected error occurred";
+      setError(errorMessage);
+      console.error("Error fetching activities:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Calculate start and end index of items for current page
-  const itemStartIndex = (currentPage - 1) * itemsPerPage + 1;
-  const itemEndIndex =
-    currentPage * itemsPerPage > filteredEmployees.length
-      ? filteredEmployees.length
-      : currentPage * itemsPerPage;
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredActivities(activities);
+      setCurrentPage(1);
+      return;
+    }
 
-  // Current page data
-  const currentPageData = filteredEmployees.slice(
-    itemStartIndex - 1,
+    const filtered = activities.filter((activity) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        activity.user_name?.toLowerCase().includes(searchLower) ||
+        activity.action?.toLowerCase().includes(searchLower)
+      );
+    });
+
+    setFilteredActivities(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, activities]);
+
+  useEffect(() => {
+    fetchActivities();
+  }, [fetchActivities]);
+
+  const totalItems = filteredActivities.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const itemStartIndex = (currentPage - 1) * itemsPerPage;
+  const itemEndIndex = Math.min(currentPage * itemsPerPage, totalItems);
+  const currentPageData = filteredActivities.slice(
+    itemStartIndex,
     itemEndIndex
   );
 
-  // Navigate to specific page
   const goToPage = (page) => {
-    if (page < 1) page = 1;
-    else if (page > totalPages) page = totalPages;
-    setCurrentPage(page);
+    const newPage = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(newPage);
   };
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    // Always show first page
+    pages.push(
+      <li key={1}>
+        <button
+          onClick={() => goToPage(1)}
+          className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+            currentPage === 1
+              ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
+              : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+          }`}
+        >
+          1
+        </button>
+      </li>
+    );
+
+    // Show ellipsis if needed after first page
+    if (currentPage > 3 && totalPages > maxVisiblePages) {
+      pages.push(
+        <li key="ellipsis-start" className="flex items-center px-2">
+          ...
+        </li>
+      );
+    }
+
+    // Calculate range of pages to show around current page
+    let startPage = Math.max(2, currentPage - 1);
+    let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    // Adjust if we're near the start or end
+    if (currentPage <= 3) {
+      endPage = Math.min(4, totalPages - 1);
+    } else if (currentPage >= totalPages - 2) {
+      startPage = Math.max(totalPages - 3, 2);
+    }
+
+    // Add page numbers in range
+    for (let i = startPage; i <= endPage; i++) {
+      if (i > 1 && i < totalPages) {
+        pages.push(
+          <li key={i}>
+            <button
+              onClick={() => goToPage(i)}
+              className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+                currentPage === i
+                  ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
+                  : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+              }`}
+            >
+              {i}
+            </button>
+          </li>
+        );
+      }
+    }
+
+    // Show ellipsis before last page if needed
+    if (currentPage < totalPages - 2 && totalPages > maxVisiblePages) {
+      pages.push(
+        <li key="ellipsis-end" className="flex items-center px-2">
+          ...
+        </li>
+      );
+    }
+
+    // Show last page if there is more than one page
+    if (totalPages > 1) {
+      pages.push(
+        <li key={totalPages}>
+          <button
+            onClick={() => goToPage(totalPages)}
+            className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+              currentPage === totalPages
+                ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
+                : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+            }`}
+          >
+            {totalPages}
+          </button>
+        </li>
+      );
+    }
+
+    return pages;
+  };
+
+  if (isLoading && activities.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
-      <div className="p-4 bg-white dark:bg-gray-800 flex justify-start items-center">
+      <div className="p-4 bg-white dark:bg-customDarkGreenbg flex justify-start items-center">
         <div className="relative w-80">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <svg
               className="w-5 h-5 text-gray-500 dark:text-gray-400"
               fill="currentColor"
               viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 fillRule="evenodd"
@@ -122,109 +249,92 @@ export default function ActivityTable() {
           <input
             type="text"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 pl-10 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-            placeholder="Search by name..."
+            placeholder="Search by user name or action..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
       <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <thead className="text-xs uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-400">
           <tr>
-            <th className="px-6 py-3">Name</th>
+            <th className="px-6 py-3">User</th>
             <th className="px-6 py-3">Time</th>
             <th className="px-6 py-3">Action</th>
+            <th className="px-6 py-3">Description</th>
           </tr>
         </thead>
         <tbody>
           {currentPageData.length > 0 ? (
-            currentPageData.map((employee, index) => (
+            currentPageData.map((activity, index) => (
               <tr
                 key={index}
-                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                className="bg-white border-b dark:bg-customDarkGreenbg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
               >
                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                  {employee.Name}
+                  {activity.user_name}
                 </td>
-                <td className="px-6 py-4">{employee.Time}</td>
+                <td className="px-6 py-4">{activity.time}</td>
                 <td className="px-6 py-4">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(
-                      employee.Action
+                      activity.action
                     )}`}
                   >
-                    {employee.Action}
+                    {activity.action}
                   </span>
                 </td>
+                <td className="px-6 py-4">{activity.description}</td>
               </tr>
             ))
           ) : (
             <tr className="bg-white dark:bg-gray-800">
-              <td colSpan="3" className="px-6 py-4 text-center">
-                No employees found
+              <td colSpan="4" className="px-6 py-4 text-center">
+                {searchTerm
+                  ? "No matching activities found"
+                  : "No activities available"}
               </td>
             </tr>
           )}
         </tbody>
       </table>
 
-      {/* Pagination */}
-      <nav
-        className="flex items-center dark:bg-gray-700 flex-column flex-wrap md:flex-row justify-between pt-4 p-5"
-        aria-label="Table navigation"
-      >
-        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
-          Showing{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {itemStartIndex}-{itemEndIndex}
-          </span>{" "}
-          of{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {filteredEmployees.length}
+      {totalItems > 0 && (
+        <nav className="flex items-center dark:bg-customDarkGreen flex-column flex-wrap md:flex-row justify-between pt-4 p-5">
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
+            Showing{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {itemStartIndex + 1}-{itemEndIndex}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {totalItems}
+            </span>
           </span>
-        </span>
-        <ul className="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
-          <li>
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
-            >
-              <ChevronLeft />
-            </button>
-          </li>
-          {Array.from({ length: totalPages }, (_, index) => {
-            return (
-              <li key={index}>
-                <button
-                  onClick={() => goToPage(index + 1)}
-                  disabled={currentPage === index + 1}
-                  className={
-                    currentPage === index + 1
-                      ? "flex items-center justify-center px-3 h-8 rounded-md text-blue-700 bg-blue-100  dark:border-gray-700  dark:bg-customGreen dark:text-white"
-                      : "flex items-center justify-center px-3 h-8 leading-tight rounded-md text-gray-500 hover:bg-slate-200  dark:bg-slate-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-500 dark:hover:text-white"
-                  }
-                >
-                  {index + 1}
-                </button>
-              </li>
-            );
-          })}
-          <li>
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
-            >
-              <ChevronRight />
-            </button>
-          </li>
-        </ul>
-      </nav>
+          <ul className="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
+            <li>
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+              >
+                <ChevronLeft />
+              </button>
+            </li>
+            {renderPageNumbers()}
+            <li>
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+              >
+                <ChevronRight />
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
     </div>
   );
 }
