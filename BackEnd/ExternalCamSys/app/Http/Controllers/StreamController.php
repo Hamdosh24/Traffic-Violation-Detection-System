@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers;
+// namespace App\Http\Controllers;
 
-use App\Models\Camera;
-use Illuminate\Http\Request;
-use Symfony\Component\Process\Process;
+// use App\Models\Camera;
+// use Illuminate\Http\Request;
+// use Symfony\Component\Process\Process;
 
-use Symfony\Component\Process\Exception\ProcessFailedException;
+// use Symfony\Component\Process\Exception\ProcessFailedException;
 
-class StreamController extends Controller
-{
+// class StreamController extends Controller
+// {
+    
 //     public function streamById($id)
 //     {
-//         // جلب بيانات الكاميرا من قاعدة البيانات
 //         $camera = Camera::find($id);
 
 //         if (!$camera) {
@@ -20,117 +20,142 @@ class StreamController extends Controller
 //         }
 
 //         $ffmpegPath = 'C:\ffmpeg\bin\ffmpeg.exe';
-//         $streamUrl = $camera->rtsp_url;
-//         if (!$streamUrl) {
+//         $rtspUrl  = $camera->rtsp_url;
+
+//         if (!$rtspUrl) {
 //             return response()->json(['error' => 'RTSP URL not configured'], 400);
 //         }
 
-//         $outputDir = public_path("hls/{$camera->camera_id}");
-//         $outputFile = $outputDir . DIRECTORY_SEPARATOR . 'index.m3u8';
+//         $outputPath = public_path("hls/$id");
 
-//         // تأكد من وجود المجلد
-//         if (!file_exists($outputDir)) {
-//             mkdir($outputDir, 0777, true);
+//         if (!file_exists($outputPath)) {
+//             mkdir($outputPath, 0777, true);
 //         }
 
-//         // $command = "\"$ffmpegPath\" -rtsp_transport tcp -i \"$streamUrl\" -c:v libx264 -f hls -hls_time 2 -hls_list_size 5 -hls_flags delete_segments \"$outputFile\"";
+//         $outputFile = $outputPath . DIRECTORY_SEPARATOR . 'index.m3u8';
 
-//         $command = [
-//             $ffmpegPath,
-//             '-rtsp_transport', 'udp',
-//             '-i', $streamUrl,
-//             '-c:v', 'libx264',
-//             '-f', 'hls',
-//             '-hls_time', '2',
-//             '-hls_list_size', '5',
-//             '-hls_flags', 'delete_segments',
-//             $outputFile,
-//         ];
+//         // أمر تشغيل الملف مع بارامترات
+//         $batFile = base_path('C:/Users/Dell/Documents/GitHub/Traffic-Violation-Detection-System/camera_stream_simulation/stream.bat');
+//         $command = "start /B cmd /C \"$batFile\" \"$rtspUrl\" \"$outputPath\"";
+//         // $logFile = storage_path("logs/ffmpeg_$id.log");
 
-//         // تشغيل عبر cmd.exe لتفادي مشاكل Winsock على ويندوز
-//         // $process = new Process(['cmd', '/C', $command]);
-//         $process = new Process($command);
-//         $process->setTimeout(null); // بدون وقت انتهاء
-//         try {
-//             $process->run();
+//         // // أمر FFmpeg بدون cmd/start
+//         // $command = [
+//         //     $ffmpegPath,
+//         //     '-rtsp_transport', 'tcp',
+//         //     '-i', $streamUrl,
+//         //     '-c:v', 'libx264',
+//         //     '-preset', 'veryfast',
+//         //     '-f', 'hls',
+//         //     '-hls_time', '2',
+//         //     '-hls_list_size', '5',
+//         //     '-hls_flags', 'delete_segments',
+//         //     $outputFile
+//         // ];
 
-//             if (!$process->isSuccessful()) {
-//                 return response()->json([
-//                     'error' => 'فشل تشغيل FFmpeg',
-//                     'output' => $process->getErrorOutput(),
-//                 ], 500);
-//             }
+//         // $process = new Process($command);
+//         // $process->setTimeout(0);
 
-//             return response()->json(['message' => 'تم بدء البث بنجاح']);
+//         // // تشغيل FFmpeg بشكل غير متزامن
+//         // $process->run();
 
-//         } catch (ProcessFailedException $e) {
-//             return response()->json([
-//                 'error' => 'حدث استثناء أثناء تشغيل FFmpeg',
-//                 'details' => $e->getMessage(),
-//             ], 500);
-//         }
+//         // if (!$process->isSuccessful()) {
+//         //     return response()->json([
+//         //         'error' => 'فشل ffmpeg',
+//         //         'command' => implode(' ', $command),
+//         //         'output' => $process->getOutput(),
+//         //         'errorOutput' => $process->getErrorOutput(),
+//         //     ]);
+//         // }
 
+
+//         // // احفظ HLS URL في قاعدة البيانات مباشرة
+//         // $camera->hls_path = asset("hls/$id/index.m3u8");
+//         // $camera->save();
+
+//         return response()->json([
+//             'message' => 'تم بدء البث (قد يستغرق بضع ثوانٍ حتى يظهر)',
+//             'hls_url' => $camera->hls_path,
+//         ]);
 //     }
-// }
-
-    //     $ffmpegCommand = 'C:/ffmpeg/bin/ffmpeg.exe -rtsp_transport tcp -i rtsp://127.0.0.1:8554/mystream -c:v libx264 -f hls -hls_time 2 -hls_list_size 5 -hls_flags delete_segments "C:\Users\Dell\Documents\GitHub\Traffic-Violation-Detection-System\BackEnd\ExternalCamSys\public\hls\1\index.m3u8"';
 
 
-    //     // حفظ رابط HLS في قاعدة البيانات إن رغبت
-    //     $camera->hls_path = asset("hls/{$camera->camera_id}/index.m3u8");
-    //     $camera->save();
+namespace App\Http\Controllers;
 
-    //     return response()->json([
-    //         'camera_id' => $camera->camera_id,
-    //         'hls_url' => $camera->hls_path
-    //     ]);
-    // }
+use App\Models\Camera;
+use Illuminate\Http\Request;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
+class StreamController extends Controller
+{
     public function streamById($id)
     {
-        $camera = Camera::find($id);
-
-        if (!$camera) {
-            return response()->json(['error' => 'Camera not found'], 404);
-        }
-
-        $ffmpegPath = 'C:\ffmpeg\bin\ffmpeg.exe';
-        $streamUrl = $camera->rtsp_url;
-
-        if (!$streamUrl) {
-            return response()->json(['error' => 'RTSP URL not configured'], 400);
-        }
-
-        $outputDir = public_path("hls/{$camera->camera_id}");
-        $outputFile = $outputDir . DIRECTORY_SEPARATOR . 'index.m3u8';
-
-        if (!file_exists($outputDir)) {
-            mkdir($outputDir, 0777, true);
-        }
-
-        $logFile = storage_path("logs/ffmpeg_{$camera->camera_id}.log");
-
-        $command = "start /B \"ffmpeg_stream\" \"$ffmpegPath\" -rtsp_transport tcp -i \"$streamUrl\" -c:v libx264 -f hls -hls_time 2 -hls_list_size 5 -hls_flags delete_segments \"$outputFile\" > \"$logFile\" 2>&1";
-
-        $process = Process::fromShellCommandline($command);
-        $process->disableOutput();
-
         try {
+            $camera = Camera::find($id);
+
+            if (!$camera) {
+                return response()->json(['error' => 'Camera not found'], 404);
+            }
+
+            $rtspUrl  = $camera->rtsp_url;
+            if (!$rtspUrl) {
+                return response()->json(['error' => 'RTSP URL not configured'], 400);
+            }
+
+            $outputPath = public_path("hls/$id");
+            $outputPath = str_replace('/', '\\', $outputPath); // لتحويل كل / إلى \
+
+
+            if (!file_exists($outputPath)) {
+                mkdir($outputPath, 0777, true);
+            }
+
+            // 🧠 تأكد أن المسار لا يحتوي على شرطات مائلة معكوسة فقط
+            // $batFile = base_path('camera_stream_simulation/stream.bat'); // تأكد من المسار النسبي إن أمكن
+            $batFile = 'C:\\Users\\Dell\\Documents\\GitHub\\Traffic-Violation-Detection-System\\camera_stream_simulation\\stream.bat';
+
+            if (!file_exists($batFile)) {
+                return response()->json(['error' => 'Batch file not found', 'path' => $batFile], 500);
+            }
+
+            $cmdExe = 'C:\Windows\System32\cmd.exe';
+
+            $command = [
+                $cmdExe,
+                '/C',
+                $batFile,
+                $rtspUrl,
+                $outputPath
+            ];
+
+            $process = new Process($command);
             $process->run();
 
-            // حفظ رابط HLS في قاعدة البيانات
-            $camera->hls_path = asset("hls/{$camera->camera_id}/index.m3u8");
+            if (!$process->isSuccessful()) {
+                return response()->json([
+                    'error' => 'فشل تنفيذ ملف الباتش',
+                    'command' => implode(' ', $command),
+                    'output' => $process->getOutput(),
+                    'errorOutput' => $process->getErrorOutput(),
+                ]);
+            }
+            // احفظ الرابط المؤقت (رغم أن الملف قد لا يكون جاهز بعد)
+            $camera->hls_path = asset("hls/{$id}/index.m3u8");
             $camera->save();
 
             return response()->json([
-                'message' => 'تم بدء البث بنجاح',
-                'hls_url' => $camera->hls_path
+                'message' => 'تم بدء البث (قد يستغرق بضع ثوانٍ حتى يظهر)',
+                'hls_url' => $camera->hls_path,
+                'command' => $command
             ]);
-
-        } catch (ProcessFailedException $e) {
+        } catch (\Throwable $e) {
             return response()->json([
-                'error' => 'حدث استثناء أثناء تشغيل FFmpeg',
-                'details' => $e->getMessage(),
+                'error' => 'استثناء غير متوقع',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ], 500);
         }
     }

@@ -78,10 +78,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'manager'])->group(function 
 
 // Statistics
 Route::prefix('violations')->middleware(['auth:sanctum', 'employee'])->group(function () {
-    Route::post('hourly', [StatisticsController::class, 'getViolationsByHour']);
-    Route::post('by-region', [StatisticsController::class, 'getViolationsByRegion']);
-    Route::get('filters/by-hour', [FiltersController::class, 'getViolationsByHour']);
-    Route::get('filters/by-region', [FiltersController::class, 'getViolationsByRegion']);
+    Route::post('hourly', [StatisticsController::class, 'getDataByHour']);
+    Route::post('by-region', [StatisticsController::class, 'getDataByRegion']);
+    Route::get('filters/by-hour', [FiltersController::class, 'getDataByHour']);
+    Route::get('filters/by-region', [FiltersController::class, 'getDataByRegion']);
 });
 
 // Activity Log
