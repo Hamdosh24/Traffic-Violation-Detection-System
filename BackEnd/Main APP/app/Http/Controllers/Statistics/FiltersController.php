@@ -9,7 +9,7 @@ use App\Models\ViolationType;
 
 class FiltersController extends Controller
 {
-    public function getViolationsByHour()
+    public function getDataByHour()
     {
         $regions = Camera::select('region')->distinct()->pluck('region');
         $regions->prepend('كل المناطق');
@@ -26,7 +26,7 @@ class FiltersController extends Controller
     }
 
 
-    public function getViolationsByRegion()
+    public function getDataByRegion()
     {
         $violationTypes = ViolationType::select('type_name')->get()->pluck('type_name');
         $violationTypes->prepend('كل المخالفات');

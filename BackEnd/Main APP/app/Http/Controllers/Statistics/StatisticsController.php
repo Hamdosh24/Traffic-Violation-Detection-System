@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Statistics;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Violation;
+use App\Models\Accident;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 
 class StatisticsController extends Controller
 {
-    public function getViolationsByHour(Request $request)
+    public function getDataByHour(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -24,14 +25,27 @@ class StatisticsController extends Controller
                 'to_date'     => 'required|date',
             ]);
 
-            // الاستعلام مع joins
-            $query = Violation::query()
-                ->join('violation_types', 'violations.v_type_id', '=', 'violation_types.v_type_id')
-                ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
-                ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
+            $isAccident = strtolower($validated['type_name']) === 'حوادث';
 
-            if (strtolower($validated['type_name']) !== 'كل المخالفات') {
-                $query->where('violation_types.type_name', $validated['type_name']);
+            // تحديد الجدول الأساسي حسب نوع البيانات
+            $baseModel = $isAccident ? new Accident : new Violation;
+            $tableName = $baseModel->getTable();
+            
+            if (!$isAccident) {
+                $query = $baseModel::query()
+                    ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
+                    ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
+                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
+
+                if (strtolower($validated['type_name']) !== 'كل المخالفات') {
+                    $query->where('violation_types.type_name', $validated['type_name']);
+                }
+            }
+            else 
+            {
+                $query = $baseModel::query()
+                    ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
+                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
             }
 
             if (strtolower($validated['governorate']) !== 'كل المحافظات') {
@@ -44,8 +58,8 @@ class StatisticsController extends Controller
 
             // تجميع البيانات حسب الساعة
             $violations = $query->select(
-                    DB::raw('HOUR(violations.created_at) as hour'),
-                    DB::raw('COUNT(*) as count')
+                    DB::raw("HOUR($tableName.created_at) as hour"),
+                    DB::raw("COUNT(*) as count")
                 )
                 ->groupBy('hour')
                 ->orderBy('hour')
@@ -96,7 +110,7 @@ class StatisticsController extends Controller
     }
 
 
-    public function getViolationsByRegion(Request $request)
+    public function getDataByRegion(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -105,17 +119,28 @@ class StatisticsController extends Controller
                 'to_date'   => 'required|date',
             ]);
 
-            // بناء الاستعلام
-            $query = Violation::query()
-                ->join('violation_types', 'violations.v_type_id', '=', 'violation_types.v_type_id')
-                ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
-                ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
+            $isAccident = strtolower($validated['type_name']) === 'حوادث';
 
-            if (strtolower($validated['type_name']) !== 'كل المخالفات') {
-                $query->where('violation_types.type_name', $validated['type_name']);
+            // تحديد الجدول الأساسي حسب نوع البيانات
+            $baseModel = $isAccident ? new Accident : new Violation;
+            $tableName = $baseModel->getTable();
+            
+            if (!$isAccident) {
+                $query = $baseModel::query()
+                    ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
+                    ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
+                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
+
+                if (strtolower($validated['type_name']) !== 'كل المخالفات') {
+                    $query->where('violation_types.type_name', $validated['type_name']);
+                }
+            } 
+            else
+            {
+                 $query = $baseModel::query()
+                    ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
+                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
             }
-
-            // تحديد عدد المخالفات لكل منطقة
             $violationsByRegion = $query->select(
                     'cameras.region',
                     DB::raw('COUNT(*) as count')
