@@ -29,40 +29,66 @@ export default function TrafficViolationsChart() {
   const [violationData, setViolationData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedType, setSelectedType] = useState("all");
+  const [selectedType, setSelectedType] = useState("");
   const [startDate, setStartDate] = useState(new Date(2025, 0, 1));
   const [endDate, setEndDate] = useState(new Date(2025, 6, 24));
   const [currentPage, setCurrentPage] = useState(0);
+  const [violationTypes, setViolationTypes] = useState([]);
+  const [filtersLoading, setFiltersLoading] = useState(false);
+  const [reportType, setReportType] = useState("مخالفات"); // ['حوادث', 'مخالفات']
   const itemsPerPage = 30;
   const componentRef = useRef();
-
-  const violationTypes = [
-    { value: "all", label: "كل الأنواع" },
-    { value: "speeding", label: "سرعة زائدة" },
-    { value: "red_light", label: "إشارة حمراء" },
-    { value: "seatbelt", label: "عدم ربط حزام الأمان" },
-    { value: "phone", label: "استخدام الهاتف" },
-    { value: "illegal_overtaking", label: "تجاوز غير قانوني" },
-  ];
 
   const formatDate = (date) => {
     return date.toISOString().split("T")[0];
   };
+
+  // جلب أنواع المخالفات عند التحميل
+  useEffect(() => {
+    const fetchViolationTypes = async () => {
+      try {
+        setFiltersLoading(true);
+        const response = await StandardApi.fetchViolationFilters();
+
+        if (response.success) {
+          const typesFromApi = response.data.violation_types || [];
+          setViolationTypes(typesFromApi);
+
+          if (typesFromApi.length > 0) {
+            setSelectedType(typesFromApi[0]);
+          }
+        } else {
+          throw new Error(response.error || "فشل في جلب أنواع المخالفات");
+        }
+      } catch (err) {
+        console.error("خطأ في جلب أنواع المخالفات:", err);
+        setError(err.message);
+      } finally {
+        setFiltersLoading(false);
+      }
+    };
+
+    if (reportType === "مخالفات") {
+      fetchViolationTypes();
+    }
+  }, [reportType]);
 
   const fetchViolationData = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
+      const params = {
+        type_name: reportType === "حوادث" ? "حوادث" : selectedType,
+        from_date: formatDate(startDate),
+        to_date: formatDate(endDate),
+      };
+
       const { success, data, error } =
-        await StandardApi.fetchViolationsByRegion({
-          type_name: selectedType,
-          from_date: formatDate(startDate),
-          to_date: formatDate(endDate),
-        });
+        await StandardApi.fetchViolationsByRegion(params);
 
       if (!success) {
-        throw new Error(error || "فشل في جلب بيانات المخالفات");
+        throw new Error(error || "فشل في جلب البيانات");
       }
 
       setViolationData(Array.isArray(data) ? data : []);
@@ -74,9 +100,11 @@ export default function TrafficViolationsChart() {
     }
   };
 
-  useEffect(() => {
+  const applyFilters = (e) => {
+    if (e) e.preventDefault();
+    setCurrentPage(0);
     fetchViolationData();
-  }, [selectedType, startDate, endDate]);
+  };
 
   const { paginatedData, totalPages, allData } = useMemo(() => {
     const sortedData = [...violationData].sort((a, b) => b.count - a.count);
@@ -97,27 +125,41 @@ export default function TrafficViolationsChart() {
         {
           label: "عدد المخالفات",
           data: paginatedData.map((item) => item.count),
-          backgroundColor: "rgb(13, 158, 109)",
-          borderColor: "rgba(13, 158, 109, 0.7)",
+          backgroundColor:
+            reportType === "حوادث" ? "rgb(220, 53, 69)" : "rgb(13, 158, 109)",
+          borderColor:
+            reportType === "حوادث"
+              ? "rgba(220, 53, 69, 0.7)"
+              : "rgba(13, 158, 109, 0.7)",
           borderWidth: 1,
         },
       ],
     }),
-    [paginatedData]
+    [paginatedData, reportType]
   );
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       title: {
         display: true,
-        text: "توزيع المخالفات المرورية حسب المنطقة",
-        font: { size: 16 },
+        text:
+          reportType === "حوادث"
+            ? "توزيع الحوادث المرورية حسب المنطقة"
+            : "توزيع المخالفات المرورية حسب المنطقة",
+        font: {
+          size: 16,
+          family: "'Tajawal', sans-serif",
+        },
       },
       tooltip: {
         callbacks: {
-          label: (context) => ` ${context.parsed.y} مخالفة`,
+          label: (context) =>
+            ` ${context.parsed.y} ${
+              reportType === "حوادث" ? "حادث" : "مخالفة"
+            }`,
         },
       },
     },
@@ -125,9 +167,12 @@ export default function TrafficViolationsChart() {
       x: {
         ticks: {
           autoSkip: false,
-          maxRotation: 90,
-          minRotation: 90,
-          font: { size: 8 },
+          maxRotation: 45,
+          minRotation: 45,
+          font: {
+            size: window.innerWidth < 768 ? 10 : 12,
+            family: "'Tajawal', sans-serif",
+          },
         },
         grid: { display: false },
       },
@@ -135,13 +180,20 @@ export default function TrafficViolationsChart() {
         beginAtZero: true,
         title: {
           display: true,
-          text: "عدد المخالفات",
-          font: { size: 12 },
+          text: reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات",
+          font: {
+            size: 12,
+            family: "'Tajawal', sans-serif",
+          },
         },
-        ticks: { stepSize: 20 },
+        ticks: {
+          stepSize: 20,
+          font: {
+            family: "'Tajawal', sans-serif",
+          },
+        },
       },
     },
-    maintainAspectRatio: false,
     barPercentage: 0.8,
     categoryPercentage: 0.9,
   };
@@ -151,10 +203,10 @@ export default function TrafficViolationsChart() {
       const ws = utils.json_to_sheet(
         allData.map((item) => ({
           المنطقة: item.region,
-          "عدد المخالفات": item.count,
-          "نوع المخالفة":
-            violationTypes.find((t) => t.value === selectedType)?.label ||
-            "كل الأنواع",
+          [reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات"]:
+            item.count,
+          "نوع التقرير": reportType,
+          "نوع المخالفة": reportType === "حوادث" ? "حوادث" : selectedType,
           "الفترة الزمنية": `من ${startDate.toLocaleDateString(
             "ar-EG"
           )} إلى ${endDate.toLocaleDateString("ar-EG")}`,
@@ -162,10 +214,10 @@ export default function TrafficViolationsChart() {
       );
 
       const wb = utils.book_new();
-      utils.book_append_sheet(wb, ws, "المخالفات");
+      utils.book_append_sheet(wb, ws, "التقرير");
       writeFile(
         wb,
-        `تقرير_المخالفات_${new Date().toISOString().slice(0, 10)}.xlsx`
+        `تقرير_${reportType}_${new Date().toISOString().slice(0, 10)}.xlsx`
       );
     } catch (err) {
       console.error("خطأ في التصدير:", err);
@@ -177,10 +229,25 @@ export default function TrafficViolationsChart() {
     content: () => componentRef.current,
     pageStyle: `
       @page { size: A4 landscape; margin: 10mm; }
-      body { direction: rtl; }
-      .print-header { text-align: center; margin-bottom: 20px; }
-      .print-table { width: 100%; border-collapse: collapse; }
-      .print-table th, .print-table td { border: 1px solid #ddd; padding: 8px; }
+      body {
+        direction: rtl;
+        font-family: 'Tajawal', sans-serif;
+      }
+      .print-header {
+        text-align: center;
+        margin-bottom: 20px;
+        font-family: 'Tajawal', sans-serif;
+      }
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Tajawal', sans-serif;
+      }
+      .print-table th, .print-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        font-family: 'Tajawal', sans-serif;
+      }
     `,
   });
 
@@ -198,7 +265,7 @@ export default function TrafficViolationsChart() {
         <p className="font-bold">خطأ في جلب البيانات:</p>
         <p>{error}</p>
         <button
-          onClick={fetchViolationData}
+          onClick={applyFilters}
           className="mt-2 px-3 py-1 bg-blue-500 text-white rounded"
         >
           إعادة المحاولة
@@ -208,22 +275,41 @@ export default function TrafficViolationsChart() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+    <div className="bg-milkColor dark:bg-customDarkGreen p-4 md:p-6 rounded-lg shadow-md">
       {/* Hidden Print Content */}
       <div className="hidden">
         <div ref={componentRef} className="p-4">
           <h1 className="print-header text-xl font-bold">
-            تقرير المخالفات المرورية
+            {reportType === "حوادث"
+              ? "تقرير الحوادث المرورية"
+              : "تقرير المخالفات المرورية"}
           </h1>
+          <div className="mb-4">
+            <p>
+              <strong>نوع التقرير:</strong> {reportType}
+            </p>
+            {reportType === "مخالفات" && (
+              <p>
+                <strong>نوع المخالفة:</strong> {selectedType}
+              </p>
+            )}
+            <p>
+              <strong>الفترة الزمنية:</strong> من{" "}
+              {startDate.toLocaleDateString("ar-EG")} إلى{" "}
+              {endDate.toLocaleDateString("ar-EG")}
+            </p>
+          </div>
           <table className="print-table">
             <thead>
               <tr>
                 <th>المنطقة</th>
-                <th>عدد المخالفات</th>
+                <th>
+                  {reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات"}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {paginatedData.map((item) => (
+              {allData.map((item) => (
                 <tr key={item.region}>
                   <td>{item.region}</td>
                   <td>{item.count}</td>
@@ -235,47 +321,99 @@ export default function TrafficViolationsChart() {
       </div>
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-          إحصائيات المخالفات المرورية
-        </h2>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-3 md:gap-4">
         <div className="flex gap-2">
           <button
             onClick={exportToExcel}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            disabled={violationData.length === 0 || isLoading}
+            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
           >
-            <span>تصدير Excel</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Excel
           </button>
+
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={violationData.length === 0 || isLoading}
+            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
           >
-            <span>طباعة التقرير</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+              />
+            </svg>
+            طباعة
           </button>
         </div>
+        <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white">
+          {reportType === "حوادث"
+            ? "إحصائيات الحوادث المرورية"
+            : "إحصائيات المخالفات المرورية"}
+        </h2>
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div>
-          <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+        <div className="flex flex-col items-end">
+          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            نوع التقرير
+          </label>
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+          >
+            <option value="حوادث">حوادث</option>
+            <option value="مخالفات">مخالفات</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col items-end col-span-1 sm:col-span-2 lg:col-span-1">
+          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             نوع المخالفة
           </label>
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600"
+            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+            disabled={
+              filtersLoading ||
+              violationTypes.length === 0 ||
+              reportType === "حوادث"
+            }
           >
-            {violationTypes.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
+            {violationTypes.map((type, index) => (
+              <option key={index} value={type}>
+                {type}
               </option>
             ))}
           </select>
         </div>
 
-        <div>
-          <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="flex flex-col items-end">
+          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             من تاريخ
           </label>
           <DatePicker
@@ -284,12 +422,12 @@ export default function TrafficViolationsChart() {
             selectsStart
             startDate={startDate}
             endDate={endDate}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600"
+            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
           />
         </div>
 
-        <div>
-          <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="flex flex-col items-end">
+          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             إلى تاريخ
           </label>
           <DatePicker
@@ -299,35 +437,49 @@ export default function TrafficViolationsChart() {
             startDate={startDate}
             endDate={endDate}
             minDate={startDate}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600"
+            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
           />
+        </div>
+
+        <div className="flex items-end col-span-1 sm:col-span-2 lg:col-span-1">
+          <button
+            onClick={applyFilters}
+            className="w-full px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-sm md:text-base"
+            disabled={
+              filtersLoading || (reportType === "مخالفات" && !selectedType)
+            }
+          >
+            {filtersLoading ? "جاري التحميل..." : "تطبيق الفلاتر"}
+          </button>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
-        <div className="h-80">
-          <Bar data={chartData} options={chartOptions} />
+      {violationData.length > 0 && (
+        <div className="bg-white dark:bg-customDarkGreenbg p-3 md:p-4 rounded-lg mb-4 md:mb-6">
+          <div className="h-64 md:h-80 w-full">
+            <Bar data={chartData} options={chartOptions} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-between items-center mt-4">
-          <span className="text-sm text-gray-600 dark:text-gray-300">
+      {violationData.length > 0 && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+          <span className="text-xs md:text-sm text-gray-600 dark:text-gray-300">
             الصفحة {currentPage + 1} من {totalPages}
           </span>
           <div className="flex gap-1">
             <button
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))}
               disabled={currentPage === 0}
-              className="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded disabled:opacity-50"
+              className="px-2 py-1 md:px-3 md:py-1 bg-gray-200 dark:bg-gray-600 rounded disabled:opacity-50 text-xs md:text-sm"
             >
               السابق
             </button>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const page =
-                currentPage < 3
+                currentPage < 2
                   ? i
                   : currentPage > totalPages - 3
                   ? totalPages - 5 + i
@@ -336,7 +488,7 @@ export default function TrafficViolationsChart() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-1 rounded ${
+                  className={`px-2 py-1 md:px-3 md:py-1 rounded text-xs md:text-sm ${
                     currentPage === page
                       ? "bg-blue-500 text-white"
                       : "bg-gray-200 dark:bg-gray-600"
@@ -351,7 +503,7 @@ export default function TrafficViolationsChart() {
                 setCurrentPage((p) => Math.min(p + 1, totalPages - 1))
               }
               disabled={currentPage === totalPages - 1}
-              className="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded disabled:opacity-50"
+              className="px-2 py-1 md:px-3 md:py-1 bg-gray-200 dark:bg-gray-600 rounded disabled:opacity-50 text-xs md:text-sm"
             >
               التالي
             </button>

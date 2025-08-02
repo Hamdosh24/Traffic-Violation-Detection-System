@@ -160,7 +160,7 @@ export default function Sidebar({ role, showSidebar }) {
                 )}
               </button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="py-2 pl-5 dark:bg-customDarkGreen bg-white rounded-md text-sm dark:text-slate-500">
+            <CollapsibleContent className="py-2 pl-5 mt-2 dark:bg-customDarkGreen bg-white rounded-md text-sm dark:text-slate-500">
               {statisticsLinks.map((item, i) => (
                 <Link
                   key={i}
