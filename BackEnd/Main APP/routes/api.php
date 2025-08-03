@@ -4,10 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 // It seems you'll need these controllers from the 'main' branch
-use App\Http\Controllers\Api\StatisticsController;
-use App\Http\Controllers\Api\FiltersController;
-use App\Http\Controllers\Api\ActivityLogController;
-use App\Http\Controllers\Api\CameraController;
+use App\Http\Controllers\Statistics\StatisticsController;
+use App\Http\Controllers\Statistics\FiltersController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Api\CameraReceiverController;
 use App\Http\Controllers\Api\AiController;
 
@@ -42,9 +42,8 @@ Route::prefix('violations')->middleware(['auth:sanctum', 'employee'])->group(fun
 
 // Activity Log
 Route::middleware(['auth:sanctum', 'manager'])->group(function () {
-    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
-    Route::get('/activity-logs/search', [ActivityLogController::class, 'search']);
-    Route::get('/activity-logs/filter', [ActivityLogController::class, 'filteredLogs']);
+    Route::get('/activity-logs', [ActivityLogController::class, 'getLogs']);
+    Route::post('/activity-logs', [ActivityLogController::class, 'getLogs']);
 });
 
 // Log out
