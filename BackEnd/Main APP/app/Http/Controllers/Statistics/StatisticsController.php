@@ -30,15 +30,15 @@ class StatisticsController extends Controller
                 ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
                 ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
 
-            if (strtolower($validated['type_name']) !== 'كل المخالفات') {
+            if (strtolower($validated['type_name']) !== 'all') {
                 $query->where('violation_types.type_name', $validated['type_name']);
             }
 
-            if (strtolower($validated['governorate']) !== 'كل المحافظات') {
+            if (strtolower($validated['governorate']) !== 'all') {
                 $query->where('cameras.governorate', $validated['governorate']);
             }
 
-            if (strtolower($validated['region']) !== 'كل المناطق') {
+            if (strtolower($validated['region']) !== 'all') {
                 $query->where('cameras.region', $validated['region']);
             }
 
@@ -111,7 +111,7 @@ class StatisticsController extends Controller
                 ->join('cameras', 'violations.camera_id', '=', 'cameras.camera_id')
                 ->whereBetween('violations.created_at', [$validated['from_date'], $validated['to_date']]);
 
-            if (strtolower($validated['type_name']) !== 'كل المخالفات') {
+            if (strtolower($validated['type_name']) !== 'all') {
                 $query->where('violation_types.type_name', $validated['type_name']);
             }
 
@@ -130,14 +130,6 @@ class StatisticsController extends Controller
                 $result[] = [
                     'region' => $item->region,
                     'count'  => $item->count,
-                ];
-            }
-
-            // إذا كانت النتيجة فارغة، ضع القيمة الافتراضية
-            if (empty($result)) {
-                $result[] = [
-                    'region' => 'كل المناطق',
-                    'count'  => 0,
                 ];
             }
 

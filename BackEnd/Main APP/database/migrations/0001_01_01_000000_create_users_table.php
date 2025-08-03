@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            // مخطط ERD يطلب user_id من نوع VARCHAR. سنستخدم UUID وهو النوع الأفضل لمفاتيح نصية فريدة.
             $table->uuid('user_id')->primary();
-
             $table->string('user_name')->unique();
             $table->string('national_num')->unique();
             $table->string('password');

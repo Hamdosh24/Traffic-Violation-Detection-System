@@ -1,0 +1,84 @@
+[2025-07-20 12:10:16] local.INFO: Request received for plate number: 8942841  
+[2025-07-20 12:10:16] local.INFO: Driver found. {"id":7,"first_name":"Zoie","last_name":"Botsford","phone_num":"(830) 836-8712","email":"joesph06@example.com","plate_num":"8942841","created_at":"2025-07-20T11:35:19.000000Z","updated_at":"2025-07-20T11:35:19.000000Z"} 
+[2025-07-20 12:10:26] local.INFO: Request received for plate number: 8942841  
+[2025-07-20 12:10:26] local.INFO: Driver found. {"id":7,"first_name":"Zoie","last_name":"Botsford","phone_num":"(830) 836-8712","email":"joesph06@example.com","plate_num":"8942841","created_at":"2025-07-20T11:35:19.000000Z","updated_at":"2025-07-20T11:35:19.000000Z"} 
+[2025-07-20 12:10:33] local.INFO: Request received for plate number: 8942841  
+[2025-07-20 12:10:33] local.INFO: Driver found. {"id":7,"first_name":"Zoie","last_name":"Botsford","phone_num":"(830) 836-8712","email":"joesph06@example.com","plate_num":"8942841","created_at":"2025-07-20T11:35:19.000000Z","updated_at":"2025-07-20T11:35:19.000000Z"} 
+[2025-07-20 12:10:36] local.INFO: Request received for plate number: 8942841  
+[2025-07-20 12:10:36] local.INFO: Driver found. {"id":7,"first_name":"Zoie","last_name":"Botsford","phone_num":"(830) 836-8712","email":"joesph06@example.com","plate_num":"8942841","created_at":"2025-07-20T11:35:19.000000Z","updated_at":"2025-07-20T11:35:19.000000Z"} 
+[2025-07-20 12:12:27] local.INFO: Request received for plate number: 8942841  
+[2025-07-20 12:12:27] local.INFO: Driver found. {"id":7,"first_name":"Zoie","last_name":"Botsford","phone_num":"(830) 836-8712","email":"joesph06@example.com","plate_num":"8942841","created_at":"2025-07-20T11:35:19.000000Z","updated_at":"2025-07-20T11:35:19.000000Z"} 
+[2025-07-20 12:14:08] local.INFO: Request received for plate number: 89428411  
+[2025-07-20 12:14:08] local.WARNING: Driver NOT found for plate number: 89428411  
+[2025-07-20 12:14:09] local.INFO: Request received for plate number: 89428411  
+[2025-07-20 12:14:09] local.WARNING: Driver NOT found for plate number: 89428411  
+[2025-07-20 12:16:56] local.INFO: Request received for plate number: 89428411  
+[2025-07-20 12:16:56] local.WARNING: Driver NOT found for plate number: 89428411  
+[2025-07-20 12:16:59] local.INFO: Request received for plate number: 8942841  
+[2025-07-20 12:16:59] local.INFO: Driver found. {"id":7,"first_name":"Zoie","last_name":"Botsford","phone_num":"(830) 836-8712","email":"joesph06@example.com","plate_num":"8942841","created_at":"2025-07-20T11:35:19.000000Z","updated_at":"2025-07-20T11:35:19.000000Z"} 
+[2025-07-20 13:03:35] local.INFO: Request received for plate number: 2418379  
+[2025-07-20 13:03:35] local.INFO: Driver found. {"id":6,"first_name":"Elsie","last_name":"Walter","phone_num":"(484) 364-9564","email":"hwaelchi@example.net","plate_num":"2418379","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-20 13:05:02] local.INFO: Request received for plate number: 241837129  
+[2025-07-20 13:05:02] local.WARNING: Driver NOT found for plate number: 241837129  
+[2025-07-20 13:05:49] local.INFO: Request received for plate number: 2418379  
+[2025-07-20 13:05:49] local.INFO: Driver found. {"id":6,"first_name":"Elsie","last_name":"Walter","phone_num":"(484) 364-9564","email":"hwaelchi@example.net","plate_num":"2418379","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-22 18:21:49] local.INFO: Request received for plate number: 7126111  
+[2025-07-22 18:21:49] local.INFO: Driver found. {"id":12,"first_name":"Hermann","last_name":"Tillman","phone_num":"(720) 484-1370","email":"ihirthe@example.com","plate_num":"7126111","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 10:54:36] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 10:54:36] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:18:04] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:18:04] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:18:24] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:18:24] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:18:53] local.INFO: Request received for plate number: 2418379  
+[2025-07-23 11:18:53] local.INFO: Driver found. {"id":6,"first_name":"Elsie","last_name":"Walter","phone_num":"(484) 364-9564","email":"hwaelchi@example.net","plate_num":"2418379","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:19:05] local.INFO: Request received for plate number: 241128379  
+[2025-07-23 11:19:05] local.WARNING: Driver NOT found for plate number: 241128379  
+[2025-07-23 11:19:37] local.INFO: Request received for plate number: 24112128379  
+[2025-07-23 11:19:37] local.WARNING: Driver NOT found for plate number: 24112128379  
+[2025-07-23 11:20:14] local.INFO: Request received for plate number: 31  
+[2025-07-23 11:20:14] local.WARNING: Driver NOT found for plate number: 31  
+[2025-07-23 11:24:29] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:24:29] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:39:42] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:39:42] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:40:33] local.INFO: Request received for plate number: 348213612  
+[2025-07-23 11:40:33] local.WARNING: Driver NOT found for plate number: 348213612  
+[2025-07-23 11:42:12] local.INFO: Request received for plate number: 3483136  
+[2025-07-23 11:42:12] local.WARNING: Driver NOT found for plate number: 3483136  
+[2025-07-23 11:51:58] local.INFO: Request received for plate number: 3483136  
+[2025-07-23 11:51:58] local.WARNING: Driver NOT found for plate number: 3483136  
+[2025-07-23 11:52:07] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:52:07] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:52:45] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:52:46] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:52:48] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:52:48] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:52:54] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:52:54] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:53:26] local.INFO: Request received for plate number: 1  
+[2025-07-23 11:53:26] local.WARNING: Driver NOT found for plate number: 1  
+[2025-07-23 11:53:56] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:53:56] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-23 11:54:02] local.INFO: Request received for plate number: 3482136  
+[2025-07-23 11:54:02] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 13:23:31] local.INFO: Request received for plate number: 3482136  
+[2025-07-25 13:23:32] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 13:23:58] local.INFO: Request received for plate number: 3482136  
+[2025-07-25 13:23:58] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 13:23:59] local.INFO: Request received for plate number: 3482136  
+[2025-07-25 13:23:59] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 13:24:06] local.INFO: Request received for plate number: 3482136  
+[2025-07-25 13:24:06] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 13:26:55] local.INFO: Request received for plate number: 8685500  
+[2025-07-25 13:26:55] local.INFO: Driver found. {"id":4,"first_name":"Kobe","last_name":"Lindgren","phone_num":"+1.843.773.9619","email":"berniece35@example.org","plate_num":"8685500","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 13:28:47] local.INFO: Request received for plate number: 8685500  
+[2025-07-25 13:28:47] local.INFO: Driver found. {"id":4,"first_name":"Kobe","last_name":"Lindgren","phone_num":"+1.843.773.9619","email":"berniece35@example.org","plate_num":"8685500","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 14:39:32] local.INFO: Request received for plate number: 8685500  
+[2025-07-25 14:39:32] local.INFO: Driver found. {"id":4,"first_name":"Kobe","last_name":"Lindgren","phone_num":"+1.843.773.9619","email":"berniece35@example.org","plate_num":"8685500","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 14:39:37] local.INFO: Request received for plate number: 8685500  
+[2025-07-25 14:39:37] local.INFO: Driver found. {"id":4,"first_name":"Kobe","last_name":"Lindgren","phone_num":"+1.843.773.9619","email":"berniece35@example.org","plate_num":"8685500","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 14:40:14] local.INFO: Request received for plate number: 8685500  
+[2025-07-25 14:40:14] local.INFO: Driver found. {"id":4,"first_name":"Kobe","last_name":"Lindgren","phone_num":"+1.843.773.9619","email":"berniece35@example.org","plate_num":"8685500","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
+[2025-07-25 14:44:16] local.INFO: Request received for plate number: 3482136  
+[2025-07-25 14:44:16] local.INFO: Driver found. {"id":9,"first_name":"Noelia","last_name":"Kreiger","phone_num":"(681) 553-9650","email":"fsteuber@example.org","plate_num":"3482136","created_at":"2025-07-20T12:30:24.000000Z","updated_at":"2025-07-20T12:30:24.000000Z"} 
