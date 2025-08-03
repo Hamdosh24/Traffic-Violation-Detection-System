@@ -1,10 +1,11 @@
 "use client";
-
+import { StandardApi } from "@/app/api/StandarApi";
 import React, { useState } from "react";
 
 export default function SearchPlate() {
   const [plateNumber, setPlateNumber] = useState("");
-  const [results, setResults] = useState([]);
+  const [driverInfo, setDriverInfo] = useState(null);
+  const [sightings, setSightings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -14,20 +15,21 @@ export default function SearchPlate() {
 
     setLoading(true);
     setError(null);
-    setResults([]); // إفراغ النتائج السابقة قبل البحث الجديد
+    setDriverInfo(null);
+    setSightings([]);
 
     try {
-      // استدعاء API للبحث عن اللوحة
-      const response = await fetch(
-        `https://your-api-endpoint.com/search?plate=${plateNumber}`
+      const response = await StandardApi.get(
+        `/admin/passing-cars/search/${plateNumber}`
       );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      if (!response.success) {
+        throw new Error(response.error || "Failed to fetch data");
       }
 
-      const data = await response.json();
-      setResults(data.cameras || []);
+      const data = response.data;
+      setDriverInfo(data.driver_info);
+      setSightings(data.sightings || []);
     } catch (err) {
       setError("حدث خطأ أثناء جلب البيانات. يرجى المحاولة لاحقًا.");
       console.error("Error fetching data:", err);
@@ -82,26 +84,66 @@ export default function SearchPlate() {
         </div>
       )}
 
+      {driverInfo && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            معلومات السائق
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">الاسم</p>
+              <p className="text-gray-900 dark:text-white">
+                {driverInfo.first_name} {driverInfo.last_name}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                رقم الهاتف
+              </p>
+              <p className="text-gray-900 dark:text-white">
+                {driverInfo.phone_num}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                البريد الإلكتروني
+              </p>
+              <p className="text-gray-900 dark:text-white">
+                {driverInfo.email}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                رقم اللوحة
+              </p>
+              <p className="text-gray-900 dark:text-white">
+                {driverInfo.plate_num}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
-        {results.map((camera, index) => (
+        {sightings.map((sighting) => (
           <div
-            key={index}
+            key={sighting.id}
             className="p-4 bg-white rounded-lg shadow dark:bg-gray-800 flex justify-between items-center hover:translate-y-1 m-4"
           >
             <div className="flex items-center space-x-4 rtl:space-x-reverse">
               <div className="flex-shrink-0">
                 <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900">
                   <span className="font-medium text-blue-800 dark:text-blue-300">
-                    {camera.cameraId.split("-")[1]}
+                    {sighting.camera_id.split("-")[1]}
                   </span>
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                  {camera.location}
+                  {sighting.camera.Street}
                 </p>
                 <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                  {new Date(camera.timestamp).toLocaleString("ar-EG", {
+                  {new Date(sighting.timestamp).toLocaleString("ar-EG", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -111,25 +153,15 @@ export default function SearchPlate() {
                 </p>
               </div>
             </div>
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                camera.direction === "شمال"
-                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                  : camera.direction === "جنوب"
-                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                  : camera.direction === "شرق"
-                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                  : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-              }`}
-            >
-              {camera.direction || "غير معروف"}
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              {sighting.camera_id}
             </span>
           </div>
         ))}
 
-        {results.length === 0 && !loading && (
+        {sightings.length === 0 && !loading && plateNumber && (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            {plateNumber ? "لا توجد نتائج للبحث" : "أدخل رقم لوحة للبحث"}
+            لا توجد نتائج للبحث
           </div>
         )}
       </div>

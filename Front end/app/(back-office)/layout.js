@@ -65,6 +65,7 @@ export default function Layout({ children }) {
 
           {/* صورة الخلفية للثيم الداكن */}
           {theme === "dark" && (
+            // <div className="absolute inset-0 -z-10 bg-maxGreen" />
             <div className="absolute inset-0 -z-10">
               <Image
                 src="/page.jpg"

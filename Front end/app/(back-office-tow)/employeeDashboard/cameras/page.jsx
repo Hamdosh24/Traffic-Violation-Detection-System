@@ -2,29 +2,16 @@
 import Heading from "@/components/backoffice/Heading";
 import CameraCard from "@/components/backoffice/CameraCard";
 import CameraSearch from "@/components/backoffice/CameraSearch";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { StandardApi } from "@/app/api/StandarApi";
+import { useRouter } from "next/navigation";
 
 export default function CamerasPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [cameras, setCameras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const searchRef = useRef();
-
-  const handleSearch = useCallback((term) => {
-    setSearchTerm(term);
-  }, []);
-
-  useEffect(() => {
-    searchRef.current = handleSearch;
-  }, [handleSearch]);
 
   useEffect(() => {
     const fetchCameras = async () => {
@@ -32,16 +19,16 @@ export default function CamerasPage() {
         setLoading(true);
         setError(null);
 
-        const response = await StandardApi.get("/cameras");
+        const response = await StandardApi.fetchAllCameras();
 
         if (!response.success) {
-          throw new Error(response.error || "فشل في جلب بيانات الكاميرات");
+          throw new Error(response.error || "Failed to fetch cameras");
         }
 
-        setCameras(response.data);
+        setCameras(response.data || []);
       } catch (err) {
-        console.error("حدث خطأ أثناء جلب الكاميرات:", err);
-        setError(err.message || "حدث خطأ غير متوقع");
+        console.error("Error fetching cameras:", err);
+        setError(err.message || "An error occurred while loading cameras");
       } finally {
         setLoading(false);
       }
@@ -51,22 +38,30 @@ export default function CamerasPage() {
   }, []);
 
   const displayedCameras = useMemo(() => {
-    return searchTerm
-      ? cameras.filter(
-          (camera) =>
-            camera.camera_id.toString().includes(searchTerm) ||
-            camera.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            camera.governorate.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : cameras;
+    if (!searchTerm) return cameras;
+
+    return cameras.filter((camera) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        camera.camera_id.toString().includes(searchTerm) ||
+        (camera.region && camera.region.toLowerCase().includes(searchLower)) ||
+        (camera.governorate &&
+          camera.governorate.toLowerCase().includes(searchLower)) ||
+        (camera.street && camera.street.toLowerCase().includes(searchLower))
+      );
+    });
   }, [cameras, searchTerm]);
+
+  const handleViewDetails = (cameraId) => {
+    router.push(`/employeeDashboard/cameras/${cameraId}`);
+  };
 
   return (
     <div>
       <Heading title="الكاميرات" />
 
       <div className="max-w-4xl mx-auto pt-8">
-        <CameraSearch onSearch={handleSearch} />
+        <CameraSearch onSearch={setSearchTerm} />
 
         {loading && (
           <div className="text-center py-8">
@@ -84,7 +79,11 @@ export default function CamerasPage() {
         <div className="mt-10">
           {!loading && !error && displayedCameras.length > 0
             ? displayedCameras.map((camera) => (
-                <CameraCard key={camera.camera_id} data={camera} />
+                <CameraCard
+                  key={camera.camera_id}
+                  data={camera}
+                  onViewDetails={() => handleViewDetails(camera.camera_id)}
+                />
               ))
             : !loading &&
               !error && (
