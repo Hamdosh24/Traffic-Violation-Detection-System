@@ -3,19 +3,14 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\ViolationController;
-use App\Http\Controllers\Api\PassingCarController;
-use App\Http\Controllers\Api\AccidentController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Statistics\StatisticsController;
-use App\Http\Controllers\Statistics\FiltersController;
-use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\CameraController;
+// It seems you'll need these controllers from the 'main' branch
+use App\Http\Controllers\Api\StatisticsController;
+use App\Http\Controllers\Api\FiltersController;
+use App\Http\Controllers\Api\ActivityLogController;
+use App\Http\Controllers\Api\CameraController;
 use App\Http\Controllers\Api\CameraReceiverController;
 use App\Http\Controllers\Api\AiController;
-use App\Models\User;
-use App\Models\Violation; // <-- السطر الأول المطلوب إضافته
-use App\Models\ViolationType; // <-- السطر الثاني المطلوب إضافته
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,55 +21,16 @@ use App\Models\ViolationType; // <-- السطر الثاني المطلوب إض
 // Public route for user login
 Route::post('/login', [AuthController::class, 'login']);
 
-// --- مسارات محمية تتطلب Token للوصول ---
-Route::middleware('auth:sanctum')->group(function () {
-
-    // APIs for the AI system to send data
-    Route::post('/violations', [ViolationController::class, 'store']);
-    Route::post('/passing-cars', [PassingCarController::class, 'store']);
-    Route::post('/accidents', [AccidentController::class, 'store']);
-    Route::get('/accidents/new', [AccidentController::class, 'indexNew']);
-    Route::patch('/accidents/{accident}/viewed', [AccidentController::class, 'markAsViewed']);
-
-    // API to get authenticated user info
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
-
+// Protected route to get authenticated user info
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
 });
 
-// --- مسار لاختبار نظام الإشعارات ---
-Route::get('/test-notification', function () {
-    // 1. تأكد من وجود مستخدم واحد على الأقل في قاعدة البيانات
-    if (User::count() === 0) {
-        return "خطأ: لا يوجد مستخدمون في قاعدة البيانات. الرجاء إنشاء مستخدم أولاً.";
-    }
+// Routes from the 'kareem' branch
+Route::prefix('admin')->group(base_path('routes/api/admin.php'));
+Route::prefix('system')->group(base_path('routes/api/system.php'));
 
-    // 2. احصل على أي نوع مخالفة للاختبار (تأكد من وجود أنواع مخالفات)
-    $violationType = ViolationType::where('key', '!=', 'traffic_accident')->first();
-    if (!$violationType) {
-        return "خطأ: لا يوجد أنواع مخالفات عادية. الرجاء ملء جدول violation_types أولاً.";
-    }
-
-    // 3. قم بإنشاء مخالفة جديدة (هذا سيؤدي إلى تفعيل المراقب Observer)
-    Violation::create([
-        'v_type_id' => $violationType->v_type_id,
-        'camera_id' => 'CAM-TEST-01',
-        'plate_num' => 'TEST-123',
-        'timestamp' => now(),
-    ]);
-
-    return "تم إنشاء مخالفة اختبار! تم تفعيل عملية الإشعار. تحقق من بريدك الإلكتروني أو Mailtrap.";
-});
-
-// CRUD System
-Route::prefix('admin')->middleware(['auth:sanctum', 'manager'])->group(function () {
-    Route::get('employees', [EmployeeController::class, 'index']);
-    Route::post('employees', [EmployeeController::class, 'store']);
-    Route::get('employees/{user_id}', [EmployeeController::class, 'show']);
-    Route::put('employees/{user_id}', [EmployeeController::class, 'update']);
-    Route::delete('employees/{user_id}', [EmployeeController::class, 'destroy']);
-});
+// Routes from the 'main' branch
 
 // Statistics
 Route::prefix('violations')->middleware(['auth:sanctum', 'employee'])->group(function () {
