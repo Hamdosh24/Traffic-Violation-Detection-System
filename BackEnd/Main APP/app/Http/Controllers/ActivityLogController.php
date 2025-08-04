@@ -6,32 +6,74 @@ use Illuminate\Http\Request;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class ActivityLogController extends Controller
 {
-
-    // عرض جميع الlogs مع اسم المستخدم.
-
-    public function index(Request $request)
+    public function getLogs(Request $request)
     {
         try {
-            $logs = ActivityLog::with('user')
-                ->orderBy('created_at', 'desc')
+            // أولًا تحقق من المدخلات (validation)
+            $validated = $request->validate([
+                'action'    => 'nullable|string',
+                'username'  => 'nullable|string',
+                'from_time' => 'nullable|date',
+                'to_time'   => 'nullable|date',
+            ]);
+
+            // قراءة القيم بعد التحقق
+            $actionType = $validated['action'] ?? 'all';
+            $username = $validated['username'] ?? 'all';
+            $fromTime = isset($validated['from_time']) ? Carbon::parse($validated['from_time']) : Carbon::now()->subDay();
+            $toTime = isset($validated['to_time']) ? Carbon::parse($validated['to_time']) : Carbon::now();
+
+            // بناء الاستعلام
+            $query = ActivityLog::with('user');
+
+            if ($actionType !== 'all') {
+                $query->where('action_type', $actionType);
+            }
+
+            if ($username !== 'all') {
+                $user = User::where('user_name', $username)->first();
+
+                if (!$user) {
+                    return response()->json([
+                        'error' => "المستخدم $username غير موجود.",
+                    ], 404);
+                }
+
+                $query->where('user_id', $user->user_id);
+            }
+
+            $query->whereBetween('created_at', [$fromTime, $toTime]);
+
+            $logs = $query->orderBy('created_at', 'desc')
                 ->get()
-                ->map(function($log){
+                ->map(function ($log) {
                     return [
-                        'user_name' => $log->user ? $log->user->user_name : null,
-                        'action' => $log->action_type,
+                        'user_name'   => $log->user ? $log->user->user_name : null,
+                        'action'      => $log->action_type,
                         'description' => $log->description,
-                        'model_type' => $log->model_type,
-                        'time' => $log->created_at->toDateTimeString(),
+                        'model_type'  => $log->model_type,
+                        'time'        => $log->created_at->toDateTimeString(),
                     ];
                 });
 
+            // تسجيل العملية في جدول activity_logs
+            $description = sprintf(
+                "Viewed activity logs with filters: action = %s, username = %s, from = %s, to = %s. Returned %d records.",
+                $actionType,
+                $username,
+                $fromTime->toDateTimeString(),
+                $toTime->toDateTimeString(),
+                $logs->count()
+            );
+
             ActivityLog::create([
-                'user_id'     => Auth::user()->id ?? null,
-                'action_type' => 'view',
-                'description' => 'Viewed activity logs.',
+                'user_id'     => Auth::user()->user_id ?? null,
+                'action_type' => 'View Activity Log',
+                'description' => $description,
                 'model_type'  => 'ActivityLog',
                 'model_id'    => null,
                 'ip_address'  => $request->ip(),
@@ -39,99 +81,19 @@ class ActivityLogController extends Controller
             ]);
 
             return response()->json($logs);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'حدث خطأ أثناء جلب السجلات: ' . $e->getMessage()], 500);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // إرجاع أخطاء التحقق بصيغة JSON وكود 422
+            return response()->json([
+                'errors' => $e->errors(),
+            ], 422);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => 'حدث خطأ أثناء جلب السجلات.',
+                'message' => $e->getMessage(), // في بيئة الإنتاج يفضل عدم إرسال رسالة الخطأ التفصيلية
+            ], 500);
         }
     }
 
-
-    //البحث باسم المستخدم.
-    public function search(Request $request)
-    {
-        try {
-            $request->validate([
-                'query' => 'required|string',
-            ]);
-
-            $search = $request->query('query');
-
-            $logs = ActivityLog::whereHas('user', function ($q) use ($search) {
-                    $q->where('user_name', 'like', '%' . $search . '%');
-                })
-                ->with('user')
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function($log){
-                    return [
-                        'user_name' => $log->user ? $log->user->user_name : null,
-                        'action' => $log->action_type,
-                        'description' => $log->description,
-                        'model_type' => $log->model_type,
-                        'time' => $log->created_at->toDateTimeString(),
-                    ];
-                });
-
-            ActivityLog::create([
-                'user_id'     => Auth::user()->id ?? null,
-                'action_type' => 'view',
-                'description' => 'Searched activity logs for user: ' . $search,
-                'model_type'  => 'ActivityLog',
-                'model_id'    => null,
-                'ip_address'  => $request->ip(),
-                'user_agent'  => $request->userAgent(),
-            ]);
-
-            return response()->json($logs);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'حدث خطأ أثناء البحث في السجلات: ' . $e->getMessage()], 500);
-        }
-    }
-
-    // فلترة النشاطات حسب خيارات المستخدم (اسم، اجراء، كلاهما)
-    public function filteredLogs(Request $request)
-    {
-        try {
-            $query = ActivityLog::query()->with('user');
-
-            // فلترة حسب اسم المستخدم
-            if ($request->username && $request->username !== 'all') {
-                $query->whereHas('user', function ($q) use ($request) {
-                    $q->where('name', $request->username);
-                });
-            }
-
-            // فلترة حسب نوع الإجراء
-            if ($request->action && $request->action !== 'all') {
-                $query->where('action_type', $request->action);
-            }
-
-            // تنفيذ الاستعلام
-            $logs = $query->orderBy('created_at', 'desc')->get();
-
-            // تنسيق البيانات للإرجاع
-            $result = $logs->map(function ($log) {
-                return [
-                    'user_name'    => $log->user?->name ?? 'Unknown',
-                    'action'       => $log->action_type,
-                    'description'  => $log->description,
-                    'model_type'   => $log->model_type,
-                    'time'         => $log->created_at->toDateTimeString(),
-                ];
-            });
-
-            ActivityLog::create([
-                'user_id'     => Auth::user()->id ?? null,
-                'action_type' => 'view',
-                'description' => 'Viewed activity logs.',
-                'model_type'  => 'ActivityLog',
-                'model_id'    => null,
-                'ip_address'  => $request->ip(),
-                'user_agent'  => $request->userAgent(),
-            ]);
-
-            return response()->json($result, 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
-        }
-    }
 }

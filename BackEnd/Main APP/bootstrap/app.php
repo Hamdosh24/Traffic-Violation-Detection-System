@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
                 'manager' => \App\Http\Middleware\CheckManagerRole::class,
                 'employee' => \App\Http\Middleware\CheckEmployee::class,
+                'customThrottle' => \App\Http\Middleware\CustomThrottleRequests::class,
 ]);
 
     })

@@ -21,8 +21,8 @@ class EmployeeController extends Controller
 
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
-                'action_type' => 'view_list',
-                'description' => 'عرض قائمة الموظفين',
+                'action_type' => 'عرض قائمة الحسابات',
+                'description' => 'عرض قائمة حسابات المستخدمين',
                 'model_type' => 'User',
                 'model_id' => null,
                 'ip_address' => request()->ip(),
@@ -73,8 +73,8 @@ class EmployeeController extends Controller
 
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
-                'action_type' => 'create',
-                'description' => 'Created employee with ID: ' . $employee->user_id,
+                'action_type' => 'إنشاء حساب',
+                'description' => 'إنشاء حساب مستخدم جديد بمعرف ID: ' . $employee->user_id,
                 'model_type' => 'User',
                 'model_id' => $employee->user_id,
                 'ip_address' => request()->ip(),
@@ -96,8 +96,8 @@ class EmployeeController extends Controller
 
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
-                'action_type' => 'view',
-                'description' => 'عرض تفاصيل موظف برقم: ' . $employee->user_id,
+                'action_type' => 'البحث عن حساب',
+                'description' => 'البحث عن حساب المستخدم ذو المعرف : ' . $employee->user_id,
                 'model_type' => 'User',
                 'model_id' => $employee->user_id,
                 'ip_address' => request()->ip(),
@@ -140,8 +140,8 @@ class EmployeeController extends Controller
 
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
-                'action_type' => 'update',
-                'description' => 'تم تعديل موظف برقم: ' . $employee->user_id,
+                'action_type' => 'تعديل بيانات حساب',
+                'description' => 'تم تعديل حساب المستخدم ذو المعرف: ' . $employee->user_id,
                 'model_type' => 'User',
                 'model_id' => $employee->user_id,
                 'ip_address' => request()->ip(),
@@ -165,8 +165,8 @@ class EmployeeController extends Controller
 
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
-                'action_type' => 'delete',
-                'description' => 'تم حذف موظف برقم: ' . $user_id,
+                'action_type' => 'حذف حساب',
+                'description' => 'تم حذف حساب المستخدم ذو المعرف: ' . $user_id,
                 'model_type' => 'User',
                 'model_id' => $user_id,
                 'ip_address' => request()->ip(),
