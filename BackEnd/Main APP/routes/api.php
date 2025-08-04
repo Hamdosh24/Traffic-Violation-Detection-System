@@ -19,7 +19,9 @@ use App\Http\Controllers\Api\AiController;
 */
 
 // Public route for user login
-Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('customThrottle:5,1');
+
 
 // Protected route to get authenticated user info
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

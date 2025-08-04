@@ -26,8 +26,8 @@ class LogSuccessfulLogin
 
         ActivityLog::create([
             'user_id' => $user->user_id,
-            'action_type' => 'login',
-            'description' => 'User logged in',
+            'action_type' => 'تسجيل دخول',
+            'description' => "المستحدم $user->user_name قام بتسجيل الدخول",
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);

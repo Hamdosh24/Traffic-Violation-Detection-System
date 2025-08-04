@@ -26,8 +26,8 @@ class LogSuccessfulLogout
 
         ActivityLog::create([
             'user_id' => $user->user_id,
-            'action_type' => 'logout',
-            'description' => 'User logged out',
+            'action_type' => 'تسجيل خروج',
+            'description' => "المستحدم $user->user_name قام بتسجيل الخروج",
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
