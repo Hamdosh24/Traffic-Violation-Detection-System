@@ -28,10 +28,14 @@ class FiltersController extends Controller
 
     public function getDataByRegion()
     {
+        $governorates = Camera::select('governorate')->distinct()->pluck('governorate');
+        $governorates->prepend('كل المحافظات');
+
         $violationTypes = ViolationType::select('type_name')->get()->pluck('type_name');
         $violationTypes->prepend('كل المخالفات');
 
         return response()->json([
+            'governorates' => $governorates,
             'violation_types' => $violationTypes,
         ]);
     }
