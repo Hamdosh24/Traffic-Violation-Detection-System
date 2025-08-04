@@ -3,9 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AccidentController;
 use App\Http\Controllers\Api\PassingCarController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Statistics\StatisticsController;
-use App\Http\Controllers\ActivityLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,18 +22,4 @@ Route::middleware(['auth:sanctum', 'employee'])->group(function () {
     Route::get('/passing-cars/search/{plate_num}', [PassingCarController::class, 'searchByPlate']); //
 });
 
-// Employee & Log Management (For Managers Only)
-Route::middleware(['auth:sanctum', 'manager'])->group(function () { //
-    // Employee CRUD
-    Route::apiResource('employees', EmployeeController::class)->parameters(['employees' => 'user_id']); //
 
-    // Activity Logs
-    Route::get('/activity-logs', [ActivityLogController::class, 'index']); //
-    Route::get('/activity-logs/search', [ActivityLogController::class, 'search']); //
-});
-
-// Statistics (For Employees & Managers)
-Route::middleware(['auth:sanctum', 'employee'])->group(function () { //
-    Route::post('/statistics/violations/hourly', [StatisticsController::class, 'getViolationsByHour']); //
-    Route::post('/statistics/violations/by-region', [StatisticsController::class, 'getViolationsByRegion']); //
-});

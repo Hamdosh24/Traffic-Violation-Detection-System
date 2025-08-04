@@ -17,7 +17,24 @@ class EmployeeController extends Controller
     public function index()
     {
         try {
-            $employees = User::with('roles')->get();
+            // $employees = User::with('roles')->get();
+
+            $employees = User::with('roles')->get()->map(function ($user) {
+            $role = $user->roles->first(); // أخذ أول دور فقط
+                return [
+                    'user_id'      => $user->user_id,
+                    'user_name'    => $user->user_name,
+                    'national_num' => $user->national_num,
+                    'first_name'   => $user->first_name,
+                    'last_name'    => $user->last_name,
+                    'phone_num'    => $user->phone_num,
+                    'email'        => $user->email,
+                    'age'          => $user->age,
+                    'gender'       => $user->gender,
+                    'role_id'      => $role ? $role->role_id : null,
+                    'role_name'    => $role ? $role->role_name : null,
+                ];
+            });
 
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
@@ -93,7 +110,21 @@ class EmployeeController extends Controller
     {
         try {
             $employee = User::with('roles')->findOrFail($user_id);
+            $role = $employee->roles->first(); // أخذ أول دور فقط
 
+            $data = [
+                'user_id'      => $employee->user_id,
+                'user_name'    => $employee->user_name,
+                'national_num' => $employee->national_num,
+                'first_name'   => $employee->first_name,
+                'last_name'    => $employee->last_name,
+                'phone_num'    => $employee->phone_num,
+                'email'        => $employee->email,
+                'age'          => $employee->age,
+                'gender'       => $employee->gender,
+                'role_id'      => $role ? $role->role_id : null,
+                'role_name'    => $role ? $role->role_name : null,
+            ];
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
                 'action_type' => 'البحث عن حساب',
@@ -104,7 +135,7 @@ class EmployeeController extends Controller
                 'user_agent' => request()->header('User-Agent'),
             ]);
 
-            return response()->json($employee);
+            return response()->json($data);
         } catch (\Exception $e) {
             return response()->json(['error' => 'حدث خطأ أثناء جلب بيانات الموظف: ' . $e->getMessage()], 500);
         }

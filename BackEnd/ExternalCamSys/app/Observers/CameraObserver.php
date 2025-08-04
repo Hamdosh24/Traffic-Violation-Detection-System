@@ -22,8 +22,9 @@ class CameraObserver
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('CAMERA_RECEIVER_TOKEN'),
-            ])->post(env('CAMERA_RECEIVER_URL'), $data);
+                'X-API-KEY' => config('services.receiver.api_key'), // الأفضل تخزينه في .env
+                // 'Authorization' => 'Bearer ' . env('CAMERA_RECEIVER_TOKEN'),
+            ])->timeout(120)->post(config('services.receiver.url'), $data);
 
             if ($response->failed()) {
                 Log::error('Failed to send camera data', [

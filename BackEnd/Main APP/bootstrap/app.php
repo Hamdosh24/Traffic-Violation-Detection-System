@@ -20,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 'manager' => \App\Http\Middleware\CheckManagerRole::class,
                 'employee' => \App\Http\Middleware\CheckEmployee::class,
                 'customThrottle' => \App\Http\Middleware\CustomThrottleRequests::class,
+                'token.expires' => \App\Http\Middleware\TokenExpiryMiddleware::class,
+                'check.external.api_key' => \App\Http\Middleware\CheckExternalApiKey::class,
 ]);
 
     })
