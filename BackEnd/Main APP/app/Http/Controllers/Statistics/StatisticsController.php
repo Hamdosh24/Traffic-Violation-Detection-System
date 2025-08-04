@@ -115,6 +115,7 @@ class StatisticsController extends Controller
         try {
             $validated = $request->validate([
                 'type_name' => 'required|string',
+                'governorate' => 'required|string',
                 'from_date' => 'required|date',
                 'to_date'   => 'required|date',
             ]);
@@ -141,6 +142,11 @@ class StatisticsController extends Controller
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
                     ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
             }
+
+            if ($validated['governorate'] !== 'كل المحافظات') {
+                $query->where('cameras.governorate', $validated['governorate']);
+            }
+            
             $violationsByRegion = $query->select(
                     'cameras.region',
                     DB::raw('COUNT(*) as count')
