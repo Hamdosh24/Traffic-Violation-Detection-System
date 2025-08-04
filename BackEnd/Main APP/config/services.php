@@ -36,6 +36,11 @@ return [
     ],
 
     'traffic_api' => [
-    'url' => env('TRAFFIC_API_URL'),
-],
+        'url' => env('TRAFFIC_API_URL'),
+    ],
+
+    'external_system' => [
+        'api_key' => env('EXTERNAL_SYSTEM_API_KEY'),
+    ],
+
 ];

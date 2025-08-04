@@ -26,8 +26,14 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
+            $user->tokens()->delete();
             $token = $user->createToken('authToken')->plainTextToken;
+            $accessToken = $user->tokens()->latest()->first();
+            $accessToken->expires_at = now()->addHours(8);
+            $accessToken->save();
             $role = $user->roles()->first()?->role_name ?? 'unknown';
+
+            $user->update(['last_login_at' => now()]);
 
             return response()->json([
                 'role' => $role,

@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'receiver' => [
+        'api_key' => env('RECEIVER_API_KEY'),
+        'url' => env('RECEIVER_API_URL'),
+    ],
+
+
 ];

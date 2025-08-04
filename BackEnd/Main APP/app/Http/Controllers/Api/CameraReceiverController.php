@@ -12,10 +12,6 @@ class CameraReceiverController extends Controller
 {
     public function receive(Request $request)
     {
-        if ($request->bearerToken() !== env('CAMERA_RECEIVER_TOKEN')) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
         // التحقق من البيانات
         $validated = Validator::make($request->all(), [
             'region' => 'nullable|string',

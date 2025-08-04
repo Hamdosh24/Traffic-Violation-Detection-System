@@ -37,6 +37,8 @@ class User extends Authenticatable
      * @var string
      */
     protected $keyType = 'string';
+    protected $dates = ['last_login_at'];
+
 
 
     /**
@@ -54,6 +56,7 @@ class User extends Authenticatable
         'age',
         'gender',
         'password',
+        'last_login_at',
     ];
 
     /**

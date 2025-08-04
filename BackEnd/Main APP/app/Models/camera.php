@@ -24,7 +24,9 @@ class Camera extends Model
         'governorate',
         'street',
         'coordinates',
-        'key',
+        'rtsp_url',
+        'hls_path',
+        'status',
     ];
 
     // علاقة واحد-إلى-عدة مع جدول violations
