@@ -60,20 +60,10 @@ class ActivityLogController extends Controller
                     ];
                 });
 
-            // تسجيل العملية في جدول activity_logs
-            $description = sprintf(
-                "Viewed activity logs with filters: action = %s, username = %s, from = %s, to = %s. Returned %d records.",
-                $actionType,
-                $username,
-                $fromTime->toDateTimeString(),
-                $toTime->toDateTimeString(),
-                $logs->count()
-            );
-
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null,
-                'action_type' => 'View Activity Log',
-                'description' => $description,
+                'action_type' => 'عرض سجل الأنشطة',
+                'description' => "عرض سجل الانشطة حسب الفلاتر: نوع الحدث = {$actionType}, اسم المستخدم = {$username}, من الوقت = {$fromTime}, لإلى الوقت = {$toTime}.",
                 'model_type'  => 'ActivityLog',
                 'model_id'    => null,
                 'ip_address'  => $request->ip(),

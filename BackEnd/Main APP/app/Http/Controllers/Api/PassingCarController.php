@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 use App\Services\TrafficAPIService;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
+
 
 class PassingCarController extends Controller
 {
@@ -47,6 +50,16 @@ class PassingCarController extends Controller
             'driver_info' => $driverInfo,
             'sightings'   => $sightings,
         ];
+
+        ActivityLog::create([
+            'user_id'     => Auth::user()->user_id ?? null,
+            'action_type' => 'بحث عن لوحة',
+            'description' => "تم البحث عن معلومات السائق والمشاهدات للوحة رقم {$plate_num}",
+            'model_type'  => 'PassingCar',
+            'model_id'    => null, // لا يوجد ID محدد في هذه الحالة
+            'ip_address'  => request()->ip(),
+            'user_agent'  => request()->userAgent(),
+        ]);
 
         return response()->json($data);
     }

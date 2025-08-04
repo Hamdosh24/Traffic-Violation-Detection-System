@@ -82,8 +82,8 @@ class StatisticsController extends Controller
 
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
-                'action_type' => 'Statistics Query',
-                'description' => 'Retrieved violations by hour statistics.',
+                'action_type' => 'عرض الإحصاءات',
+                'description' => "عرض إحصاءات {$validated['type_name']} حسب ساعات اليوم في {$validated['region']},{$validated['governorate']} من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
                 'model_type'  => 'Violation',
                 'model_id'    => null, // لا يرتبط بسجل محدد هنا
                 'ip_address'  => $request->ip(),
@@ -168,8 +168,8 @@ class StatisticsController extends Controller
 
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
-                'action_type' => 'Statistics Query',
-                'description' => 'Retrieved violations by region statistics.',
+                'action_type' => 'عرض الإحصاءات',
+                'description' => "عرض إحصاءات {$validated['type_name']} حسب توزعها في المناطق من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
                 'model_type'  => 'Violation',
                 'model_id'    => null, // لا يرتبط بسجل محدد هنا
                 'ip_address'  => $request->ip(),
