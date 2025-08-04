@@ -16,8 +16,8 @@ class CameraController extends Controller
         try {
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null,
-                'action_type' => 'Cameras Query',
-                'description' => 'Retrieved information about all cameras.',
+                'action_type' => 'عرض كل الكاميرات',
+                'description' => 'عرض قائمة كل الكاميرات في النظام',
                 'model_type'  => 'Camera',
                 'model_id'    => null,
                 'ip_address'  => $request->ip(),
@@ -46,8 +46,8 @@ class CameraController extends Controller
 
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null,
-                'action_type' => 'Cameras Query',
-                'description' => 'Retrieved information about specific camera.',
+                'action_type' => 'عرض كاميرا',
+                'description' => "عرض معلومات الكاميرا ذات المعرف {$id}",
                 'model_type'  => 'Camera',
                 'model_id'    => $camera->camera_id,
                 'ip_address'  => $request->ip(),

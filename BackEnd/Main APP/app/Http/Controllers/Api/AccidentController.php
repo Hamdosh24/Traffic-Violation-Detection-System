@@ -60,39 +60,39 @@ class AccidentController extends Controller
      * Stream new accidents in real-time using Server-Sent Events.
      */
     public function streamNewAccidents(): StreamedResponse
-{
-    $response = new StreamedResponse(function() {
-        // --- ADD THIS LINE ---
-        // Disable the PHP time limit for this long-running script
-        set_time_limit(0);
+    {
+        $response = new StreamedResponse(function() {
+            // --- ADD THIS LINE ---
+            // Disable the PHP time limit for this long-running script
+            set_time_limit(0);
 
-        $listener = function ($event) {
-            $accidentData = $event->accident->load('camera');
+            $listener = function ($event) {
+                $accidentData = $event->accident->load('camera');
 
-            echo "event: new-accident\n";
-            echo 'data: ' . json_encode($accidentData) . "\n\n";
+                echo "event: new-accident\n";
+                echo 'data: ' . json_encode($accidentData) . "\n\n";
 
-            ob_flush();
-            flush();
-        };
+                ob_flush();
+                flush();
+            };
 
-        Event::listen(
-            \App\Events\NewAccidentDetected::class,
-            $listener
-        );
+            Event::listen(
+                \App\Events\NewAccidentDetected::class,
+                $listener
+            );
 
-        while (true) {
-            echo ": ping\n\n";
-            ob_flush();
-            flush();
-            sleep(15);
-        }
-    });
+            while (true) {
+                echo ": ping\n\n";
+                ob_flush();
+                flush();
+                sleep(15);
+            }
+        });
 
-    $response->headers->set('Content-Type', 'text/event-stream');
-    $response->headers->set('X-Accel-Buffering', 'no');
-    $response->headers->set('Cache-Control', 'no-cache');
-    
-    return $response;
-}
+        $response->headers->set('Content-Type', 'text/event-stream');
+        $response->headers->set('X-Accel-Buffering', 'no');
+        $response->headers->set('Cache-Control', 'no-cache');
+        
+        return $response;
+    }
 }
