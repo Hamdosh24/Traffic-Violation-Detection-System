@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Driver;
-// You no longer need to import Faker here
 
 class DriverSeeder extends Seeder
 {
@@ -13,7 +12,25 @@ class DriverSeeder extends Seeder
      */
     public function run(): void
     {
-        // This single line uses the factory to create 10 drivers.
+        // --- ✨ بداية الإضافة الجديدة: إنشاء سائق ثابت للـتجربة ✨ ---
+        
+        Driver::firstOrCreate(
+            // الشرط: ابحث عن سائق بهذا الرقم لمنع تكراره
+            ['phone_num' => '+963933359912'],
+            
+            // البيانات: إذا لم تجده، قم بإنشائه بهذه البيانات
+            [
+                'first_name' => 'كريم',
+                'last_name'  => 'قلاش',
+                'email'      => 'kareem.kallash@test.com', // بريد إلكتروني فريد للتجربة
+                'plate_num'  => '9999999' // رقم لوحة فريد للتجربة
+            ]
+        );
+
+        // --- 🔚 نهاية الإضافة الجديدة 🔚 ---
+
+
+        // هذا السطر الأصلي يبقى كما هو لإنشاء باقي السائقين العشوائيين
         Driver::factory()->count(20)->create();
     }
 }

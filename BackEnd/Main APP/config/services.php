@@ -42,5 +42,9 @@ return [
     'external_system' => [
         'api_key' => env('EXTERNAL_SYSTEM_API_KEY'),
     ],
+    'telegram' => [
+    'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+    'chat_id' => env('TELEGRAM_CHAT_ID'),
+    ],
 
 ];
