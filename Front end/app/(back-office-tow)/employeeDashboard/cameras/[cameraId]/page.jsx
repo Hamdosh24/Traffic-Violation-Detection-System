@@ -17,26 +17,30 @@ export default function CameraDetailsPage({ params }) {
         setError(null);
 
         const response = await StandardApi.fetchCameraById(cameraId);
+        console.log("API Response:", response);
 
         if (!response.success) {
-          throw new Error(response.error || "Failed to fetch camera details");
+          throw new Error(response.error);
+        }
+
+        // تحقق من وجود البيانات الأساسية
+        if (!response.data || !response.data.camera_id) {
+          throw new Error("بيانات الكاميرا غير مكتملة");
         }
 
         setCamera(response.data);
       } catch (err) {
         console.error("Error fetching camera details:", err);
 
-        let errorMessage = "حدث خطأ أثناء جلب بيانات الكاميرا";
+        let errorMessage = err.message || "حدث خطأ أثناء جلب بيانات الكاميرا";
 
-        if (err.message.includes("401")) {
-          errorMessage = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
-        } else if (
-          err.message.includes("404") ||
-          err.message.includes("not found")
-        ) {
+        // معالجة أخطاء محددة
+        if (err.message.includes("انتهت صلاحية الجلسة")) {
+          errorMessage = err.message;
+          // يمكنك إضافة إعادة توجيه لتسجيل الدخول هنا إذا لزم الأمر
+          // router.push("/login");
+        } else if (err.message.includes("غير موجودة")) {
           errorMessage = "الكاميرا غير موجودة في النظام";
-        } else if (err.message.includes("JSON")) {
-          errorMessage = "استجابة غير متوقعة من الخادم";
         }
 
         setError(errorMessage);
@@ -93,11 +97,11 @@ export default function CameraDetailsPage({ params }) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <button
           onClick={() => router.push("/employeeDashboard/cameras")}
-          className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+          className="flex items-center justify-center text-blue-600 hover:text-blue-800 transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 ml-2"
+            className="h-5 w-5 mx-2"
             viewBox="0 0 20 20"
             fill="currentColor"
           >

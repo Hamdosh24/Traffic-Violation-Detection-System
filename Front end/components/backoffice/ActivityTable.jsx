@@ -57,6 +57,8 @@ export default function ActivityTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dateFilter, setDateFilter] = useState({ startDate: "", endDate: "" });
+  const [isFiltering, setIsFiltering] = useState(false);
   const itemsPerPage = 6;
 
   const fetchActivities = useCallback(async () => {
@@ -77,33 +79,73 @@ export default function ActivityTable() {
         setError(apiError || "Failed to fetch activities");
       }
     } catch (err) {
-      const errorMessage =
-        err?.message || err?.toString() || "An unexpected error occurred";
-      setError(errorMessage);
+      setError(err.message || "An unexpected error occurred");
       console.error("Error fetching activities:", err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  const fetchFilteredActivities = useCallback(async () => {
+    if (!dateFilter.startDate || !dateFilter.endDate) return;
+
+    setIsLoading(true);
+    setIsFiltering(true);
+    setError("");
+
+    try {
+      const {
+        success,
+        data,
+        error: apiError,
+      } = await StandardApi.get("/activity-logs/filter", {
+        params: {
+          startDate: dateFilter.startDate,
+          endDate: dateFilter.endDate,
+        },
+      });
+
+      if (success) {
+        setFilteredActivities(data);
+        setCurrentPage(1);
+      } else {
+        setError(apiError || "Failed to fetch filtered activities");
+      }
+    } catch (err) {
+      setError(err.message || "An unexpected error occurred");
+      console.error("Error fetching filtered activities:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dateFilter]);
+
   useEffect(() => {
     if (searchTerm.trim() === "") {
-      setFilteredActivities(activities);
+      setFilteredActivities(isFiltering ? filteredActivities : activities);
       setCurrentPage(1);
       return;
     }
 
-    const filtered = activities.filter((activity) => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        activity.user_name?.toLowerCase().includes(searchLower) ||
-        activity.action?.toLowerCase().includes(searchLower)
-      );
-    });
+    const filtered = (isFiltering ? filteredActivities : activities).filter(
+      (activity) => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          activity.user_name?.toLowerCase().includes(searchLower) ||
+          activity.action?.toLowerCase().includes(searchLower)
+        );
+      }
+    );
 
     setFilteredActivities(filtered);
     setCurrentPage(1);
-  }, [searchTerm, activities]);
+  }, [searchTerm, activities, isFiltering, filteredActivities]);
+
+  const resetFilter = () => {
+    setDateFilter({ startDate: "", endDate: "" });
+    setIsFiltering(false);
+    setFilteredActivities(activities);
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     fetchActivities();
@@ -231,8 +273,8 @@ export default function ActivityTable() {
 
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
-      <div className="p-4 bg-white dark:bg-customDarkGreenbg flex justify-start items-center">
-        <div className="relative w-80">
+      <div className="p-4 bg-white dark:bg-customDarkGreenbg flex flex-col md:flex-row justify-start items-start md:items-center gap-4">
+        <div className="relative w-full md:w-80">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <svg
               className="w-5 h-5 text-gray-500 dark:text-gray-400"
@@ -253,6 +295,54 @@ export default function ActivityTable() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+        {/* حقل التاريخ  */}
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 mx-3">
+            <input
+              type="date"
+              value={dateFilter.endDate}
+              onChange={(e) =>
+                setDateFilter({ ...dateFilter, endDate: e.target.value })
+              }
+              className="border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              min={dateFilter.startDate}
+            />
+            <label className="text-sm text-gray-600 dark:text-gray-300">
+              :إلى
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2 mx-3">
+            <input
+              type="date"
+              value={dateFilter.startDate}
+              onChange={(e) =>
+                setDateFilter({ ...dateFilter, startDate: e.target.value })
+              }
+              className="border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            <label className="text-sm text-gray-600 dark:text-gray-300">
+              :من
+            </label>
+          </div>
+
+          <button
+            onClick={fetchFilteredActivities}
+            disabled={!dateFilter.startDate || !dateFilter.endDate}
+            className="bg-blue-600 text-white mx-2 px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          >
+            تطبيق الفلتر
+          </button>
+
+          {isFiltering && (
+            <button
+              onClick={resetFilter}
+              className="text-gray-700 bg-gray-200 px-4 py-2 mx-2 rounded hover:bg-gray-300 text-sm dark:bg-gray-600 dark:text-white"
+            >
+              إعادة تعيين
+            </button>
+          )}
         </div>
       </div>
 

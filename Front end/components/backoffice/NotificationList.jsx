@@ -32,9 +32,9 @@ const NotificationList = ({ notifications, loading, onMarkAsRead }) => {
             onClick={() =>
               !notification.isRead && onMarkAsRead(notification.id)
             }
-            className="block" // تأكد من أن الرابط يأخذ المساحة كاملة
-            scroll={false} // تحسين الأداء عند التنقل
-            prefetch={false} // يمكن تفعيله إذا كنت تريد prefetch
+            className="block"
+            scroll={false}
+            prefetch={false}
           >
             <NotificationCard notification={notification} />
           </Link>

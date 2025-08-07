@@ -1,6 +1,104 @@
 export class StandardApi {
   static BASE_URL = "http://127.0.0.1:8000/api";
 
+  static async searchVehicleSightings(plateNumber) {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      const response = await fetch(
+        `${this.BASE_URL}/admin/passing-cars/search/${encodeURIComponent(
+          plateNumber
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (response.status === 404) {
+        return {
+          success: false,
+          error: "لم يتم العثور على أي مشاهدات لهذه المركبة",
+        };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || "فشل في جلب بيانات المركبة",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (err) {
+      console.error("API Error [searchVehicleSightings]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء البحث عن المركبة",
+      };
+    }
+  }
+
+  static async fetchFilteredActivities(startDate, endDate) {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Authentication token not found");
+
+      const response = await fetch(`${this.BASE_URL}/activity-logs/filter`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          start_date: startDate,
+          end_date: endDate,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `Request failed with status ${response.status}`
+        );
+      }
+
+      return {
+        success: true,
+        data: data.data || data,
+      };
+    } catch (err) {
+      console.error("API Error [fetchFilteredActivities]:", err);
+      return {
+        success: false,
+        error:
+          err.message || "An error occurred while fetching filtered activities",
+      };
+    }
+  }
+
   static async fetchAllCameras() {
     try {
       const token = localStorage.getItem("token");
@@ -49,9 +147,14 @@ export class StandardApi {
   static async fetchCameraById(cameraId) {
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("Authentication token not found");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
 
-      const response = await fetch(`${this.BASE_URL}/cameras/${cameraId}`, {
+      const response = await fetch(`${this.BASE_URL}/camera/${cameraId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -59,38 +162,38 @@ export class StandardApi {
         },
       });
 
-      const contentType = response.headers.get("content-type");
-      const isJson = contentType && contentType.includes("application/json");
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
 
       if (response.status === 404) {
-        throw new Error("Camera not found");
+        return {
+          success: false,
+          error: "الكاميرا غير موجودة في النظام",
+        };
       }
 
       if (!response.ok) {
-        const errorData = isJson
-          ? await response.json()
-          : await response.text();
-        throw new Error(
-          `Request failed with status ${response.status}: ${JSON.stringify(
-            errorData
-          )}`
-        );
-      }
-
-      if (!isJson) {
-        throw new Error(`Expected JSON response, got: ${contentType}`);
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || "فشل جلب بيانات الكاميرا",
+        };
       }
 
       const data = await response.json();
       return {
         success: true,
-        data: data.data || data,
+        data: data.data || data, // تأكد من بنية الاستجابة
       };
     } catch (err) {
       console.error("API Error [fetchCameraById]:", err);
       return {
         success: false,
-        error: err.message || "An error occurred while fetching camera details",
+        error: err.message || "حدث خطأ أثناء جلب بيانات الكاميرا",
       };
     }
   }
