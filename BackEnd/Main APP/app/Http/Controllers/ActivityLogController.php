@@ -22,19 +22,19 @@ class ActivityLogController extends Controller
             ]);
 
             // قراءة القيم بعد التحقق
-            $actionType = $validated['action'] ?? 'all';
-            $username = $validated['username'] ?? 'all';
+            $actionType = $validated['action'] ?? 'جميع الاحداث';
+            $username = $validated['username'] ?? 'كل المستخدمين';
             $fromTime = isset($validated['from_time']) ? Carbon::parse($validated['from_time']) : Carbon::now()->subDay();
             $toTime = isset($validated['to_time']) ? Carbon::parse($validated['to_time']) : Carbon::now();
 
             // بناء الاستعلام
             $query = ActivityLog::with('user');
 
-            if ($actionType !== 'all') {
+            if ($actionType !== 'جميع الاحداث') {
                 $query->where('action_type', $actionType);
             }
 
-            if ($username !== 'all') {
+            if ($username !== 'كل المستخدمين') {
                 $user = User::where('user_name', $username)->first();
 
                 if (!$user) {
