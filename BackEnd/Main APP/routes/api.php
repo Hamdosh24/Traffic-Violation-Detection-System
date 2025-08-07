@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Api\CameraReceiverController;
 use App\Http\Controllers\Api\AiController;
+// --- إضافة جديدة ---
+use App\Http\Controllers\Api\WebhookController; // استدعاء الـ Controller الجديد
 
 
 /*
@@ -68,3 +70,11 @@ Route::post('/ex_cameras', [CameraReceiverController::class, 'receive'])->middle
 
 // cameras for AI
 Route::get('/AI/cameras', [AiController::class, 'index'])->middleware('check.external.api_key');
+
+
+// Routes for receiving notifications from external systems.
+
+Route::prefix('webhook')->group(function () {
+    // يستقبل تحديثات أسعار المخالفات من نظام المرور الخارجي
+    Route::post('/fine-updated', [WebhookController::class, 'handleFineUpdate']);
+});
