@@ -10,15 +10,8 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Api\CameraReceiverController;
 use App\Http\Controllers\Api\AiController;
-// --- إضافة جديدة ---
-use App\Http\Controllers\Api\WebhookController; // استدعاء الـ Controller الجديد
+use App\Http\Controllers\Api\WebhookController;
 
-
-/*
-|--------------------------------------------------------------------------
-| Main API Routes
-|--------------------------------------------------------------------------
-*/
 
 // Public route for user login
 Route::post('/login', [AuthController::class, 'login'])->middleware('customThrottle:5,1');
@@ -73,7 +66,6 @@ Route::get('/AI/cameras', [AiController::class, 'index'])->middleware('check.ext
 
 
 // Routes for receiving notifications from external systems.
-
 Route::prefix('webhook')->group(function () {
     // يستقبل تحديثات أسعار المخالفات من نظام المرور الخارجي
     Route::post('/fine-updated', [WebhookController::class, 'handleFineUpdate']);
