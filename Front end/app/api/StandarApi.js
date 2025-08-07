@@ -1,5 +1,113 @@
 export class StandardApi {
-  static BASE_URL = "http://127.0.0.1:8000/api";
+  static BASE_URL = "http://localhost:8000/api";
+
+  static async fetchAllActivities() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      const response = await fetch(`${this.BASE_URL}/activity-logs`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error:", errorText);
+        return {
+          success: false,
+          error: "فشل في جلب سجل الأنشطة",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      return {
+        success: false,
+        error: "حدث خطأ في الاتصال بالخادم",
+      };
+    }
+  }
+
+  static async filterActivities(filterParams) {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      // تحويل الإجراء إلى التنسيق المطلوب من API
+      const formattedAction = `o1.taa "${filterParams.action}"`;
+
+      const requestBody = {
+        action: formattedAction,
+        username: filterParams.username,
+        from_time: filterParams.from_time,
+        to_time: filterParams.to_time,
+      };
+
+      const response = await fetch(`${this.BASE_URL}/activity-logs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error:", errorText);
+        return {
+          success: false,
+          error: "فشل في تصفية الأنشطة",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (err) {
+      console.error("API Error [filterActivities]:", err);
+      return {
+        success: false,
+        error: "حدث خطأ أثناء تصفية الأنشطة",
+      };
+    }
+  }
 
   static async searchVehicleSightings(plateNumber) {
     try {
@@ -56,45 +164,6 @@ export class StandardApi {
       return {
         success: false,
         error: err.message || "حدث خطأ أثناء البحث عن المركبة",
-      };
-    }
-  }
-
-  static async fetchFilteredActivities(startDate, endDate) {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Authentication token not found");
-
-      const response = await fetch(`${this.BASE_URL}/activity-logs/filter`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          start_date: startDate,
-          end_date: endDate,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || `Request failed with status ${response.status}`
-        );
-      }
-
-      return {
-        success: true,
-        data: data.data || data,
-      };
-    } catch (err) {
-      console.error("API Error [fetchFilteredActivities]:", err);
-      return {
-        success: false,
-        error:
-          err.message || "An error occurred while fetching filtered activities",
       };
     }
   }
@@ -197,6 +266,7 @@ export class StandardApi {
       };
     }
   }
+
   static async fetchViolationFilters() {
     try {
       const token = localStorage.getItem("token");
@@ -293,10 +363,79 @@ export class StandardApi {
     }
   }
 
-  static async fetchViolationsByRegion(params) {
+  static async fetchViolationFiltersByRegion() {
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("Authentication token not found");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      const response = await fetch(
+        `${this.BASE_URL}/violations/filters/by-region`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      // التحقق من نوع المحتوى
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Expected JSON response, got:", contentType, text);
+        return {
+          success: false,
+          error: "تنسيق الاستجابة غير متوقع من الخادم",
+        };
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.message || "فشل في جلب فلاتر المخالفات حسب المنطقة",
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          governorates: data.governorates || [],
+          violation_types: data.violation_types || [],
+        },
+      };
+    } catch (err) {
+      console.error("API Error [fetchViolationFiltersByRegion]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء جلب فلاتر المخالفات حسب المنطقة",
+      };
+    }
+  }
+
+  static async fetchViolationsByRegionWithDetails(params) {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
 
       const response = await fetch(`${this.BASE_URL}/violations/by-region`, {
         method: "POST",
@@ -307,36 +446,43 @@ export class StandardApi {
         body: JSON.stringify(params),
       });
 
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
       // التحقق من نوع المحتوى
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text();
-        throw new Error(
-          `Expected JSON response, got: ${contentType}. Response: ${text.substring(
-            0,
-            100
-          )}...`
-        );
+        console.error("Expected JSON response, got:", contentType, text);
+        return {
+          success: false,
+          error: "تنسيق الاستجابة غير متوقع من الخادم",
+        };
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || `Request failed with status ${response.status}`
-        );
+        return {
+          success: false,
+          error: data.message || "فشل في جلب بيانات المخالفات حسب المنطقة",
+        };
       }
 
       return {
         success: true,
-        data: data.data || data, // دعم لكلا الهيكليتين
+        data: data.data || data,
       };
     } catch (err) {
-      console.error("API Error [fetchViolationsByRegion]:", err);
+      console.error("API Error [fetchViolationsByRegionWithDetails]:", err);
       return {
         success: false,
-        error:
-          err.message || "An error occurred while fetching violations data",
+        error: err.message || "حدث خطأ أثناء جلب بيانات المخالفات حسب المنطقة",
       };
     }
   }

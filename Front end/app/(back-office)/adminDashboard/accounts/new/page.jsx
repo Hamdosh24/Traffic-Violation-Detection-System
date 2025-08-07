@@ -6,7 +6,7 @@ import NewAccount from "@/components/FormInputs/NewAccount";
 export default function page() {
   return (
     <div className="p-4">
-      <Heading title="انشاء حساب جديد" />
+      <Heading title="انشاء حساب جديد للموظف" />
       <NewAccount isEditMode={false} />
     </div>
   );

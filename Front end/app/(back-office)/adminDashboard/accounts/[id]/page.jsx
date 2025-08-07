@@ -92,7 +92,7 @@ export default function AccountDetail({ params }) {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4" dir="rtl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           تفاصيل الموظف: {employee.user_name}
@@ -100,7 +100,7 @@ export default function AccountDetail({ params }) {
         <div className="space-x-2">
           <Link
             href={`/adminDashboard/accounts/${id}/edit`}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-3"
           >
             تعديل
           </Link>
@@ -163,7 +163,7 @@ export default function AccountDetail({ params }) {
           className="text-customGreen hover:underline flex items-center"
         >
           <svg
-            className="w-4 h-4 mr-1"
+            className="w-4 h-4 ml-1"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
