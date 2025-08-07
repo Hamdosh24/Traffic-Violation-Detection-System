@@ -30,12 +30,14 @@ export default function TrafficViolationsChart() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedType, setSelectedType] = useState("");
+  const [selectedGovernorate, setSelectedGovernorate] = useState("");
   const [startDate, setStartDate] = useState(new Date(2025, 0, 1));
   const [endDate, setEndDate] = useState(new Date(2025, 6, 24));
   const [currentPage, setCurrentPage] = useState(0);
   const [violationTypes, setViolationTypes] = useState([]);
+  const [governorates, setGovernorates] = useState([]);
   const [filtersLoading, setFiltersLoading] = useState(false);
-  const [reportType, setReportType] = useState("مخالفات"); // ['حوادث', 'مخالفات']
+  const [reportType, setReportType] = useState("مخالفات");
   const itemsPerPage = 30;
   const componentRef = useRef();
 
@@ -43,25 +45,31 @@ export default function TrafficViolationsChart() {
     return date.toISOString().split("T")[0];
   };
 
-  // جلب أنواع المخالفات عند التحميل
+  // جلب الفلاتر (أنواع المخالفات والمحافظات) عند التحميل
   useEffect(() => {
-    const fetchViolationTypes = async () => {
+    const fetchFilters = async () => {
       try {
         setFiltersLoading(true);
-        const response = await StandardApi.fetchViolationFilters();
+        const response = await StandardApi.fetchViolationFiltersByRegion();
 
         if (response.success) {
           const typesFromApi = response.data.violation_types || [];
+          const govsFromApi = response.data.governorates || [];
+
           setViolationTypes(typesFromApi);
+          setGovernorates(govsFromApi);
 
           if (typesFromApi.length > 0) {
             setSelectedType(typesFromApi[0]);
           }
+          if (govsFromApi.length > 0) {
+            setSelectedGovernorate(govsFromApi[0]);
+          }
         } else {
-          throw new Error(response.error || "فشل في جلب أنواع المخالفات");
+          throw new Error(response.error || "فشل في جلب الفلاتر");
         }
       } catch (err) {
-        console.error("خطأ في جلب أنواع المخالفات:", err);
+        console.error("خطأ في جلب الفلاتر:", err);
         setError(err.message);
       } finally {
         setFiltersLoading(false);
@@ -69,7 +77,11 @@ export default function TrafficViolationsChart() {
     };
 
     if (reportType === "مخالفات") {
-      fetchViolationTypes();
+      fetchFilters();
+    } else {
+      // Reset filters when switching to accidents
+      setSelectedGovernorate("");
+      setSelectedType("");
     }
   }, [reportType]);
 
@@ -80,12 +92,13 @@ export default function TrafficViolationsChart() {
     try {
       const params = {
         type_name: reportType === "حوادث" ? "حوادث" : selectedType,
+        governorate: selectedGovernorate,
         from_date: formatDate(startDate),
         to_date: formatDate(endDate),
       };
 
       const { success, data, error } =
-        await StandardApi.fetchViolationsByRegion(params);
+        await StandardApi.fetchViolationsByRegionWithDetails(params);
 
       if (!success) {
         throw new Error(error || "فشل في جلب البيانات");
@@ -123,7 +136,7 @@ export default function TrafficViolationsChart() {
       labels: paginatedData.map((item) => item.region),
       datasets: [
         {
-          label: "عدد المخالفات",
+          label: reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات",
           data: paginatedData.map((item) => item.count),
           backgroundColor:
             reportType === "حوادث" ? "rgb(220, 53, 69)" : "rgb(13, 158, 109)",
@@ -207,6 +220,7 @@ export default function TrafficViolationsChart() {
             item.count,
           "نوع التقرير": reportType,
           "نوع المخالفة": reportType === "حوادث" ? "حوادث" : selectedType,
+          المحافظة: selectedGovernorate || "الكل",
           "الفترة الزمنية": `من ${startDate.toLocaleDateString(
             "ar-EG"
           )} إلى ${endDate.toLocaleDateString("ar-EG")}`,
@@ -289,9 +303,14 @@ export default function TrafficViolationsChart() {
               <strong>نوع التقرير:</strong> {reportType}
             </p>
             {reportType === "مخالفات" && (
-              <p>
-                <strong>نوع المخالفة:</strong> {selectedType}
-              </p>
+              <>
+                <p>
+                  <strong>نوع المخالفة:</strong> {selectedType}
+                </p>
+                <p>
+                  <strong>المحافظة:</strong> {selectedGovernorate || "الكل"}
+                </p>
+              </>
             )}
             <p>
               <strong>الفترة الزمنية:</strong> من{" "}
@@ -375,7 +394,8 @@ export default function TrafficViolationsChart() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+        {/* فلتر حوادث او مخالفات  */}
         <div className="flex flex-col items-end">
           <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             نوع التقرير
@@ -389,56 +409,76 @@ export default function TrafficViolationsChart() {
             <option value="مخالفات">مخالفات</option>
           </select>
         </div>
+        {/* فلتر حوادث او مخالفات  */}
+        {reportType === "مخالفات" && (
+          <>
+            <div className="flex flex-col items-end">
+              <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                نوع المخالفة
+              </label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+                disabled={filtersLoading || violationTypes.length === 0}
+              >
+                {violationTypes.map((type, index) => (
+                  <option key={index} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="flex flex-col items-end col-span-1 sm:col-span-2 lg:col-span-1">
-          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            نوع المخالفة
-          </label>
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-            disabled={
-              filtersLoading ||
-              violationTypes.length === 0 ||
-              reportType === "حوادث"
-            }
-          >
-            {violationTypes.map((type, index) => (
-              <option key={index} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="flex flex-col items-end">
+              <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                المحافظة
+              </label>
+              <select
+                value={selectedGovernorate}
+                onChange={(e) => setSelectedGovernorate(e.target.value)}
+                className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+                disabled={filtersLoading || governorates.length === 0}
+              >
+                {governorates.map((gov, index) => (
+                  <option key={index} value={gov}>
+                    {gov}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
 
-        <div className="flex flex-col items-end">
-          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            من تاريخ
-          </label>
-          <DatePicker
-            selected={startDate}
-            onChange={setStartDate}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-          />
-        </div>
+        <div className="flex flex-row justify-center items-center ml-5">
+          <div className="flex flex-col items-end mx-2">
+            <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              من تاريخ
+            </label>
+            <DatePicker
+              selected={startDate}
+              onChange={setStartDate}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+            />
+          </div>
 
-        <div className="flex flex-col items-end">
-          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            إلى تاريخ
-          </label>
-          <DatePicker
-            selected={endDate}
-            onChange={setEndDate}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            minDate={startDate}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-          />
+          <div className="flex flex-col items-end">
+            <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              إلى تاريخ
+            </label>
+            <DatePicker
+              selected={endDate}
+              onChange={setEndDate}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+            />
+          </div>
         </div>
 
         <div className="flex items-end col-span-1 sm:col-span-2 lg:col-span-1">
@@ -446,7 +486,9 @@ export default function TrafficViolationsChart() {
             onClick={applyFilters}
             className="w-full px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-sm md:text-base"
             disabled={
-              filtersLoading || (reportType === "مخالفات" && !selectedType)
+              filtersLoading ||
+              (reportType === "مخالفات" &&
+                (!selectedType || !selectedGovernorate))
             }
           >
             {filtersLoading ? "جاري التحميل..." : "تطبيق الفلاتر"}

@@ -30,24 +30,53 @@ const ChevronRight = () => (
   </svg>
 );
 
+const ACTION_TYPES = [
+  "عرض قائمة الحسابات",
+  "انشاء حساب",
+  "البحث عن حساب",
+  "تعديل بيانات حساب",
+  "حذف حساب",
+  "تسجيل دخول",
+  "تسجيل خروج",
+  "عرض الاحصاءات",
+  "عرض سجل الانشطة",
+  "عرض كل الكاميرات",
+  "عرض كاميرا",
+  "بحث عن لوحة",
+];
+
 const getActionColor = (action) => {
-  const actionType = action.toLowerCase();
+  // استخراج الجزء العربي من الإجراء إذا كان بالصيغة "o1.taa "النص""
+  const displayAction = action.includes('"') ? action.split('"')[1] : action;
+
   const colorMap = {
-    login: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    view: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    create: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    update:
+    "عرض قائمة الحسابات":
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    "انشاء حساب":
+      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    "البحث عن حساب":
+      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+    "تعديل بيانات حساب":
       "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    delete: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    "حذف حساب": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    "تسجيل دخول":
+      "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    "تسجيل خروج":
+      "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    "عرض الاحصاءات":
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    "عرض سجل الانشطة":
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    "عرض كل الكاميرات":
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    "عرض كاميرا":
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    "بحث عن لوحة":
+      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
     default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
   };
 
-  if (actionType.includes("login")) return colorMap.login;
-  if (actionType.includes("view")) return colorMap.view;
-  if (actionType.includes("create")) return colorMap.create;
-  if (actionType.includes("update")) return colorMap.update;
-  if (actionType.includes("delete")) return colorMap.delete;
-  return colorMap.default;
+  return colorMap[displayAction] || colorMap["default"];
 };
 
 export default function ActivityTable() {
@@ -58,28 +87,30 @@ export default function ActivityTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [dateFilter, setDateFilter] = useState({ startDate: "", endDate: "" });
+  const [selectedAction, setSelectedAction] = useState("");
   const [isFiltering, setIsFiltering] = useState(false);
   const itemsPerPage = 6;
 
   const fetchActivities = useCallback(async () => {
     setIsLoading(true);
     setError("");
+    setIsFiltering(false);
 
     try {
       const {
         success,
         data,
         error: apiError,
-      } = await StandardApi.get("/activity-logs");
+      } = await StandardApi.fetchAllActivities();
 
       if (success) {
         setActivities(data);
         setFilteredActivities(data);
       } else {
-        setError(apiError || "Failed to fetch activities");
+        setError(apiError || "فشل في جلب سجل الأنشطة");
       }
     } catch (err) {
-      setError(err.message || "An unexpected error occurred");
+      setError(err.message || "حدث خطأ أثناء جلب سجل الأنشطة");
       console.error("Error fetching activities:", err);
     } finally {
       setIsLoading(false);
@@ -87,69 +118,69 @@ export default function ActivityTable() {
   }, []);
 
   const fetchFilteredActivities = useCallback(async () => {
-    if (!dateFilter.startDate || !dateFilter.endDate) return;
-
     setIsLoading(true);
-    setIsFiltering(true);
     setError("");
 
     try {
+      const filterParams = {
+        username: searchTerm || null, // إرسال null بدلاً من سلسلة فارغة
+        action: selectedAction !== "جميع الاحداث" ? selectedAction : null,
+        from_time: dateFilter.startDate
+          ? `${dateFilter.startDate} 00:00:00`
+          : null,
+        to_time: dateFilter.endDate ? `${dateFilter.endDate} 23:59:59` : null,
+      };
+
+      console.log("Sending filter params:", filterParams); // أضف هذا للسجل
+
       const {
         success,
         data,
         error: apiError,
-      } = await StandardApi.get("/activity-logs/filter", {
-        params: {
-          startDate: dateFilter.startDate,
-          endDate: dateFilter.endDate,
-        },
-      });
+      } = await StandardApi.filterActivities(filterParams);
+
+      console.log("Received response:", { success, data, apiError }); // أضف هذا للسجل
 
       if (success) {
         setFilteredActivities(data);
+        setIsFiltering(true);
         setCurrentPage(1);
       } else {
-        setError(apiError || "Failed to fetch filtered activities");
+        setError(apiError || "فشل في تصفية الأنشطة");
       }
     } catch (err) {
-      setError(err.message || "An unexpected error occurred");
-      console.error("Error fetching filtered activities:", err);
+      console.error("Filter error details:", err); // سجل تفاصيل الخطأ
+      setError(err.message || "حدث خطأ أثناء تصفية الأنشطة");
     } finally {
       setIsLoading(false);
     }
-  }, [dateFilter]);
-
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredActivities(isFiltering ? filteredActivities : activities);
-      setCurrentPage(1);
-      return;
-    }
-
-    const filtered = (isFiltering ? filteredActivities : activities).filter(
-      (activity) => {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          activity.user_name?.toLowerCase().includes(searchLower) ||
-          activity.action?.toLowerCase().includes(searchLower)
-        );
-      }
-    );
-
-    setFilteredActivities(filtered);
-    setCurrentPage(1);
-  }, [searchTerm, activities, isFiltering, filteredActivities]);
-
-  const resetFilter = () => {
-    setDateFilter({ startDate: "", endDate: "" });
-    setIsFiltering(false);
-    setFilteredActivities(activities);
-    setCurrentPage(1);
-  };
+  }, [searchTerm, selectedAction, dateFilter]);
 
   useEffect(() => {
     fetchActivities();
   }, [fetchActivities]);
+
+  const resetFilter = () => {
+    setSearchTerm("");
+    setSelectedAction("");
+    setDateFilter({ startDate: "", endDate: "" });
+    setIsFiltering(false);
+    setCurrentPage(1);
+    fetchActivities();
+  };
+
+  const applyFilter = () => {
+    if (
+      searchTerm ||
+      selectedAction ||
+      dateFilter.startDate ||
+      dateFilter.endDate
+    ) {
+      fetchFilteredActivities();
+    } else {
+      resetFilter();
+    }
+  };
 
   const totalItems = filteredActivities.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -169,7 +200,8 @@ export default function ActivityTable() {
     const pages = [];
     const maxVisiblePages = 5;
 
-    // Always show first page
+    if (totalPages <= 1) return null;
+
     pages.push(
       <li key={1}>
         <button
@@ -185,7 +217,6 @@ export default function ActivityTable() {
       </li>
     );
 
-    // Show ellipsis if needed after first page
     if (currentPage > 3 && totalPages > maxVisiblePages) {
       pages.push(
         <li key="ellipsis-start" className="flex items-center px-2">
@@ -194,18 +225,15 @@ export default function ActivityTable() {
       );
     }
 
-    // Calculate range of pages to show around current page
     let startPage = Math.max(2, currentPage - 1);
     let endPage = Math.min(totalPages - 1, currentPage + 1);
 
-    // Adjust if we're near the start or end
     if (currentPage <= 3) {
       endPage = Math.min(4, totalPages - 1);
     } else if (currentPage >= totalPages - 2) {
       startPage = Math.max(totalPages - 3, 2);
     }
 
-    // Add page numbers in range
     for (let i = startPage; i <= endPage; i++) {
       if (i > 1 && i < totalPages) {
         pages.push(
@@ -225,7 +253,6 @@ export default function ActivityTable() {
       }
     }
 
-    // Show ellipsis before last page if needed
     if (currentPage < totalPages - 2 && totalPages > maxVisiblePages) {
       pages.push(
         <li key="ellipsis-end" className="flex items-center px-2">
@@ -234,7 +261,6 @@ export default function ActivityTable() {
       );
     }
 
-    // Show last page if there is more than one page
     if (totalPages > 1) {
       pages.push(
         <li key={totalPages}>
@@ -272,10 +298,13 @@ export default function ActivityTable() {
   }
 
   return (
-    <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
-      <div className="p-4 bg-white dark:bg-customDarkGreenbg flex flex-col md:flex-row justify-start items-start md:items-center gap-4">
+    <div
+      className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4"
+      dir="rtl"
+    >
+      <div className="p-4 bg-white dark:bg-customDarkGreenbg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="relative w-full md:w-80">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg
               className="w-5 h-5 text-gray-500 dark:text-gray-400"
               fill="currentColor"
@@ -290,15 +319,54 @@ export default function ActivityTable() {
           </div>
           <input
             type="text"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 pl-10 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-            placeholder="Search by user name or action..."
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 pr-10 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+            placeholder="كل المستخدمين"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        {/* حقل التاريخ  */}
+
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 mx-3">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-300">
+              نوع الحدث:
+            </label>
+            <select
+              value={selectedAction}
+              onChange={(e) => setSelectedAction(e.target.value)}
+              className="border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] w-full max-w-xs"
+            >
+              <option value="جميع الاحداث">كل الأحداث</option>
+              {ACTION_TYPES.map((action) => (
+                <option
+                  key={action}
+                  value={action}
+                  className="whitespace-normal"
+                >
+                  {action}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-300">
+              من:
+            </label>
+            <input
+              type="date"
+              value={dateFilter.startDate}
+              onChange={(e) =>
+                setDateFilter({ ...dateFilter, startDate: e.target.value })
+              }
+              className="border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-300">
+              إلى:
+            </label>
             <input
               type="date"
               value={dateFilter.endDate}
@@ -308,37 +376,23 @@ export default function ActivityTable() {
               className="border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               min={dateFilter.startDate}
             />
-            <label className="text-sm text-gray-600 dark:text-gray-300">
-              :إلى
-            </label>
-          </div>
-
-          <div className="flex items-center gap-2 mx-3">
-            <input
-              type="date"
-              value={dateFilter.startDate}
-              onChange={(e) =>
-                setDateFilter({ ...dateFilter, startDate: e.target.value })
-              }
-              className="border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            <label className="text-sm text-gray-600 dark:text-gray-300">
-              :من
-            </label>
           </div>
 
           <button
-            onClick={fetchFilteredActivities}
-            disabled={!dateFilter.startDate || !dateFilter.endDate}
-            className="bg-blue-600 text-white mx-2 px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            onClick={applyFilter}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
           >
             تطبيق الفلتر
           </button>
 
-          {isFiltering && (
+          {(isFiltering ||
+            searchTerm ||
+            selectedAction ||
+            dateFilter.startDate ||
+            dateFilter.endDate) && (
             <button
               onClick={resetFilter}
-              className="text-gray-700 bg-gray-200 px-4 py-2 mx-2 rounded hover:bg-gray-300 text-sm dark:bg-gray-600 dark:text-white"
+              className="text-gray-700 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 text-sm dark:bg-gray-600 dark:text-white"
             >
               إعادة تعيين
             </button>
@@ -346,70 +400,86 @@ export default function ActivityTable() {
         </div>
       </div>
 
-      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead className="text-xs uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-400">
-          <tr>
-            <th className="px-6 py-3">User</th>
-            <th className="px-6 py-3">Time</th>
-            <th className="px-6 py-3">Action</th>
-            <th className="px-6 py-3">Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentPageData.length > 0 ? (
-            currentPageData.map((activity, index) => (
-              <tr
-                key={index}
-                className="bg-white border-b dark:bg-customDarkGreenbg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-              >
-                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                  {activity.user_name}
-                </td>
-                <td className="px-6 py-4">{activity.time}</td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(
-                      activity.action
-                    )}`}
-                  >
-                    {activity.action}
-                  </span>
-                </td>
-                <td className="px-6 py-4">{activity.description}</td>
-              </tr>
-            ))
-          ) : (
-            <tr className="bg-white dark:bg-gray-800">
-              <td colSpan="4" className="px-6 py-4 text-center">
-                {searchTerm
-                  ? "No matching activities found"
-                  : "No activities available"}
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+          <thead className="text-xs uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-400">
+            <tr>
+              <th scope="col" className="px-6 py-3">
+                المستخدم
+              </th>
+              <th scope="col" className="px-6 py-3">
+                الوقت
+              </th>
+              <th scope="col" className="px-6 py-3">
+                الحدث
+              </th>
+              <th scope="col" className="px-6 py-3">
+                الوصف
+              </th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {currentPageData.length > 0 ? (
+              currentPageData.map((activity, index) => (
+                <tr
+                  key={index}
+                  className="bg-white border-b dark:bg-customDarkGreenbg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                >
+                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                    {activity.user_name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {activity.time}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(
+                        activity.action
+                      )}`}
+                    >
+                      {activity.action.includes('"')
+                        ? activity.action.split('"')[1]
+                        : activity.action}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 max-w-xs truncate">
+                    {activity.description}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr className="bg-white dark:bg-gray-800">
+                <td colSpan="4" className="px-6 py-4 text-center">
+                  {isFiltering
+                    ? "لا توجد نتائج مطابقة للفلتر"
+                    : "لا توجد أنشطة متاحة"}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {totalItems > 0 && (
         <nav className="flex items-center dark:bg-customDarkGreen flex-column flex-wrap md:flex-row justify-between pt-4 p-5">
           <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
-            Showing{" "}
+            عرض{" "}
             <span className="font-semibold text-gray-900 dark:text-white">
               {itemStartIndex + 1}-{itemEndIndex}
             </span>{" "}
-            of{" "}
+            من{" "}
             <span className="font-semibold text-gray-900 dark:text-white">
               {totalItems}
             </span>
           </span>
-          <ul className="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
+          <ul className="inline-flex -space-x-px text-sm h-8">
             <li>
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
               >
-                <ChevronLeft />
+                <ChevronRight />
               </button>
             </li>
             {renderPageNumbers()}
@@ -419,7 +489,7 @@ export default function ActivityTable() {
                 disabled={currentPage === totalPages}
                 className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
               >
-                <ChevronRight />
+                <ChevronLeft />
               </button>
             </li>
           </ul>

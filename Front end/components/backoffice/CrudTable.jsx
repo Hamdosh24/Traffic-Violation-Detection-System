@@ -135,7 +135,10 @@ export default function CrudTable() {
     );
   }
   return (
-    <div className="relative overflow-x-auto shadow-md sm:rounded-lg w-full">
+    <div
+      className="relative overflow-x-auto shadow-md sm:rounded-lg w-full"
+      dir="rtl"
+    >
       {/* Search and Add New Button */}
       <div className="p-4 bg-white dark:bg-customDarkGreenbg flex justify-between items-center">
         <div className="relative w-80">
@@ -273,7 +276,7 @@ export default function CrudTable() {
       >
         <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
           عرض{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
+          <span className="font-semibold text-gray-900 dark:text-white mx-1">
             {itemStartIndex}-{itemEndIndex}
           </span>{" "}
           من{" "}
@@ -288,7 +291,7 @@ export default function CrudTable() {
               disabled={currentPage === 1}
               className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" />
             </button>
           </li>
           {Array.from({ length: totalPages }, (_, index) => (
@@ -311,7 +314,7 @@ export default function CrudTable() {
               disabled={currentPage === totalPages}
               className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
           </li>
         </ul>

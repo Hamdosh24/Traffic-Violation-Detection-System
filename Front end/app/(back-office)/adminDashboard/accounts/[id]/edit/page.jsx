@@ -48,7 +48,7 @@ export default function EditEmployeePage({ params }) {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-end mb-6 text-right" dir="rtl">
         <Heading
           title={`تعديل معلومات الموظف: ${employee.first_name} ${employee.last_name}`}
         />

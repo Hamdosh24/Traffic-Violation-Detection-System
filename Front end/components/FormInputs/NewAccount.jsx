@@ -8,7 +8,6 @@ export default function NewEmployee() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // صلاحية الموظف ثابتة
   const employeeRole = {
     role_id: 2,
     role_name: "موظف",
@@ -45,7 +44,6 @@ export default function NewEmployee() {
     setIsSubmitting(true);
 
     try {
-      // التحقق من صحة البيانات
       if (
         !formData.user_name ||
         !formData.national_num ||
@@ -59,7 +57,6 @@ export default function NewEmployee() {
         throw new Error("الرجاء تعبئة جميع الحقول المطلوبة");
       }
 
-      // إرسال البيانات مع التوكن في الرأس
       const response = await StandardApi.post(
         "/admin/employees",
         {
@@ -83,7 +80,6 @@ export default function NewEmployee() {
     } catch (error) {
       console.error("Error creating employee:", error);
 
-      // معالجة أنواع الأخطاء المختلفة
       if (error.response?.status === 401) {
         toast.error("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى");
         router.push("/");
@@ -97,11 +93,7 @@ export default function NewEmployee() {
     }
   };
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-right">
-        إضافة موظف جديد
-      </h1>
-
+    <div className="p-6 max-w-4xl mx-auto" dir="rtl">
       <form
         onSubmit={handleSubmit}
         className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"
@@ -275,18 +267,18 @@ export default function NewEmployee() {
 
         <div className="flex justify-end space-x-4 mt-6">
           <button
-            type="button"
-            onClick={() => router.push("/adminDashboard/accounts")}
-            className="text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
-          >
-            إلغاء
-          </button>
-          <button
             type="submit"
             disabled={isSubmitting}
-            className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm ml-3 px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "جاري إنشاء الموظف..." : "إنشاء موظف جديد"}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/adminDashboard/accounts")}
+            className="text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 font-medium rounded-lg text-sm  px-5 py-2.5 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+          >
+            إلغاء
           </button>
         </div>
       </form>
