@@ -104,7 +104,6 @@ class EmployeeController extends Controller
         }
     }
 
-
     //  عرض موظف محدد بالتفصيل
     public function show($user_id)
     {
