@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Accident;
+use App\Http\Resources\AccidentResource; // <-- تأكد من استيراد الـ Resource
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
@@ -29,31 +30,36 @@ class AccidentController extends Controller
         
         $accident = Accident::create($validator->validated());
 
-        return response()->json($accident->load('camera'), 201);
+        return response()->json([
+            'message' => 'Accident recorded successfully.',
+            'id' => $accident->id
+        ], 201);
     }
 
     /**
-     * Display a listing of new accidents.
-     * This is called by the frontend on page load.
+     * Display a listing of new accidents for the frontend.
      */
-    public function indexNew(): JsonResponse
+    public function indexNew()
     {
         $newAccidents = Accident::with('camera')
             ->where('status', 'new')
             ->latest()
             ->get();
 
-        return response()->json($newAccidents);
+        // Use the Resource to format the response correctly
+        return AccidentResource::collection($newAccidents);
     }
     
     /**
      * Update the specified accident's status to 'viewed'.
      */
-    public function markAsViewed(Accident $accident): JsonResponse
+    public function markAsViewed(Accident $accident): AccidentResource
     {
         $accident->status = 'viewed';
         $accident->save();
-        return response()->json($accident->load('camera'));
+        
+        // Use the Resource here as well for a consistent response
+        return new AccidentResource($accident->load('camera'));
     }
 
     /**
@@ -62,26 +68,22 @@ class AccidentController extends Controller
     public function streamNewAccidents(): StreamedResponse
     {
         $response = new StreamedResponse(function() {
-            // --- ADD THIS LINE ---
-            // Disable the PHP time limit for this long-running script
             set_time_limit(0);
 
             $listener = function ($event) {
-                $accidentData = $event->accident->load('camera');
+                // Use the resource to format the data before sending
+                $accidentResource = new AccidentResource($event->accident->load('camera'));
 
                 echo "event: new-accident\n";
-                echo 'data: ' . json_encode($accidentData) . "\n\n";
+                echo 'data: ' . $accidentResource->toJson() . "\n\n";
 
                 ob_flush();
                 flush();
             };
 
-            Event::listen(
-                \App\Events\NewAccidentDetected::class,
-                $listener
-            );
+            Event::listen(\App\Events\NewAccidentDetected::class, $listener);
 
-            while (true) {
+            while (connection_status() === CONNECTION_NORMAL && !connection_aborted()) {
                 echo ": ping\n\n";
                 ob_flush();
                 flush();
