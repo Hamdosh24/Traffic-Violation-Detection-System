@@ -35,7 +35,7 @@ class StatisticsController extends Controller
                 $query = $baseModel::query()
                     ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
 
                 if (strtolower($validated['type_name']) !== 'كل المخالفات') {
                     $query->where('violation_types.type_name', $validated['type_name']);
@@ -45,7 +45,7 @@ class StatisticsController extends Controller
             {
                 $query = $baseModel::query()
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
             }
 
             if (strtolower($validated['governorate']) !== 'كل المحافظات') {
@@ -58,7 +58,7 @@ class StatisticsController extends Controller
 
             // تجميع البيانات حسب الساعة
             $violations = $query->select(
-                    DB::raw("HOUR($tableName.created_at) as hour"),
+                    DB::raw("HOUR($tableName.timestamp) as hour"),
                     DB::raw("COUNT(*) as count")
                 )
                 ->groupBy('hour')
@@ -130,7 +130,7 @@ class StatisticsController extends Controller
                 $query = $baseModel::query()
                     ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
 
                 if (strtolower($validated['type_name']) !== 'كل المخالفات') {
                     $query->where('violation_types.type_name', $validated['type_name']);
@@ -140,7 +140,7 @@ class StatisticsController extends Controller
             {
                  $query = $baseModel::query()
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.created_at", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
             }
 
             if ($validated['governorate'] !== 'كل المحافظات') {
