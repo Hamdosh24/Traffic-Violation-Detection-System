@@ -14,7 +14,7 @@ class BasicInfosController extends Controller
     public function getDashboardInfo()
     {
         try {
-            $startOfMonth = Carbon::now()->copy()->startOfMonth();
+            $startOfMonth = Carbon::now()->subDays(30);
             $endOfMonth = Carbon::now();
 
             // 1. عدد المخالفات هذا الشهر
@@ -53,8 +53,8 @@ class BasicInfosController extends Controller
             return response()->json([
                 'violations_this_month' => $violationsCount,
                 'accidents_this_month' => $accidentsCount,
-                'total_cameras' => $totalCameras,
                 'most_common_violation' => $mostCommonViolationNames ?: 'لا يوجد بيانات',
+                'total_cameras' => $totalCameras,
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -68,7 +68,7 @@ class BasicInfosController extends Controller
     public function topAccidentStreets()
     {
         try {
-            $startOfMonth = Carbon::now()->copy()->startOfMonth();
+            $startOfMonth = Carbon::now()->subDays(30);
             $endOfMonth = Carbon::now();
 
             // ننضم جدول الكاميرات مع الحوادث لأن الحوادث مخزنة مع camera_id فقط

@@ -13,7 +13,7 @@ class ChartsController extends Controller
     public function getViolationsDonutChart()
     {
         try {
-            $startOfMonth = Carbon::now()->copy()->startOfMonth();
+            $startOfMonth = Carbon::now()->subDays(30);
             $endOfMonth = Carbon::now();
 
             $violations = Violation::select('v_type_id', DB::raw('count(*) as total'))
