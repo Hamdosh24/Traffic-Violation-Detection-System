@@ -45,7 +45,7 @@ class ChartsController extends Controller
     public function getViolationsTrendLine()
     {
         try {
-            $startDate = Carbon::now()->subYear()->startOfDay();
+            $startDate = Carbon::now()->subDays(30);
             $endDate = Carbon::now();
 
             $data = Violation::select(
