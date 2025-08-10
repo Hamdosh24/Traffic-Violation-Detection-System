@@ -9,19 +9,21 @@ use App\Services\TrafficAPIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 
 class ViolationController extends Controller
 {
     /**
      * Store a newly created violation in storage.
+     * This is called by the AI system.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Services\TrafficAPIService  $trafficService
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request, TrafficAPIService $trafficService)
+    public function store(Request $request, TrafficAPIService $trafficService): JsonResponse
     {
-        // 1. التحقق من صحة البيانات المدخلة
+        // 1. Validate the incoming data
         $validator = Validator::make($request->all(), [
             'violation_type_key' => 'required|string|exists:violation_types,key',
             'plate_number'       => 'required|string|max:255',
@@ -33,7 +35,7 @@ class ViolationController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // 2. جلب بيانات السائق من الـ API الخارجي عبر الخدمة
+        // 2. Fetch driver info from the external traffic API
         try {
             $driverInfo = $trafficService->getDriverInfoByPlate($request->input('plate_number'));
             if (!$driverInfo) {
@@ -44,10 +46,10 @@ class ViolationController extends Controller
             return response()->json(['message' => 'حدث خطأ أثناء محاولة الاتصال بنظام المرور الخارجي.'], 503); // Service Unavailable
         }
         
-        // 3. العثور على نوع المخالفة المقابل في قاعدة البيانات المحلية
+        // 3. Find the corresponding violation type in the local database
         $violationType = ViolationType::where('key', $request->input('violation_type_key'))->first();
 
-        // 4. تسجيل سجل المخالفة في قاعدة البيانات
+        // 4. Create the violation record in the database
         $violation = Violation::create([
             'v_type_id' => $violationType->v_type_id,
             'camera_id' => $request->input('camera_id'),
@@ -55,14 +57,11 @@ class ViolationController extends Controller
             'timestamp' => $request->input('timestamp'),
         ]);
 
-        // 5. تجهيز رد JSON ناجح يحتوي على جميع البيانات المطلوبة
-        // نستخدم load() لتضمين بيانات النماذج المرتبطة (نوع المخالفة والكاميرا) في الرد
-        $data = [
-            'message'     => 'تم تسجيل المخالفة بنجاح.',
-            'violation'   => $violation->load('violationType', 'camera'),
-            'driver_info' => $driverInfo,
-        ];
-
-        return response()->json($data, 201);
+        // 5. --- Optimization ---
+        // Return only a success message and the ID of the created violation
+        return response()->json([
+            'message' => 'Violation recorded successfully.',
+            'v_id' => $violation->v_id // Use the correct primary key 'v_id' from the model
+        ], 201);
     }
 }
