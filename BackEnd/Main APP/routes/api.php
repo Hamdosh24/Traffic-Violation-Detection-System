@@ -11,6 +11,8 @@ use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Api\CameraReceiverController;
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Dashboard\ChartsController;
+use App\Http\Controllers\Dashboard\BasicInfosController;
 
 
 // Public route for user login
@@ -64,9 +66,15 @@ Route::post('/ex_cameras', [CameraReceiverController::class, 'receive'])->middle
 // cameras for AI
 Route::get('/AI/cameras', [AiController::class, 'index'])->middleware('check.external.api_key');
 
-
 // Routes for receiving notifications from external systems.
 Route::prefix('webhook')->group(function () {
     // يستقبل تحديثات أسعار المخالفات من نظام المرور الخارجي
     Route::post('/fine-updated', [WebhookController::class, 'handleFineUpdate']);
+});
+
+Route::prefix('dashboard')->middleware(['auth:sanctum', 'token.expires'])->group(function () {
+    Route::get('/donut_chart', [ChartsController::class, 'getViolationsDonutChart']);
+    Route::get('/line_chart', [ChartsController::class, 'getViolationsTrendLine']);
+    Route::get('/infos', [BasicInfosController::class, 'getDashboardInfo']);
+    Route::get('/acc-streets', [BasicInfosController::class, 'topAccidentStreets']);    // API لإرجاع أكثر 4 شوارع بها حوادث هذا الشهر
 });
