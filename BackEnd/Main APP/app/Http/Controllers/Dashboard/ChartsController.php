@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Violation;
+use App\Models\Accident;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -40,7 +41,6 @@ class ChartsController extends Controller
         }
     }
 
-
     // 2. خط زمني للمخالفات
     public function getViolationsTrendLine()
     {
@@ -66,4 +66,28 @@ class ChartsController extends Controller
         }
     }
 
+    // 3. خط زمني للحوادث
+    public function getAccidentsTrendLine()
+    {
+        try {
+            $startDate = Carbon::now()->subDays(30);
+            $endDate = Carbon::now();
+
+            $data = Accident::select(
+                    DB::raw("DATE(timestamp) as date"),
+                    DB::raw("count(*) as total")
+                )
+                ->whereBetween('timestamp', [$startDate, $endDate])
+                ->groupBy(DB::raw("DATE(timestamp)"))
+                ->orderBy('date')
+                ->get();
+
+            return response()->json($data);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'حدث خطأ أثناء جلب بيانات خط الزمن للحوادث',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
