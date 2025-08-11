@@ -74,7 +74,8 @@ Route::prefix('webhook')->group(function () {
 
 Route::prefix('dashboard')->middleware(['auth:sanctum', 'token.expires'])->group(function () {
     Route::get('/donut_chart', [ChartsController::class, 'getViolationsDonutChart']);
-    Route::get('/line_chart', [ChartsController::class, 'getViolationsTrendLine']);
+    Route::get('/line_chart', [ChartsController::class, 'getViolationsTrendLine']); // for violations
+    Route::get('/line_chart2', [ChartsController::class, 'getAccidentsTrendLine']); // for accidents
     Route::get('/infos', [BasicInfosController::class, 'getDashboardInfo']);
     Route::get('/acc-streets', [BasicInfosController::class, 'topAccidentStreets']);    // API لإرجاع أكثر 4 شوارع بها حوادث هذا الشهر
 });
