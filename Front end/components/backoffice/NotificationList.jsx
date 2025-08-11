@@ -1,9 +1,12 @@
 "use client";
 import Link from "next/link";
-import { memo } from "react";
 import NotificationCard from "./NotificationCard";
 
-const NotificationList = ({ notifications, loading, onMarkAsRead }) => {
+export default function NotificationList({
+  notifications,
+  loading,
+  onMarkAsRead,
+}) {
   if (loading) {
     return (
       <div className="p-8 text-center">
@@ -28,13 +31,12 @@ const NotificationList = ({ notifications, loading, onMarkAsRead }) => {
           className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <Link
-            href={`/employeeDashboard/notifications/${notification.id}`}
+            href={`/notifications/${notification.id}`}
             onClick={() =>
               !notification.isRead && onMarkAsRead(notification.id)
             }
             className="block"
             scroll={false}
-            prefetch={false}
           >
             <NotificationCard notification={notification} />
           </Link>
@@ -42,6 +44,4 @@ const NotificationList = ({ notifications, loading, onMarkAsRead }) => {
       ))}
     </ul>
   );
-};
-
-export default memo(NotificationList);
+}

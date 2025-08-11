@@ -224,7 +224,9 @@ export default function CrudTable() {
                 <td className="px-6 py-4">{employee.email}</td>
                 <td className="px-6 py-4">{employee.phone_num}</td>
                 <td className="px-6 py-4">{employee.age}</td>
-                <td className="px-6 py-4">{employee.gender}</td>
+                <td className="px-6 py-4">
+                  {employee.gender === "male" ? "ذكر" : "انثى"}
+                </td>
                 <td className="px-6 py-4">
                   {new Date(employee.created_at).toLocaleDateString()}
                 </td>

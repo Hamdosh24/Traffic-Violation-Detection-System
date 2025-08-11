@@ -76,14 +76,8 @@ export default function TrafficViolationsChart() {
       }
     };
 
-    if (reportType === "مخالفات") {
-      fetchFilters();
-    } else {
-      // Reset filters when switching to accidents
-      setSelectedGovernorate("");
-      setSelectedType("");
-    }
-  }, [reportType]);
+    fetchFilters();
+  }, []);
 
   const fetchViolationData = async () => {
     setIsLoading(true);
@@ -211,6 +205,7 @@ export default function TrafficViolationsChart() {
     categoryPercentage: 0.9,
   };
 
+  // Excel
   const exportToExcel = () => {
     try {
       const ws = utils.json_to_sheet(
@@ -303,15 +298,13 @@ export default function TrafficViolationsChart() {
               <strong>نوع التقرير:</strong> {reportType}
             </p>
             {reportType === "مخالفات" && (
-              <>
-                <p>
-                  <strong>نوع المخالفة:</strong> {selectedType}
-                </p>
-                <p>
-                  <strong>المحافظة:</strong> {selectedGovernorate || "الكل"}
-                </p>
-              </>
+              <p>
+                <strong>نوع المخالفة:</strong> {selectedType}
+              </p>
             )}
+            <p>
+              <strong>المحافظة:</strong> {selectedGovernorate || "الكل"}
+            </p>
             <p>
               <strong>الفترة الزمنية:</strong> من{" "}
               {startDate.toLocaleDateString("ar-EG")} إلى{" "}
@@ -409,46 +402,44 @@ export default function TrafficViolationsChart() {
             <option value="مخالفات">مخالفات</option>
           </select>
         </div>
-        {/* فلتر حوادث او مخالفات  */}
-        {reportType === "مخالفات" && (
-          <>
-            <div className="flex flex-col items-end">
-              <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                نوع المخالفة
-              </label>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-                disabled={filtersLoading || violationTypes.length === 0}
-              >
-                {violationTypes.map((type, index) => (
-                  <option key={index} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div className="flex flex-col items-end">
-              <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                المحافظة
-              </label>
-              <select
-                value={selectedGovernorate}
-                onChange={(e) => setSelectedGovernorate(e.target.value)}
-                className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-                disabled={filtersLoading || governorates.length === 0}
-              >
-                {governorates.map((gov, index) => (
-                  <option key={index} value={gov}>
-                    {gov}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
+        {reportType === "مخالفات" && (
+          <div className="flex flex-col items-end">
+            <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              نوع المخالفة
+            </label>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+              disabled={filtersLoading || violationTypes.length === 0}
+            >
+              {violationTypes.map((type, index) => (
+                <option key={index} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
+
+        <div className="flex flex-col items-end">
+          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            المحافظة
+          </label>
+          <select
+            value={selectedGovernorate}
+            onChange={(e) => setSelectedGovernorate(e.target.value)}
+            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+            disabled={filtersLoading || governorates.length === 0}
+          >
+            {governorates.map((gov, index) => (
+              <option key={index} value={gov}>
+                {gov}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="flex flex-row justify-center items-center ml-5">
           <div className="flex flex-col items-end mx-2">
@@ -485,11 +476,7 @@ export default function TrafficViolationsChart() {
           <button
             onClick={applyFilters}
             className="w-full px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-sm md:text-base"
-            disabled={
-              filtersLoading ||
-              (reportType === "مخالفات" &&
-                (!selectedType || !selectedGovernorate))
-            }
+            disabled={filtersLoading || !selectedGovernorate}
           >
             {filtersLoading ? "جاري التحميل..." : "تطبيق الفلاتر"}
           </button>
