@@ -7,7 +7,7 @@ import DashboardCharts from "@/components/backoffice/DashboardCharts";
 export default function page() {
   return (
     <div>
-      <Heading title="Employee Dashboard Overview" />
+      <Heading title="لوحة التحكم للموظف" />
       {/* Large Cards  */}
       <LargeCards />
       {/* Small Cards  */}

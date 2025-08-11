@@ -82,12 +82,12 @@ const getActionColor = (action) => {
 export default function ActivityTable() {
   const [activities, setActivities] = useState([]);
   const [filteredActivities, setFilteredActivities] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("كل المستخدمين");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [dateFilter, setDateFilter] = useState({ startDate: "", endDate: "" });
-  const [selectedAction, setSelectedAction] = useState("");
+  const [selectedAction, setSelectedAction] = useState("كل الاحداث");
   const [isFiltering, setIsFiltering] = useState(false);
   const itemsPerPage = 6;
 
@@ -123,23 +123,31 @@ export default function ActivityTable() {
 
     try {
       const filterParams = {
-        username: searchTerm || null, // إرسال null بدلاً من سلسلة فارغة
-        action: selectedAction !== "جميع الاحداث" ? selectedAction : null,
-        from_time: dateFilter.startDate
-          ? `${dateFilter.startDate} 00:00:00`
-          : null,
-        to_time: dateFilter.endDate ? `${dateFilter.endDate} 23:59:59` : null,
+        username: searchTerm === "كل المستخدمين" ? null : searchTerm,
+        action: selectedAction === "كل الاحداث" ? null : selectedAction,
+        from_time: dateFilter.startDate || null,
+        to_time: dateFilter.endDate || null,
       };
+      console.log("username", searchTerm);
+      console.log("action", selectedAction);
+      console.log("from_time", dateFilter.startDate);
+      console.log("to_time", dateFilter.endDate);
 
-      console.log("Sending filter params:", filterParams); // أضف هذا للسجل
+      // إزالة أي بارامترات غير محددة (null)
+      const cleanParams = Object.fromEntries(
+        Object.entries(filterParams).filter(([_, v]) => v !== null)
+      );
+
+      console.log("username cleanParams", searchTerm);
+      console.log("action cleanParams", selectedAction);
+      console.log("from_time cleanParams", dateFilter.startDate);
+      console.log("to_time cleanParams", dateFilter.endDate);
 
       const {
         success,
         data,
         error: apiError,
-      } = await StandardApi.filterActivities(filterParams);
-
-      console.log("Received response:", { success, data, apiError }); // أضف هذا للسجل
+      } = await StandardApi.filterActivities(cleanParams);
 
       if (success) {
         setFilteredActivities(data);
@@ -149,7 +157,7 @@ export default function ActivityTable() {
         setError(apiError || "فشل في تصفية الأنشطة");
       }
     } catch (err) {
-      console.error("Filter error details:", err); // سجل تفاصيل الخطأ
+      console.error("Filter error details:", err);
       setError(err.message || "حدث خطأ أثناء تصفية الأنشطة");
     } finally {
       setIsLoading(false);
@@ -321,8 +329,10 @@ export default function ActivityTable() {
             type="text"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 pr-10 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
             placeholder="كل المستخدمين"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={
+              searchTerm === "كل المستخدمين" ? "كل المستخدمين" : searchTerm
+            }
+            onChange={(e) => setSearchTerm(e.target.value || "كل المستخدمين")}
           />
         </div>
 
@@ -336,7 +346,7 @@ export default function ActivityTable() {
               onChange={(e) => setSelectedAction(e.target.value)}
               className="border rounded p-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[200px] w-full max-w-xs"
             >
-              <option value="جميع الاحداث">كل الأحداث</option>
+              <option value="كل الاحداث">كل الأحداث</option>
               {ACTION_TYPES.map((action) => (
                 <option
                   key={action}
@@ -429,7 +439,7 @@ export default function ActivityTable() {
                     {activity.user_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {activity.time}
+                    {activity.time.split(" ")[0]}
                   </td>
                   <td className="px-6 py-4">
                     <span

@@ -7,20 +7,28 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function BestSellingProductsChart() {
   const data = {
-    labels: ["Cabbage", "Watermelon", "Broccoli", "Maize"],
+    labels: [
+      "Cabbage Cabbage Cabbage ",
+      "Watermelon Cabbage Cabbage",
+      "Broccoli Cabbage Cabbage",
+      "Maize Cabbage Cabbage ",
+      "Maize Cabbage Cabbage ",
+    ],
     datasets: [
       {
         label: "# of Votes",
-        data: [40, 10, 30, 20],
+        data: [30, 10, 30, 20, 10],
         backgroundColor: [
           "rgba(255, 99, 132, 0.35)",
           "rgba(54, 162, 235, 0.35)",
+          "rgba(165, 122, 172, 0.35)",
           "rgba(255, 206, 86, 0.35)",
           "rgba(75, 192, 192, 0.35)",
         ],
         borderColor: [
           "rgba(255, 99, 132, 2)",
           "rgba(54, 162, 235, 2)",
+          "rgba(165, 122, 172, 2)",
           "rgba(255, 206, 86, 2)",
           "rgba(75, 192, 192, 2)",
         ],

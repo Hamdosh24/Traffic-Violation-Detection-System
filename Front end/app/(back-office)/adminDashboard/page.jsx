@@ -7,12 +7,13 @@ import DashboardCharts from "@/components/backoffice/DashboardCharts";
 export default function page() {
   return (
     <div className="mt-4">
-      <Heading title="Admin Dashboard Overview" />
+      <Heading title="لوحة التحكم للمدير" />
       {/* Large Cards  */}
       <LargeCards />
       {/* Small Cards  */}
       <SmallCards />
       {/* Charts  */}
+
       <DashboardCharts />
     </div>
   );

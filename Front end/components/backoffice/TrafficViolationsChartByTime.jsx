@@ -4,12 +4,13 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { utils, writeFile } from "xlsx";
@@ -19,7 +20,8 @@ import { StandardApi } from "@/app/api/StandarApi";
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend
@@ -146,7 +148,15 @@ export default function TrafficViolationsChartByTime() {
             reportType === "حوادث"
               ? "rgba(220, 53, 69, 1)"
               : "rgba(54, 162, 235, 1)",
-          borderWidth: 1,
+          borderWidth: 2,
+          tension: 0.4,
+          fill: false,
+          pointBackgroundColor:
+            reportType === "حوادث"
+              ? "rgba(220, 53, 69, 1)"
+              : "rgba(54, 162, 235, 1)",
+          pointRadius: 4,
+          pointHoverRadius: 6,
         },
       ],
     };
@@ -209,8 +219,6 @@ export default function TrafficViolationsChartByTime() {
       },
     },
     maintainAspectRatio: false,
-    barPercentage: 0.8,
-    categoryPercentage: 0.9,
   };
 
   const exportToExcel = () => {
@@ -366,7 +374,7 @@ export default function TrafficViolationsChartByTime() {
 
           {chartData && (
             <div className="print-chart-container">
-              <Bar data={chartData} options={options} />
+              <Line data={chartData} options={options} />
             </div>
           )}
 
@@ -660,7 +668,7 @@ export default function TrafficViolationsChartByTime() {
         >
           {chartData ? (
             <div className="min-w-[200px] h-[300px]">
-              <Bar data={chartData} options={options} />
+              <Line data={chartData} options={options} />
             </div>
           ) : (
             !loading &&

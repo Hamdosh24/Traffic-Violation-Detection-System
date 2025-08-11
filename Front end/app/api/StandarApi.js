@@ -244,15 +244,24 @@ export class StandardApi {
         };
       }
 
-      // تحويل الإجراء إلى التنسيق المطلوب من API
-      const formattedAction = `o1.taa "${filterParams.action}"`;
+      // تحضير الجسم مع إزالة القيم الفارغة أو غير المحددة
+      const requestBody = {};
 
-      const requestBody = {
-        action: formattedAction,
-        username: filterParams.username,
-        from_time: filterParams.from_time,
-        to_time: filterParams.to_time,
-      };
+      if (filterParams.username && filterParams.username !== "كل المستخدمين") {
+        requestBody.username = filterParams.username;
+      }
+
+      if (filterParams.action && filterParams.action !== "كل الاحداث") {
+        requestBody.action = filterParams.action;
+      }
+
+      if (filterParams.from_time) {
+        requestBody.from_time = filterParams.from_time;
+      }
+
+      if (filterParams.to_time) {
+        requestBody.to_time = filterParams.to_time;
+      }
 
       const response = await fetch(`${this.BASE_URL}/activity-logs`, {
         method: "POST",
