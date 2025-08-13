@@ -22,7 +22,7 @@ class DriverSeeder extends Seeder
             [
                 'first_name' => 'كريم',
                 'last_name'  => 'قلاش',
-                'email'      => 'kareem.kallash@test.com', // بريد إلكتروني فريد للتجربة
+                'email'      => 'kareem.kallash18@gmail.com', // بريد إلكتروني فريد للتجربة
                 'plate_num'  => '9999999' // رقم لوحة فريد للتجربة
             ]
         );

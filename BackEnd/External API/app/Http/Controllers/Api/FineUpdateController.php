@@ -52,6 +52,7 @@ class FineUpdateController extends Controller
 
         } catch (\Exception $e) {
             // في حال فشل الاتصال بالنظام الداخلي
+            
             Log::error("Could not connect to the internal system: " . $e->getMessage());
             return response()->json([
                 'message' => 'Could not connect to the internal system.'

@@ -15,7 +15,6 @@ public function run(): void
 {
     $this->call([
         DriverSeeder::class,
-        CameraSeeder::class, // <-- Add this line
     ]);
 }
 }

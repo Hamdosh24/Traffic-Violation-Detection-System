@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
-        Violation::observe(ViolationObserver::class); 
+        // Violation::observe(ViolationObserver::class); 
         Accident::observe(AccidentObserver::class); 
     }
 }
