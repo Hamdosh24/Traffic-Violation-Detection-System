@@ -9,6 +9,10 @@ export const metadata: Metadata = {
     icon: "/log1.ico",
     shortcut: "/log1.ico",
   },
+  other: {
+    "font-cairo":
+      "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap",
+  },
 };
 
 export default function RootLayout({
@@ -17,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body>
+    <html lang="ar" className="dark">
+      <body className="font-cairo">
         <Providers>{children}</Providers>
       </body>
     </html>
