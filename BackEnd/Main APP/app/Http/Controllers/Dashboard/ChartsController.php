@@ -45,19 +45,33 @@ class ChartsController extends Controller
     public function getViolationsTrendLine()
     {
         try {
-            $startDate = Carbon::now()->subDays(30);
-            $endDate = Carbon::now();
+            $startDate = Carbon::now()->subDays(29)->startOfDay(); // 30 يوم شامل اليوم
+            $endDate = Carbon::now()->endOfDay();
 
-            $data = Violation::select(
+            // جلب بيانات المخالفات من قاعدة البيانات مع تحويلها إلى مصفوفة date => total
+            $violations = Violation::select(
                     DB::raw("DATE(timestamp) as date"),
                     DB::raw("count(*) as total")
                 )
                 ->whereBetween('timestamp', [$startDate, $endDate])
                 ->groupBy(DB::raw("DATE(timestamp)"))
                 ->orderBy('date')
-                ->get();
+                ->pluck('total', 'date');
 
-            return response()->json($data);
+            // إنشاء مصفوفة لجميع الأيام الـ 30
+            $trendData = [];
+            $currentDate = $startDate->copy();
+
+            while ($currentDate->lte($endDate)) {
+                $dateStr = $currentDate->toDateString();
+                $trendData[] = [
+                    'date' => $dateStr,
+                    'total' => $violations[$dateStr] ?? 0
+                ];
+                $currentDate->addDay();
+            }
+
+            return response()->json($trendData);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'حدث خطأ أثناء جلب بيانات خط الزمن للمخالفات',
@@ -66,23 +80,38 @@ class ChartsController extends Controller
         }
     }
 
+
     // 3. خط زمني للحوادث
     public function getAccidentsTrendLine()
     {
         try {
-            $startDate = Carbon::now()->subDays(30);
-            $endDate = Carbon::now();
+            $startDate = Carbon::now()->subDays(29)->startOfDay();
+            $endDate = Carbon::now()->endOfDay();
 
-            $data = Accident::select(
+            // جلب بيانات الحوادث من قاعدة البيانات
+            $accidents = Accident::select(
                     DB::raw("DATE(timestamp) as date"),
                     DB::raw("count(*) as total")
                 )
                 ->whereBetween('timestamp', [$startDate, $endDate])
                 ->groupBy(DB::raw("DATE(timestamp)"))
                 ->orderBy('date')
-                ->get();
+                ->pluck('total', 'date'); // يرجع [ '2025-08-10' => 5, ...]
 
-            return response()->json($data);
+            // إنشاء مصفوفة لجميع الأيام الـ 30
+            $trendData = [];
+            $currentDate = $startDate->copy();
+
+            while ($currentDate->lte($endDate)) {
+                $dateStr = $currentDate->toDateString();
+                $trendData[] = [
+                    'date' => $dateStr,
+                    'total' => $accidents[$dateStr] ?? 0
+                ];
+                $currentDate->addDay();
+            }
+
+            return response()->json($trendData);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'حدث خطأ أثناء جلب بيانات خط الزمن للحوادث',
