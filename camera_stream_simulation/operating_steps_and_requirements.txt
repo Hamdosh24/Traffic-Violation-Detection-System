@@ -2,15 +2,16 @@ requirements:
 1- video
 2- batch file
 3- which program supports viewing RTSP video. (download link: "https://www.videolan.org/vlc/")
+4- mediamtx server (download link: https://github.com/bluenviron/mediamtx/releases/download/v1.13.1/mediamtx_v1.13.1_windows_amd64.zip)
 
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 operating steps:
 
-1- Open the batch file ("start_stream_and_record.bat") in edit mode and modify VIDEO_PATH, and VLC_PATH as it is on your device
+1- Open the batch file ("1-Stream_RTSP.bat") in edit mode and modify VIDEO_PATH, FFMPEG_PATH, MEDIA_MTX_PATH, and VLC_PATH as it is on your device
 
-2- open "start_stream_and_record.bat" --> This starts streaming from the video "sample.mp4"
+2- open "1-Stream_RTSP.bat" --> This starts RTSP streaming from the video "sample.mp4"
 
 3- watch stream:
 	- open VLC media player

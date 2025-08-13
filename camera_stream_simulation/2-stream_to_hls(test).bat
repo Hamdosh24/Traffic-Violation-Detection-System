@@ -3,7 +3,7 @@ setlocal
 
 rem === إعدادات المسارات ===
 set FFMPEG_PATH=C:\ffmpeg\bin\ffmpeg.exe
-set RTSP_URL=rtsp://localhost:8554/mystream
+set RTSP_URL=rtsp://127.0.0.1:8554/mystream
 set OUTPUT_DIR=C:\Users\Dell\Documents\GitHub\Traffic-Violation-Detection-System\camera_stream_simulation\hls\mystream
 
 rem === إنشاء المجلد إذا لم يكن موجودًا ===
