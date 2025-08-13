@@ -39,15 +39,14 @@ class AccidentController extends Controller
     /**
      * Display a listing of new accidents for the frontend.
      */
-    public function indexNew()
+     public function indexAll()
     {
-        $newAccidents = Accident::with('camera')
-            ->where('status', 'new')
+        $allAccidents = \App\Models\Accident::with('camera')
+            ->where('created_at', '>=', now()->subHours(24)) 
             ->latest()
             ->get();
 
-        // Use the Resource to format the response correctly
-        return AccidentResource::collection($newAccidents);
+        return AccidentResource::collection($allAccidents);
     }
     
     /**

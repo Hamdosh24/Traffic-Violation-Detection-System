@@ -2,54 +2,45 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ViolationRecorded;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreViolationRequest;
 use App\Models\Violation;
 use App\Models\ViolationType;
 use App\Services\TrafficAPIService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache; // <-- 1. استيراد واجهة الكاش
+use Illuminate\Support\Facades\Log;
 
 class ViolationController extends Controller
 {
-    /**
-     * Store a newly created violation in storage.
-     * This is called by the AI system.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Services\TrafficAPIService  $trafficService
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request, TrafficAPIService $trafficService): JsonResponse
+    public function store(StoreViolationRequest $request, TrafficAPIService $trafficService): JsonResponse
     {
-        // 1. Validate the incoming data
-        $validator = Validator::make($request->all(), [
-            'violation_type_key' => 'required|string|exists:violation_types,key',
-            'plate_number'       => 'required|string|max:255',
-            'timestamp'          => 'required|date',
-            'camera_id'          => 'required|string|exists:cameras,camera_id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        // 2. Fetch driver info from the external traffic API
         try {
-            $driverInfo = $trafficService->getDriverInfoByPlate($request->input('plate_number'));
+            // <-- 2. تطبيق التخزين المؤقت (Caching)
+            // أنشئ مفتاحًا فريدًا للكاش خاص برقم اللوحة هذا
+            $cacheKey = "driver_info_{$request->input('plate_number')}";
+
+            // اطلب من الكاش أن يتذكر هذه المعلومة لمدة 60 دقيقة
+            $driverInfo = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($trafficService, $request) {
+                // هذا الكود سينفذ فقط إذا لم تكن المعلومة في الكاش
+                // أو إذا انتهت مدة صلاحيتها
+                Log::info("Fetching driver info from external API for plate: {$request->input('plate_number')}");
+                return $trafficService->getDriverInfoByPlate($request->input('plate_number'));
+            });
+
             if (!$driverInfo) {
+                // إذا لم يتم العثور على السائق، قم بحذف أي بيانات قديمة في الكاش
+                Cache::forget($cacheKey);
                 return response()->json(['message' => 'رقم اللوحة المدخل غير موجود في نظام المرور.'], 404);
             }
         } catch (\Exception $e) {
             Log::error('API Call Failed: ' . $e->getMessage());
-            return response()->json(['message' => 'حدث خطأ أثناء محاولة الاتصال بنظام المرور الخارجي.'], 503); // Service Unavailable
+            return response()->json(['message' => 'حدث خطأ أثناء محاولة الاتصال بنظام المرور الخارجي.'], 503);
         }
-        
-        // 3. Find the corresponding violation type in the local database
+
         $violationType = ViolationType::where('key', $request->input('violation_type_key'))->first();
 
-        // 4. Create the violation record in the database
         $violation = Violation::create([
             'v_type_id' => $violationType->v_type_id,
             'camera_id' => $request->input('camera_id'),
@@ -57,11 +48,15 @@ class ViolationController extends Controller
             'timestamp' => $request->input('timestamp'),
         ]);
 
-        // 5. --- Optimization ---
-        // Return only a success message and the ID of the created violation
+        // التحميل المسبق للعلاقات لتحسين الأداء
+        $violation->load('violationType', 'camera');
+
+        // إطلاق الحدث مع تمرير كل البيانات المطلوبة
+        event(new ViolationRecorded($violation, $driverInfo));
+
         return response()->json([
-            'message' => 'Violation recorded successfully.',
-            'v_id' => $violation->v_id // Use the correct primary key 'v_id' from the model
+            'message' => 'Violation recorded successfully and notifications are being processed.',
+            'v_id' => $violation->v_id
         ], 201);
     }
 }

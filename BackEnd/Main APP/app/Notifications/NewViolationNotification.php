@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Violation;
+use App\Support\ViolationMessageBuilder; // <-- 1. استيراد الـ Builder
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -15,43 +16,29 @@ class NewViolationNotification extends Notification implements ShouldQueue
     public Violation $violation;
     public array $driverInfo;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(Violation $violation, array $driverInfo)
     {
         $this->violation = $violation;
         $this->driverInfo = $driverInfo;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @param  mixed  $notifiable
-     * @return array
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
-     */
     public function toMail(object $notifiable): MailMessage
     {
-        // جمع البيانات باستخدام أسماء الأعمدة الصحيحة
-        $fullName = trim(($this->driverInfo['first_name'] ?? '') . ' ' . ($this->driverInfo['last_name'] ?? ''));
-        $driverName = $fullName ?: 'Driver';
+        // <-- 2. تم حذف `loadMissing` من هنا لأن البيانات تأتي جاهزة
         
-        $violationName = $this->violation->violationType->type_name ?? 'غير محدد';
-        $fineAmount = $this->violation->violationType->fine_amount ?? 'غير محدد';
-        $location = $this->violation->camera->location ?? 'غير محدد';
+        // <-- 3. استخدام دوال مساعدة من الـ Builder لتوحيد المنطق
+        $driverName = ViolationMessageBuilder::getDriverFullName($this->driverInfo) ?: 'السائق الكريم';
+        $location = ViolationMessageBuilder::getViolationLocation($this->violation);
+        
+        $violationName = $this->violation->violationType?->type_name ?? 'غير محدد';
+        $fineAmount = $this->violation->violationType?->fine_amount ?? 'غير محدد';
 
-        // بناء رسالة البريد الإلكتروني باللغة العربية
+        // بناء رسالة البريد الإلكتروني
         return (new MailMessage)
                     ->subject('إشعار مخالفة مرورية جديدة')
                     ->greeting('مرحباً، ' . $driverName)
@@ -60,8 +47,8 @@ class NewViolationNotification extends Notification implements ShouldQueue
                     ->line('**اسم السائق:** ' . $driverName)
                     ->line('**رقم اللوحة:** ' . $this->violation->plate_num)
                     ->line('**نوع المخالفة:** ' . $violationName)
-                    ->line('**قيمة المخالفة:** ' . $fineAmount . ' ريال سعودي')
-                    ->line('**الموقع:** ' . $location)
+                    ->line('**قيمة المخالفة:** ' . $fineAmount . ' ليرة')
+                    ->line('**الموقع:** ' . ($location ?: 'غير محدد'))
                     ->line('**التاريخ والوقت:** ' . $this->violation->timestamp)
                     ->line('---')
                     ->line('نشكر لكم تعاونكم.');
