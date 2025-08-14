@@ -55,14 +55,14 @@ export default function SmallCards() {
 
   const cardsData = [
     {
-      title: "المخالفات هذا الشهر",
+      title: "المخالفات اخر 30 يوم",
       number: dashboardData?.violations_this_month || 0,
       iconBg: "bg-red-500 dark:bg-red-500",
       icon: AlertTriangle,
       iconColor: "text-red-600 dark:text-red-400",
     },
     {
-      title: "الحوادث هذا الشهر",
+      title: "الحوادث اخر 30 يوم",
       number: dashboardData?.accidents_this_month || 0,
       iconBg: "bg-yellow-500 dark:bg-yellow-500",
       icon: AlertCircle,

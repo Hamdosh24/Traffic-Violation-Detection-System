@@ -24,6 +24,7 @@ export default function SearchPlate({ onSearchComplete }) {
         throw new Error(response.error || "Failed to fetch data");
       }
 
+      // تعديل هنا لضمان هيكل البيانات الصحيح
       onSearchComplete({
         driverInfo: response.data.driver_info || null,
         sightings: response.data.sightings || [],
@@ -41,9 +42,8 @@ export default function SearchPlate({ onSearchComplete }) {
       console.error("Error fetching data:", err);
     }
   };
-
   return (
-    <div className="max-w-md mx-auto mb-8">
+    <div className="max-w-md mx-auto my-8">
       <form onSubmit={handleSearch}>
         <div className="relative">
           <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">

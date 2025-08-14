@@ -1,6 +1,178 @@
 export class StandardApi {
   static BASE_URL = "http://localhost:8000/api";
 
+  // get all notifications
+  static async fetchNewAccidents() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      const response = await fetch(`${this.BASE_URL}/admin/accidents/all`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || "فشل في جلب الحوادث الجديدة",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.data || data,
+      };
+    } catch (err) {
+      console.error("API Error [fetchNewAccidents]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء جلب الحوادث الجديدة",
+      };
+    }
+  }
+
+  // mark notification as read
+  static async markAccidentAsViewed(accidentId) {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      const response = await fetch(
+        `${this.BASE_URL}/admin/accidents/${accidentId}/viewed`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (response.status === 404) {
+        return {
+          success: false,
+          error: "الحادث غير موجود",
+        };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || "فشل في تحديث حالة الحادث",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (err) {
+      console.error("API Error [markAccidentAsViewed]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء تحديث حالة الحادث",
+      };
+    }
+  }
+
+  // SSE function
+  static setupAccidentSSE(callback) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found for SSE connection");
+      return null;
+    }
+
+    const eventSource = new EventSource(
+      `${this.BASE_URL}/admin/accidents/stream?token=${encodeURIComponent(
+        token
+      )}`
+    );
+
+    eventSource.addEventListener("new-accident", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        callback(data);
+      } catch (err) {
+        console.error("Error parsing accident data:", err);
+      }
+    });
+
+    eventSource.onerror = (err) => {
+      console.error("Accident SSE Error:", err);
+      eventSource.close();
+      setTimeout(() => this.setupAccidentSSE(callback), 5000);
+    };
+
+    return eventSource;
+  }
+
+  static setupNotificationCountSSE(callback) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found for SSE connection");
+      return null;
+    }
+
+    const eventSource = new EventSource(
+      `${this.BASE_URL}/admin/notifications/count?token=${encodeURIComponent(
+        token
+      )}`
+    );
+
+    eventSource.addEventListener("count-update", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        callback(data.change || 1);
+      } catch (err) {
+        console.error("Error parsing count data:", err);
+      }
+    });
+
+    eventSource.onerror = (err) => {
+      console.error("Count SSE Error:", err);
+      eventSource.close();
+      setTimeout(() => this.setupNotificationCountSSE(callback), 5000);
+    };
+
+    return eventSource;
+  }
+  
+  // region filter
   static async fetchViolationFiltersByRegion() {
     try {
       const token = localStorage.getItem("token");
@@ -173,7 +345,7 @@ export class StandardApi {
       const data = await response.json();
       return {
         success: true,
-        data: data,
+        data: data, // التأكد من أن البيانات تحتوي على driver_info و sightings
       };
     } catch (err) {
       console.error("API Error [searchVehicleSightings]:", err);
@@ -183,7 +355,6 @@ export class StandardApi {
       };
     }
   }
-
   // Activity Log Filter
   static async fetchAllActivities() {
     try {

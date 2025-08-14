@@ -13,7 +13,7 @@ export default function SmallCard({ data }) {
         <div className="text-center sm:text-left">
           <p className="text-sm font-bold sm:text-base">{title}</p>
           <h3 className="text-xl sm:text-2xl">{number}</h3>
-          <h3 className="text-md sm:text-lg">{text}</h3>
+          <h3 className="text-md ">{text}</h3>
         </div>
       </div>
     </div>

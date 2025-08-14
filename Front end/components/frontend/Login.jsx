@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StandardApi } from "@/app/api/StandarApi";
+import useNotificationStore from "@/stores/notificationStore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -9,6 +10,12 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      useNotificationStore.getState().cleanupSSE();
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,20 +28,23 @@ export default function Login() {
         data,
         error: apiError,
       } = await StandardApi.post("/login", { email, password });
+
       if (!success) {
         throw new Error(apiError || "Login failed, please try again");
       }
 
       localStorage.setItem("token", data.access_token);
-      console.log("token", data.access_token);
       localStorage.setItem("user", JSON.stringify({ role: data.role }));
-      console.log("user", JSON.stringify({ role: data.role }));
+
+      // تفعيل اتصال SSE
+      useNotificationStore.getState().setupSSEConnection();
 
       router.push(
         data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
       );
     } catch (err) {
       setError(err.message);
+      useNotificationStore.getState().cleanupSSE();
     } finally {
       setIsLoading(false);
     }

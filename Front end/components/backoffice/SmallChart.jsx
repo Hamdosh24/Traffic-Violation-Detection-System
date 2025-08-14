@@ -133,7 +133,7 @@ export default function SmallChart() {
   return (
     <div className="bg-milkColor dark:bg-customDarkGreen p-8 rounded-md shadow-xl py-8">
       <h2 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-50">
-        تغير عدد المخالفات عبر الزمن
+        تغير عدد المخالفات والحوادث عبر الزمن
       </h2>
       <div className="p-4">
         {/* Tabs  */}

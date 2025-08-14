@@ -22,35 +22,24 @@ export default function SearchResults({
       )}
 
       {driverInfo && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6"
+          dir="rtl"
+        >
+          <h3 className="text-lg font-semibold text-customGreen dark:text-white mb-4">
             معلومات السائق
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <p className="text-gray-600 dark:text-gray-300">الاسم الأول:</p>
+              <p className="text-gray-600 dark:text-gray-300">صاحب المركبة</p>
               <p className="font-medium dark:text-white">
-                {driverInfo.first_name || "غير متوفر"}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-600 dark:text-gray-300">الاسم الأخير:</p>
-              <p className="font-medium dark:text-white">
-                {driverInfo.last_name || "غير متوفر"}
+                {driverInfo.full_name || "غير متوفر"}
               </p>
             </div>
             <div>
               <p className="text-gray-600 dark:text-gray-300">رقم الهاتف:</p>
               <p className="font-medium dark:text-white">
                 {driverInfo.phone_num || "غير متوفر"}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-600 dark:text-gray-300">
-                البريد الإلكتروني:
-              </p>
-              <p className="font-medium dark:text-white">
-                {driverInfo.email || "غير متوفر"}
               </p>
             </div>
             <div>
@@ -103,13 +92,15 @@ export default function SearchResults({
                     className="hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {sighting.id}
+                      {sighting.p_car_id || "غير متوفر"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {sighting.plate_num}
+                      {sighting.plate_num ||
+                        driverInfo?.plate_num ||
+                        "غير متوفر"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {sighting.camera_id}
+                      {sighting.camera?.camera_id || "غير متوفر"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {sighting.camera?.region || "غير متوفر"}
