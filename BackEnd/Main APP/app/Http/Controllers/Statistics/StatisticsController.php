@@ -26,26 +26,30 @@ class StatisticsController extends Controller
             ]);
 
             $isAccident = strtolower($validated['type_name']) === 'حوادث';
-
-            // تحديد الجدول الأساسي حسب نوع البيانات
             $baseModel = $isAccident ? new Accident : new Violation;
             $tableName = $baseModel->getTable();
-            
+
+            // ضبط بداية ونهاية اليوم
+            $from = \Carbon\Carbon::parse($validated['from_date'])->startOfDay();
+            $to   = \Carbon\Carbon::parse($validated['to_date'])->endOfDay();
+
+            // حساب عدد الأيام شامل اليوم الأخير
+            $days = $from->diffInDays($to) + 1;
+
+            // بناء الاستعلام
             if (!$isAccident) {
                 $query = $baseModel::query()
                     ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$from, $to]);
 
                 if (strtolower($validated['type_name']) !== 'كل المخالفات') {
                     $query->where('violation_types.type_name', $validated['type_name']);
                 }
-            }
-            else 
-            {
+            } else {
                 $query = $baseModel::query()
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$from, $to]);
             }
 
             if (strtolower($validated['governorate']) !== 'كل المحافظات') {
@@ -56,7 +60,7 @@ class StatisticsController extends Controller
                 $query->where('cameras.region', $validated['region']);
             }
 
-            // تجميع البيانات حسب الساعة
+            // جلب البيانات مجمعة حسب الساعة
             $violations = $query->select(
                     DB::raw("HOUR($tableName.timestamp) as hour"),
                     DB::raw("COUNT(*) as count")
@@ -65,27 +69,27 @@ class StatisticsController extends Controller
                 ->orderBy('hour')
                 ->get();
 
-            // تجهيز هيكل البيانات لجميع الساعات
+            // تهيئة مصفوفة الساعات
             $result = [];
-
             for ($i = 0; $i < 24; $i++) {
                 $next = ($i + 1) % 24;
                 $label = $i . '-' . $next;
                 $result[$label] = 0;
             }
 
+            // تعبئة المتوسط لكل ساعة
             foreach ($violations as $v) {
                 $next = ($v->hour + 1) % 24;
                 $label = $v->hour . '-' . $next;
-                $result[$label] = $v->count;
+                $result[$label] = round($v->count / $days, 2);
             }
 
             ActivityLog::create([
-                'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
+                'user_id'     => Auth::user()->user_id ?? null,
                 'action_type' => 'عرض الإحصاءات',
-                'description' => "عرض إحصاءات {$validated['type_name']} حسب ساعات اليوم في {$validated['region']},{$validated['governorate']} من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
+                'description' => "عرض إحصاءات {$validated['type_name']} (كمعدل يومي) حسب ساعات اليوم في {$validated['region']},{$validated['governorate']} من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
                 'model_type'  => 'Violation',
-                'model_id'    => null, // لا يرتبط بسجل محدد هنا
+                'model_id'    => null,
                 'ip_address'  => $request->ip(),
                 'user_agent'  => $request->userAgent(),
             ]);
@@ -101,52 +105,52 @@ class StatisticsController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('خطأ في getViolationsByHour: ' . $e->getMessage());
             return response()->json([
                 'status' => false,
-                'message' => 'حدث خطأ أثناء معالجة الطلب.',
+                'message' => $e->getMessage(), // مؤقتاً لعرض الخطأ الحقيقي أثناء التجربة
             ], 500);
         }
     }
-
 
     public function getDataByRegion(Request $request)
     {
         try {
             $validated = $request->validate([
-                'type_name' => 'required|string',
+                'type_name'   => 'required|string',
                 'governorate' => 'required|string',
-                'from_date' => 'required|date',
-                'to_date'   => 'required|date',
+                'from_date'   => 'required|date',
+                'to_date'     => 'required|date',
             ]);
 
             $isAccident = strtolower($validated['type_name']) === 'حوادث';
 
-            // تحديد الجدول الأساسي حسب نوع البيانات
             $baseModel = $isAccident ? new Accident : new Violation;
             $tableName = $baseModel->getTable();
-            
+
+            // ضبط نطاق التاريخ ليشمل كامل اليوم
+            $from = \Carbon\Carbon::parse($validated['from_date'])->startOfDay();
+            $to   = \Carbon\Carbon::parse($validated['to_date'])->endOfDay();
+
             if (!$isAccident) {
                 $query = $baseModel::query()
                     ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$from, $to]);
 
                 if (strtolower($validated['type_name']) !== 'كل المخالفات') {
                     $query->where('violation_types.type_name', $validated['type_name']);
                 }
-            } 
-            else
-            {
-                 $query = $baseModel::query()
+            } else {
+                $query = $baseModel::query()
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
-                    ->whereBetween("$tableName.timestamp", [$validated['from_date'], $validated['to_date']]);
+                    ->whereBetween("$tableName.timestamp", [$from, $to]);
             }
 
-            if ($validated['governorate'] !== 'كل المحافظات') {
+            if (strtolower($validated['governorate']) !== 'كل المحافظات') {
                 $query->where('cameras.governorate', $validated['governorate']);
             }
-            
+
+            // جلب البيانات مجمعة حسب المنطقة
             $violationsByRegion = $query->select(
                     'cameras.region',
                     DB::raw('COUNT(*) as count')
@@ -173,11 +177,11 @@ class StatisticsController extends Controller
             }
 
             ActivityLog::create([
-                'user_id'     => Auth::user()->user_id ?? null, // null لو لم يكن مستخدم مسجل
+                'user_id'     => Auth::user()->user_id ?? null,
                 'action_type' => 'عرض الإحصاءات',
                 'description' => "عرض إحصاءات {$validated['type_name']} حسب توزعها في المناطق من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
                 'model_type'  => 'Violation',
-                'model_id'    => null, // لا يرتبط بسجل محدد هنا
+                'model_id'    => null,
                 'ip_address'  => $request->ip(),
                 'user_agent'  => $request->userAgent(),
             ]);
@@ -186,17 +190,18 @@ class StatisticsController extends Controller
                 'status' => true,
                 'data'   => $result,
             ]);
+
         } catch (ValidationException $e) {
             Log::error('فشل التحقق من البيانات: ' . json_encode($e->errors()));
             return response()->json([
                 'status' => false,
                 'message' => 'فشل التحقق من البيانات.',
-                'errors' => $e->errors(),
+                'errors'  => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             Log::error('خطأ في getViolationsByRegion: ' . $e->getMessage());
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'حدث خطأ أثناء معالجة الطلب.',
             ], 500);
         }
