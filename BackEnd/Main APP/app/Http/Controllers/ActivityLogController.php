@@ -37,16 +37,16 @@ class ActivityLogController extends Controller
             }
 
             if ($username !== 'كل المستخدمين') {
-                $user = User::where('user_name', $username)->first();
+            $users = User::where('user_name', 'LIKE', '%' . $username . '%')->pluck('user_id');
 
-                if (!$user) {
-                    return response()->json([
-                        'error' => "المستخدم $username غير موجود.",
-                    ], 404);
-                }
-
-                $query->where('user_id', $user->user_id);
+            if ($users->isEmpty()) {
+                return response()->json([
+                    'error' => "لا يوجد مستخدم يحتوي اسمه على: $username",
+                ], 404);
             }
+
+            $query->whereIn('user_id', $users);
+        }
 
             $query->whereBetween('created_at', [$fromTime, $toTime]);
 
@@ -64,7 +64,7 @@ class ActivityLogController extends Controller
 
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null,
-                'action_type' => 'عرض سجل الأنشطة',
+                'action_type' => 'عرض سجل الانشطة',
                 'description' => "عرض سجل الانشطة حسب الفلاتر: نوع الحدث = {$actionType}, اسم المستخدم = {$username}, من الوقت = {$fromTime}, لإلى الوقت = {$toTime}.",
                 'model_type'  => 'ActivityLog',
                 'model_id'    => null,
