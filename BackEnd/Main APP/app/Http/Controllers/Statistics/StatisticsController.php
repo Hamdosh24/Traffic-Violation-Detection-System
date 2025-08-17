@@ -86,7 +86,7 @@ class StatisticsController extends Controller
 
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null,
-                'action_type' => 'عرض الإحصاءات',
+                'action_type' => 'عرض الاحصاءات',
                 'description' => "عرض إحصاءات {$validated['type_name']} (كمعدل يومي) حسب ساعات اليوم في {$validated['region']},{$validated['governorate']} من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
                 'model_type'  => 'Violation',
                 'model_id'    => null,
@@ -178,7 +178,7 @@ class StatisticsController extends Controller
 
             ActivityLog::create([
                 'user_id'     => Auth::user()->user_id ?? null,
-                'action_type' => 'عرض الإحصاءات',
+                'action_type' => 'عرض الاحصاءات',
                 'description' => "عرض إحصاءات {$validated['type_name']} حسب توزعها في المناطق من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
                 'model_type'  => 'Violation',
                 'model_id'    => null,
