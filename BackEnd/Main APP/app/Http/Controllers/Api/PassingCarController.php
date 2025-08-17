@@ -69,7 +69,10 @@ class PassingCarController extends Controller
             'user_id'     => Auth::id(),
             'action_type' => 'بحث عن لوحة',
             'description' => "تم البحث عن معلومات السائق والمشاهدات للوحة رقم {$plate_num}",
+            'model_type'  => 'PassingCar',
+            'model_id'    => null,
             'ip_address'  => request()->ip(),
+            'user_agent'  => request()->userAgent(),
         ]);
 
         // 4. Return the structured response using the resource
