@@ -14,10 +14,12 @@ use Illuminate\Support\Facades\Cache;
 
 class AccidentController extends Controller
 {
+    /**
+     * Store a new accident. Called by the AI system.
+     */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            // ✅ تم تعديل التحقق من camera_id ليناسب النوع الرقمي
             'camera_id' => 'required|integer|exists:cameras,camera_id', 
             'timestamp' => 'required|date',
         ]);
@@ -34,11 +36,13 @@ class AccidentController extends Controller
         ], 201);
     }
 
+    /**
+     * Get a list of all recent accidents (for historical view).
+     */
     public function indexAll()
     {
         $allAccidents = Cache::remember('all_accidents_24h', now()->addMinutes(10), function () {
             return Accident::with('camera')
-                ->where('created_at', '>=', now()->subHours(24)) 
                 ->latest()
                 ->get();
         });
@@ -46,42 +50,29 @@ class AccidentController extends Controller
         return AccidentResource::collection($allAccidents);
     }
     
-    public function markAsViewed(Accident $accident): AccidentResource
-    {
-        $accident->status = 'viewed';
-        $accident->save();
-        
-        return new AccidentResource($accident->load('camera'));
-    }
-
     /**
-     * ✅ تم تعديل هذه الدالة بالكامل لتعمل مع الكاش
-     * Stream new accidents in real-time by polling the cache.
+     * Stream new accidents in real-time using SSE.
      */
-   public function streamNewAccidents(): StreamedResponse
+    public function streamNewAccidents(): StreamedResponse
     {
         $response = new StreamedResponse(function() {
+            set_time_limit(0);
+
             while (true) {
-                // 1. اقرأ آخر حادث من الكاش
                 $latestAccident = Cache::get('latest_accident');
 
-                // 2. تحقق فقط إذا كان هناك حادث جديد
                 if ($latestAccident) {
-                    
                     $accidentResource = new AccidentResource($latestAccident);
 
-                    // 3. أرسل الحدث إلى المتصفح
                     echo "event: new-accident\n";
                     echo 'data: ' . $accidentResource->toJson() . "\n\n";
 
                     ob_flush();
                     flush();
 
-                    // 4. ✅ الأهم: احذف الحادث من الكاش فوراً بعد إرساله
                     Cache::forget('latest_accident');
                 }
 
-                // انتظر لمدة ثانيتين قبل المحاولة مرة أخرى
                 sleep(2);
 
                 if (connection_aborted()) {
