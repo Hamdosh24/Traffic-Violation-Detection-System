@@ -12,7 +12,6 @@ class CameraController extends Controller
     public function store(Request $request)
     {
         try {
-            // تحقق من صحة البيانات المطلوبة
             $validated = $request->validate([
                 'region' => 'required|string',
                 'governorate' => 'required|string',
@@ -27,8 +26,6 @@ class CameraController extends Controller
                 'description' => 'nullable|string',
             ]);
 
-
-            // إنشاء الكاميرا
             $camera = Camera::create($validated);
 
             return response()->json([
@@ -37,21 +34,90 @@ class CameraController extends Controller
             ], 201);
 
         } catch (ValidationException $e) {
-            // خطأ في التحقق من البيانات
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
 
         } catch (QueryException $e) {
-            // خطأ في قاعدة البيانات
             return response()->json([
                 'message' => 'Database error',
                 'error' => $e->getMessage(),
             ], 500);
 
         } catch (\Exception $e) {
-            // أي خطأ آخر
+            return response()->json([
+                'message' => 'Something went wrong',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // تابع التعديل
+    public function update(Request $request, $id)
+    {
+        try {
+            $camera = Camera::findOrFail($id);
+
+            $validated = $request->validate([
+                'region' => 'string',
+                'governorate' => 'string',
+                'street' => 'string',
+                'coordinates' => 'nullable|string',
+                'hls_path' => 'nullable|string|unique:cameras,hls_path',
+                'rtsp_url' => 'string|unique:cameras,rtsp_url',
+                'ip_address' => 'ip|unique:cameras,ip_address',
+                'status' => 'in:active,inactive',
+                'model' => 'string',
+                'installation_date' => 'date',
+                'description' => 'nullable|string',
+            ]);
+
+            $camera->update($validated);
+
+            return response()->json([
+                'message' => 'Camera updated successfully',
+                'data' => $camera
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'Database error',
+                'error' => $e->getMessage(),
+            ], 500);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Something went wrong',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // تابع الحذف
+    public function destroy($id)
+    {
+        try {
+            $camera = Camera::findOrFail($id);
+            $camera->delete();
+
+            return response()->json([
+                'message' => 'Camera deleted successfully'
+            ], 200);
+
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'Database error',
+                'error' => $e->getMessage(),
+            ], 500);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Something went wrong',
                 'error' => $e->getMessage(),
@@ -59,4 +125,3 @@ class CameraController extends Controller
         }
     }
 }
-

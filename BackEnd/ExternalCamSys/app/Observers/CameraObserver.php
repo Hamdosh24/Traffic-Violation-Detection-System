@@ -8,9 +8,13 @@ use Illuminate\Support\Facades\Log;
 
 class CameraObserver
 {
-    public function created(Camera $camera): void
+    /**
+     * عند الإنشاء أو التعديل
+     */
+    public function saved(Camera $camera): void
     {
         $data = [
+            'external_id' => $camera->camera_id,
             'region' => $camera->region,
             'governorate' => $camera->governorate,
             'street' => $camera->street,
@@ -22,8 +26,7 @@ class CameraObserver
 
         try {
             $response = Http::withHeaders([
-                'X-API-KEY' => config('services.receiver.api_key'), // الأفضل تخزينه في .env
-                // 'Authorization' => 'Bearer ' . env('CAMERA_RECEIVER_TOKEN'),
+                'X-API-KEY' => config('services.receiver.api_key'),
             ])->timeout(120)->post(config('services.receiver.url'), $data);
 
             if ($response->failed()) {
@@ -33,6 +36,28 @@ class CameraObserver
             }
         } catch (\Exception $e) {
             Log::error('Exception while sending camera data', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * عند الحذف
+     */
+    public function deleted(Camera $camera): void
+    {
+        try {
+            $response = Http::withHeaders([
+                'X-API-KEY' => config('services.receiver.api_key'),
+            ])->timeout(120)->delete(config('services.receiver.url') . '/' . $camera->camera_id);
+
+            if ($response->failed()) {
+                Log::error('Failed to send camera delete request', [
+                    'response' => $response->body(),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception while sending camera delete request', [
                 'message' => $e->getMessage(),
             ]);
         }
