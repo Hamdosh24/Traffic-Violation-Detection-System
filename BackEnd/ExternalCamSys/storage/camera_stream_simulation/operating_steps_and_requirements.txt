@@ -12,15 +12,26 @@ operating steps:
 
 1- Open the batch file ("1-Stream_RTSP.bat") in edit mode and modify FFMPEG_PATH and MEDIA_MTX_PATH as it is on your device.
 
-2- open "1-Stream_RTSP.bat" --> This starts RTSP streaming from the videos.
+-------------------------------------------------------------------------------------------------------------------------
+start(manually):
 
-3- watch stream:
+1- open "1-Stream_RTSP.bat" --> This starts RTSP streaming from the videos.
+
+2- watch stream:
 	- open VLC media player
 	- Media --> Open Network Stream
 	- place the live stream link as specified in the batch file(rtsp://127.0.0.1:8554/cam1 or rtsp://127.0.0.1:8554/cam2)
 	- Click on "play"
 
 -------------------------------------------------------------------------------------------------------------------------
+start(Automatically):
 
-4- open browser --> place the live stream link (http://127.0.0.1:8889/cam1 or http://127.0.0.1:8889/cam2)
+1- open cmd in "ExternalCamSys" folder
+
+2- php artisan serve --port=8001
+
+3- open another cmd in the same folder
+
+4- php artisan streams:start
+
 
