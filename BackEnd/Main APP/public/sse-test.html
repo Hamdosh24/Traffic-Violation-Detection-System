@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مراقب الحوادث المباشر</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #1a202c;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        #accidents-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .accident-item {
+            background-color: #ffffff;
+            margin-bottom: 12px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #e53e3e; /* شريط تنبيه أحمر */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 1.1em;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.8em;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>لوحة مراقبة الحوادث المباشرة</h1>
+        <ul id="accidents-list">
+            </ul>
+    </div>
+
+    <script>
+        const list = document.getElementById('accidents-list');
+        const eventSource = new EventSource('http://127.0.0.1:8000/api/admin/accidents/stream');
+
+        eventSource.addEventListener('new-accident', event => {
+            const accident = JSON.parse(event.data);
+            console.log('New accident received:', accident);
+
+            // 1. نستخرج البيانات المطلوبة
+            const cameraNumber = accident.camera.camera_id;
+            const location = `${accident.camera.street}, ${accident.camera.region}`;
+            const time = new Date(accident.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            // 2. ننشئ عنصر القائمة الجديد بتصميم محسّن
+            const newLi = document.createElement('li');
+            newLi.className = 'accident-item'; // تطبيق الستايل الجديد
+            
+            // 3. نستخدم innerHTML لإضافة هيكل HTML داخلي منسق
+            newLi.innerHTML = `
+                <div class="info-group">
+                    <span class="info-label">كاميرا رقم</span>
+                    <span class="info-value">${cameraNumber}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">الموقع</span>
+                    <span class="info-value">${location}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">وقت الحادث</span>
+                    <span class="info-value">${time}</span>
+                </div>
+            `;
+            
+            list.prepend(newLi);
+        });
+
+        eventSource.onerror = error => {
+            console.error('EventSource connection failed:', error);
+        };
+
+        eventSource.onopen = () => {
+            console.log('Connection to SSE stream established.');
+        };
+    </script>
+</body>
+</html>

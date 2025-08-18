@@ -1,14 +1,13 @@
 <?php
+// app/Notifications/NewAccidentNotification.php
 
 namespace App\Notifications;
 
 use App\Models\Accident;
 use Illuminate\Bus\Queueable;
-// ADD THIS
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-// MODIFY THIS to implement ShouldQueue
 class NewAccidentNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -20,19 +19,14 @@ class NewAccidentNotification extends Notification implements ShouldQueue
         $this->accident = $accident;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     */
     public function via(object $notifiable): array
     {
-        // MODIFY THIS to send to the database channel
-        return [];
+        // <-- التعديل: تحديد وجهة الإشعار إلى قاعدة البيانات
+        return ['database'];
     }
 
-    /**
-     * Get the array representation of the notification.
-     */
-    public function toArray(object $notifiable): array
+    // <-- الأفضل: إضافة دالة مخصصة لمحتوى الإشعار في قاعدة البيانات
+    public function toDatabase(object $notifiable): array
     {
         return [
             'accident_id' => $this->accident->id,
