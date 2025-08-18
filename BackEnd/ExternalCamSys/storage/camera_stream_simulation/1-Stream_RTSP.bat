@@ -5,16 +5,17 @@ rem ==== إعداد المسارات ====
 set FFMPEG_PATH=C:\ffmpeg\bin\ffmpeg.exe
 set MEDIA_MTX_PATH=C:\mediamtx\mediamtx.exe
 
-set VIDEO1_PATH=cam1.mp4
-set VIDEO2_PATH=cam2.mp4
-set VIDEO3_PATH=cam3.mp4
+set VIDEO1_PATH=%~dp0cam1.mp4
+set VIDEO2_PATH=%~dp0cam2.mp4
+set VIDEO3_PATH=%~dp0cam3.mp4
+
 
 set STREAM1_URL=rtsp://127.0.0.1:8554/cam1
 set STREAM2_URL=rtsp://127.0.0.1:8554/cam2
 set STREAM3_URL=rtsp://127.0.0.1:8554/cam3
 
 rem ==== تشغيل MediaMTX مرة واحدة ====
-start "" "%MEDIA_MTX_PATH%"
+start "" "%MEDIA_MTX_PATH%" "%~dp0mediamtx.yml"
 
 timeout /t 5 /nobreak
 
