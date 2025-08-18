@@ -1,26 +1,24 @@
 <?php
+// app/Http/Controllers/Api/AccidentController.php
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Accident;
-use App\Http\Resources\AccidentResource; // <-- تأكد من استيراد الـ Resource
+use App\Http\Resources\AccidentResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Cache; 
 
 class AccidentController extends Controller
 {
-    /**
-     * Store a newly created accident in storage.
-     * This is called by the AI system.
-     */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'camera_id' => 'required|string|max:255|exists:cameras,camera_id',
+            // ✅ تم تعديل التحقق من camera_id ليناسب النوع الرقمي
+            'camera_id' => 'required|integer|exists:cameras,camera_id', 
             'timestamp' => 'required|date',
         ]);
 
@@ -36,57 +34,59 @@ class AccidentController extends Controller
         ], 201);
     }
 
-    /**
-     * Display a listing of new accidents for the frontend.
-     */
-     public function indexAll()
+    public function indexAll()
     {
-        $allAccidents = \App\Models\Accident::with('camera')
-            ->where('created_at', '>=', now()->subHours(24)) 
-            ->latest()
-            ->get();
+        $allAccidents = Cache::remember('all_accidents_24h', now()->addMinutes(10), function () {
+            return Accident::with('camera')
+                ->where('created_at', '>=', now()->subHours(24)) 
+                ->latest()
+                ->get();
+        });
 
         return AccidentResource::collection($allAccidents);
     }
     
-    /**
-     * Update the specified accident's status to 'viewed'.
-     */
     public function markAsViewed(Accident $accident): AccidentResource
     {
         $accident->status = 'viewed';
         $accident->save();
         
-        // Use the Resource here as well for a consistent response
         return new AccidentResource($accident->load('camera'));
     }
 
     /**
-     * Stream new accidents in real-time using Server-Sent Events.
+     * ✅ تم تعديل هذه الدالة بالكامل لتعمل مع الكاش
+     * Stream new accidents in real-time by polling the cache.
      */
-    public function streamNewAccidents(): StreamedResponse
+   public function streamNewAccidents(): StreamedResponse
     {
         $response = new StreamedResponse(function() {
-            set_time_limit(0);
+            while (true) {
+                // 1. اقرأ آخر حادث من الكاش
+                $latestAccident = Cache::get('latest_accident');
 
-            $listener = function ($event) {
-                // Use the resource to format the data before sending
-                $accidentResource = new AccidentResource($event->accident->load('camera'));
+                // 2. تحقق فقط إذا كان هناك حادث جديد
+                if ($latestAccident) {
+                    
+                    $accidentResource = new AccidentResource($latestAccident);
 
-                echo "event: new-accident\n";
-                echo 'data: ' . $accidentResource->toJson() . "\n\n";
+                    // 3. أرسل الحدث إلى المتصفح
+                    echo "event: new-accident\n";
+                    echo 'data: ' . $accidentResource->toJson() . "\n\n";
 
-                ob_flush();
-                flush();
-            };
+                    ob_flush();
+                    flush();
 
-            Event::listen(\App\Events\NewAccidentDetected::class, $listener);
+                    // 4. ✅ الأهم: احذف الحادث من الكاش فوراً بعد إرساله
+                    Cache::forget('latest_accident');
+                }
 
-            while (connection_status() === CONNECTION_NORMAL && !connection_aborted()) {
-                echo ": ping\n\n";
-                ob_flush();
-                flush();
-                sleep(15);
+                // انتظر لمدة ثانيتين قبل المحاولة مرة أخرى
+                sleep(2);
+
+                if (connection_aborted()) {
+                    break;
+                }
             }
         });
 

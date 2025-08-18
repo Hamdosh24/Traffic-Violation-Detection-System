@@ -14,7 +14,7 @@ class AiController extends Controller
     {
         try {
             // جلب الأعمدة المطلوبة فقط
-            $cameras = Camera::select('camera_id', 'rtsp_url', 'status')->get();
+            $cameras = Camera::select('camera_id', 'rtsp_url', 'status')->where('status', 'active')->get();
 
             return response()->json($cameras, 200);
         } catch (\Exception $e) {
