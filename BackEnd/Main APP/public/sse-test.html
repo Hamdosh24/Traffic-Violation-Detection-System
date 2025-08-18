@@ -83,7 +83,7 @@
 
     <script>
         const list = document.getElementById('accidents-list');
-        const eventSource = new EventSource('http://127.0.0.1:8000/api/admin/accidents/stream');
+        const eventSource = new EventSource('http://127.0.0.1:8002/api/admin/accidents/stream');
 
         eventSource.addEventListener('new-accident', event => {
             const accident = JSON.parse(event.data);
