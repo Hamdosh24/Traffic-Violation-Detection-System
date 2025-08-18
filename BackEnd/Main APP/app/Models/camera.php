@@ -27,6 +27,7 @@ class Camera extends Model
         'rtsp_url',
         'hls_path',
         'status',
+        'external_id',
     ];
 
     // علاقة واحد-إلى-عدة مع جدول violations
