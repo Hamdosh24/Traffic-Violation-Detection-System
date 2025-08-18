@@ -730,12 +730,25 @@ pathDefaults:
 # for example "~^(test1|test2)$" will match both "test1" and "test2",
 # for example "~^prefix" will match all paths that start with "prefix".
 paths:
-  mystream:
-    publishUser: ""
-    publishPass: ""
+  cam1: 
+  cam2:
+  cam3:
+  cam4:
+  cam5:
+  cam6:
+  cam7:
+  cam8:
+  cam9:
+  cam10:
+  cam11:
+  cam12:
+  cam13:
+  cam14:
+  cam15:
+  cam16:
 
 
-  # example:
+  # example:f
   # my_camera:
   #   source: rtsp://my_camera
 
