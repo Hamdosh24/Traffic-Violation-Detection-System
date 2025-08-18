@@ -34,7 +34,7 @@ class PrunePassingCars extends Command
         $cutoffDate = Carbon::now()->subHours(48);
 
         // حذف السجلات الأقدم من التاريخ الفاصل
-        $deletedRows = PassingCar::where('created_at', '<', $cutoffDate)->delete();
+        $deletedRows = PassingCar::where('timestamp', '<', $cutoffDate)->delete();
 
         Log::info($deletedRows . ' records were pruned from the passing_cars table.');
         $this->info('Done! ' . $deletedRows . ' records were pruned.');

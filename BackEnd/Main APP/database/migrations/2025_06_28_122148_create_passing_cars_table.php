@@ -28,7 +28,8 @@ return new class extends Migration
 
             // هذان العمودان تضيفهما لارافيل تلقائيًا: created_at و updated_at
             // لتسجيل وقت إنشاء السجل ووقت آخر تعديل عليه
-            $table->timestamps();
+            $table->index('plate_num');
+            $table->index('timestamp');
         });
     }
 
