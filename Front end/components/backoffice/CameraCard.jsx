@@ -3,9 +3,6 @@ import Link from "next/link";
 import React from "react";
 
 const CameraCard = ({ data }) => {
-  console.log("data.camera_id:", data.camera_id);
-  console.log("data.region:", data.region);
-  console.log("data.governorate:", data.governorate);
   return (
     <div className="max-w-4xl mx-auto mt-5 shadow-lg rounded-lg flex justify-between items-center bg-white/50 dark:bg-customDarkGreen p-4 hover:shadow-md transition-all">
       <div className="flex items-center space-x-4 rtl:space-x-reverse">

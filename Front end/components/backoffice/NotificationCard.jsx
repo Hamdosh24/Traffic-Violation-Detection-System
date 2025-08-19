@@ -1,12 +1,6 @@
 "use client";
 import { useState } from "react";
-import {
-  CheckCircle,
-  Clock,
-  MapPin,
-  AlertTriangle,
-  Camera,
-} from "lucide-react";
+import { AlertTriangle, MapPin, Clock, Eye, CheckCheck } from "lucide-react";
 
 export default function NotificationCard({ notification, onMarkAsRead }) {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -18,135 +12,113 @@ export default function NotificationCard({ notification, onMarkAsRead }) {
     setIsUpdating(true);
     try {
       await onMarkAsRead(notification.id);
-    } catch (error) {
-      console.error("Error marking as read:", error);
     } finally {
       setIsUpdating(false);
     }
   };
 
   const formattedDate = new Date(notification.date).toLocaleString("ar-EG", {
-    weekday: "long",
     day: "numeric",
-    month: "long",
-    year: "numeric",
+    month: "short",
     hour: "2-digit",
     minute: "2-digit",
   });
 
   return (
     <div
-      className={`relative p-5 mb-4 rounded-xl transition-all duration-300 ${
+      dir="rtl"
+      className={`relative group overflow-hidden rounded-xl shadow-sm transition-all duration-200 hover:shadow-md ${
         !notification.isRead
-          ? "bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10 border-l-4 border-red-500"
-          : "bg-white dark:bg-gray-800 border-l-4 border-gray-200 dark:border-gray-600"
+          ? "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10"
+          : "bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
       }`}
     >
-      <div className="flex items-start gap-4">
-        <div
-          className={`p-3 rounded-full flex-shrink-0 ${
-            !notification.isRead
-              ? "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-          }`}
-        >
-          <AlertTriangle size={24} />
-        </div>
+      {/* شريط الحالة الجانبي */}
+      <div
+        className={`absolute right-0 top-0 h-full w-1 ${
+          !notification.isRead ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"
+        }`}
+      ></div>
 
-        <div className="flex-1 space-y-3">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3
-                className={`text-xl font-bold ${
+      <div className="relative p-4">
+        <div className="flex items-start gap-3">
+          {/* أيقونة الحالة */}
+          <div
+            className={`p-2 rounded-lg flex-shrink-0 ${
+              !notification.isRead
+                ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+            }`}
+          >
+            <AlertTriangle size={20} />
+          </div>
+
+          {/* محتوى البطاقة */}
+          <div className="flex-1 space-y-2">
+            <div className="flex justify-between items-start gap-2">
+              <div>
+                <h3
+                  className={`font-medium ${
+                    !notification.isRead
+                      ? "text-red-700 dark:text-red-300"
+                      : "text-gray-800 dark:text-gray-200"
+                  }`}
+                >
+                  {notification.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {notification.message}
+                </p>
+              </div>
+
+              <button
+                onClick={handleMarkAsRead}
+                disabled={isUpdating || notification.isRead}
+                className={`p-1.5 rounded-full transition-colors ${
                   !notification.isRead
-                    ? "text-red-700 dark:text-red-300"
-                    : "text-gray-800 dark:text-gray-200"
+                    ? "text-red-600 hover:bg-red-100/50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    : "text-gray-400 cursor-default"
+                }`}
+                aria-label={
+                  notification.isRead ? "تمت المشاهدة" : "تعليم كمقروء"
+                }
+              >
+                {isUpdating ? (
+                  <Clock size={18} className="animate-spin" />
+                ) : notification.isRead ? (
+                  <CheckCheck className="text-customGreen" size={18} />
+                ) : (
+                  <Eye size={18} />
+                )}
+              </button>
+            </div>
+
+            {/* معلومات الموقع */}
+            <div className="flex flex-wrap gap-1.5">
+              <span className="inline-flex items-center text-xs bg-white/80 dark:bg-gray-700/80 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-600">
+                <MapPin size={12} className="ml-1 text-red-500" />
+                {notification.camera.region || "موقع غير معروف"}
+              </span>
+              <span className="inline-flex items-center text-xs bg-white/80 dark:bg-gray-700/80 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-600">
+                الكاميرا #{notification.camera.id}
+              </span>
+            </div>
+
+            {/* التاريخ والحالة */}
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                <Clock size={12} className="ml-1" />
+                {formattedDate}
+              </span>
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  !notification.isRead
+                    ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300"
+                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                 }`}
               >
-                {notification.title}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">
-                {notification.message}
-              </p>
-            </div>
-
-            <button
-              onClick={handleMarkAsRead}
-              disabled={isUpdating}
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                !notification.isRead
-                  ? "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
-              }`}
-            >
-              {isUpdating
-                ? "جاري التحديث..."
-                : !notification.isRead
-                ? "تمت المشاهدة"
-                : "تمت المراجعة"}
-            </button>
-          </div>
-
-          <div className="bg-white dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center">
-                <Camera className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    رقم الكاميرا
-                  </p>
-                  <p className="font-medium">{notification.camera.id}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    المحافظة
-                  </p>
-                  <p className="font-medium">
-                    {notification.camera.governorate}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    المنطقة
-                  </p>
-                  <p className="font-medium">{notification.camera.region}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    الشارع
-                  </p>
-                  <p className="font-medium">{notification.camera.street}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center pt-2">
-            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>{formattedDate}</span>
-            </div>
-            <div className="flex items-center">
-              {notification.isRead ? (
-                <div className="flex items-center text-green-600 dark:text-green-400 text-sm">
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  <span>تمت المراجعة</span>
-                </div>
-              ) : (
-                <div className="flex items-center text-yellow-600 dark:text-yellow-400 text-sm">
-                  <Clock className="h-4 w-4 mr-1" />
-                  <span>جديد</span>
-                </div>
-              )}
+                {!notification.isRead ? "جديد" : "قديم"}
+              </span>
             </div>
           </div>
         </div>
