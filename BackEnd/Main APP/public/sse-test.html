@@ -5,27 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مراقب الحوادث المباشر</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        /* Import a clean, modern font */
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
+        :root {
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent-color: #dc3545;
+            --border-color: #dee2e6;
+        }
 
         body {
-            font-family: 'Cairo', sans-serif;
+            font-family: 'Tajawal', sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
-            color: #333;
+            padding: 2.5rem;
+            background-color: var(--background-color);
+            color: var(--text-primary);
         }
 
         .container {
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
         }
 
-        h1 {
-            color: #1a202c;
-            text-align: center;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .status-dot {
+            height: 12px;
+            width: 12px;
+            background-color: #6c757d; /* Default: disconnected */
+            border-radius: 50%;
+            margin-right: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .status-dot.live {
+            background-color: #28a745; /* Green: connected */
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.error {
+            background-color: var(--accent-color); /* Red: error */
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
         }
 
         #accidents-list {
@@ -34,20 +75,30 @@
         }
 
         .accident-item {
-            background-color: #ffffff;
-            margin-bottom: 12px;
-            padding: 20px;
+            background-color: var(--card-background);
+            margin-bottom: 1rem;
+            padding: 1.5rem;
             border-radius: 8px;
-            border-left: 5px solid #e53e3e; /* شريط تنبيه أحمر */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            border-right: 5px solid var(--accent-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             flex-wrap: wrap;
-            gap: 20px;
-            font-size: 1.1em;
+            gap: 1.5rem;
             opacity: 0;
-            transform: translateY(-20px);
-            animation: fadeIn 0.5s forwards;
+            transform: scale(0.95);
+            animation: popIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        
+        .placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            padding: 3rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
         }
 
         .info-group {
@@ -56,49 +107,64 @@
         }
         
         .info-label {
-            font-size: 0.8em;
-            color: #718096;
-            margin-bottom: 4px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
         }
 
         .info-value {
             font-weight: 700;
-            color: #2d3748;
+            font-size: 1.1em;
+            color: var(--text-primary);
         }
         
-        @keyframes fadeIn {
+        @keyframes popIn {
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: scale(1);
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>لوحة مراقبة الحوادث المباشرة</h1>
+        <div class="header">
+            <span id="status-indicator" class="status-dot"></span>
+            <h1>لوحة مراقبة الحوادث المباشرة</h1>
+        </div>
+        
         <ul id="accidents-list">
-            </ul>
+            <div id="placeholder" class="placeholder">
+                في انتظار وصول إشعارات حوادث جديدة...
+            </div>
+        </ul>
     </div>
 
     <script>
         const list = document.getElementById('accidents-list');
+        const placeholder = document.getElementById('placeholder');
+        const statusIndicator = document.getElementById('status-indicator');
+
         const eventSource = new EventSource('http://127.0.0.1:8002/api/admin/accidents/stream');
 
+        // Event listener for new accidents
         eventSource.addEventListener('new-accident', event => {
+            // Hide the placeholder message if it's visible
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            
             const accident = JSON.parse(event.data);
             console.log('New accident received:', accident);
 
-            // 1. نستخرج البيانات المطلوبة
             const cameraNumber = accident.camera.camera_id;
             const location = `${accident.camera.street}, ${accident.camera.region}`;
             const time = new Date(accident.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            // 2. ننشئ عنصر القائمة الجديد بتصميم محسّن
             const newLi = document.createElement('li');
-            newLi.className = 'accident-item'; // تطبيق الستايل الجديد
+            newLi.className = 'accident-item';
             
-            // 3. نستخدم innerHTML لإضافة هيكل HTML داخلي منسق
             newLi.innerHTML = `
                 <div class="info-group">
                     <span class="info-label">كاميرا رقم</span>
@@ -117,12 +183,16 @@
             list.prepend(newLi);
         });
 
-        eventSource.onerror = error => {
-            console.error('EventSource connection failed:', error);
-        };
-
+        // Handle connection opening
         eventSource.onopen = () => {
             console.log('Connection to SSE stream established.');
+            statusIndicator.className = 'status-dot live';
+        };
+
+        // Handle connection errors
+        eventSource.onerror = error => {
+            console.error('EventSource connection failed:', error);
+            statusIndicator.className = 'status-dot error';
         };
     </script>
 </body>
