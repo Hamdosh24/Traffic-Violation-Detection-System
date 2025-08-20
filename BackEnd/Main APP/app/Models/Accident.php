@@ -10,7 +10,7 @@ class Accident extends Model
 {
     use HasFactory;
 
-    // --- إعدادات مفتاح UUID الأساسي ---
+    // المفتاح الأساسي
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -22,22 +22,50 @@ class Accident extends Model
         'camera_id',
         'timestamp',
         'status',
+        'claimed_by',
+        'claimed_at',
     ];
 
     /**
-     * دالة لإنشاء UUID تلقائيًا عند إنشاء سجل جديد
+     * تحويل الحقول
+     */
+    protected $casts = [
+        'claimed_at' => 'datetime',
+    ];
+
+    /**
+     * إنشاء UUID تلقائياً عند إنشاء سجل جديد
      */
     protected static function booted()
     {
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = Str::uuid();
+                $model->{$model->getKeyName()} = (string) Str::uuid();
             }
         });
     }
 
+    /**
+     * تفعيل Route Model Binding باستخدام UUID
+     */
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
+
+    /**
+     * العلاقة مع الكاميرا
+     */
     public function camera()
     {
-        return $this->belongsTo(camera::class, 'camera_id', 'camera_id');
+        return $this->belongsTo(Camera::class, 'camera_id', 'camera_id');
+    }
+
+    /**
+     * علاقة مع الموظف الذي تبنى الحادث
+     */
+    public function claimer()
+    {
+        return $this->belongsTo(User::class, 'claimed_by', 'user_id');
     }
 }

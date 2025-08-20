@@ -61,7 +61,10 @@ Route::middleware(['auth:sanctum', 'token.expires', 'employee'])->group(function
 });
 
 // استقبال بيانات الكاميرات الجديدة من النظام الخارجي
-Route::post('/ex_cameras', [CameraReceiverController::class, 'receive'])->middleware('check.external.api_key');
+Route::prefix('ex_cameras')->middleware('check.external.api_key')->group(function () {
+    Route::post('/', [CameraReceiverController::class, 'receive']);     // إنشاء أو تعديل كاميرا
+    Route::delete('/{external_id}', [CameraReceiverController::class, 'destroy']);      // حذف كاميرا
+});
 
 // cameras for AI
 Route::get('/AI/cameras', [AiController::class, 'index'])->middleware('check.external.api_key');
