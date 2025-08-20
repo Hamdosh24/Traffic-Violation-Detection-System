@@ -3,9 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CameraController;
-use App\Http\Controllers\StreamController;
 
-
-Route::post('/camera', [CameraController::class, 'store']);
-
-Route::GET('/stream/{id}', [StreamController::class, 'streamById']);
+Route::prefix('camera')->group(function () {
+    Route::post('/', [CameraController::class, 'store']);
+    Route::put('/{id}', [CameraController::class, 'update']);
+    Route::delete('/{id}', [CameraController::class, 'destroy']);
+});

@@ -54,7 +54,7 @@ export default function Login() {
     <div className="w-full p-8 bg-customDarkGreenbg rounded-lg shadow-lg">
       <form className="space-y-6" onSubmit={handleSubmit}>
         <h5 className="text-2xl text-center font-bold text-milkColor">
-          Sign in to your account
+          تسجيل الدخول
         </h5>
 
         {error && (
@@ -68,7 +68,7 @@ export default function Login() {
             htmlFor="email"
             className="block mb-2 text-sm font-medium text-gray-700"
           >
-            Email address
+            البريد الالكتروني
           </label>
           <input
             type="email"
@@ -87,7 +87,7 @@ export default function Login() {
             htmlFor="password"
             className="block mb-2 text-sm font-medium text-gray-700"
           >
-            Password
+            كلمة السر
           </label>
           <input
             type="password"
@@ -131,7 +131,7 @@ export default function Login() {
               جاري المعالجة...
             </>
           ) : (
-            "Login to your account"
+            "تسجيل الدخول"
           )}
         </button>
       </form>
