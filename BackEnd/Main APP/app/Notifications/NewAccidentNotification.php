@@ -1,4 +1,5 @@
 <?php
+
 // app/Notifications/NewAccidentNotification.php
 
 namespace App\Notifications;

@@ -12,7 +12,7 @@ class CheckExternalApiKey
         $providedKey = $request->header('X-API-KEY');
         $validKey = config('services.external_system.api_key');
 
-        if (!$providedKey || $providedKey !== $validKey) {
+        if (! $providedKey || $providedKey !== $validKey) {
             return response()->json(['message' => 'Unauthorized. Invalid API Key.'], 401);
         }
 

@@ -1,10 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AccidentController;
 use App\Http\Controllers\Api\PassingCarController;
-
-
+use Illuminate\Support\Facades\Route;
 
 Route::get('/accidents/stream', action: [AccidentController::class, 'streamNewAccidents']);
 
@@ -14,5 +12,3 @@ Route::middleware(['auth:sanctum', 'token.expires', 'employee'])->group(function
     Route::get('/accidents/all', [AccidentController::class, 'indexAll']);
     Route::get('/passing-cars/search/{plate_num}', [PassingCarController::class, 'searchByPlate']); //
 });
-
-

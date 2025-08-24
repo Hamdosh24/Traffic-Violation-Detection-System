@@ -38,7 +38,7 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('api')
                 ->prefix('api/system')
                 ->group(base_path('routes/api/system.php'));
-            
+
             // THIS IS THE FIX: Load your admin routes
             Route::middleware('api')
                 ->prefix('api/admin')

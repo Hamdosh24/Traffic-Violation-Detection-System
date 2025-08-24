@@ -17,9 +17,10 @@ class CheckManagerRole
     {
         $user = $request->user();
 
-        if (!$user || !$user->roles()->where('role_name', 'Manager')->exists()) {
+        if (! $user || ! $user->roles()->where('role_name', 'Manager')->exists()) {
             return response()->json(['message' => 'Unauthorized - You are not a manager'], 403);
         }
+
         return $next($request);
     }
 }

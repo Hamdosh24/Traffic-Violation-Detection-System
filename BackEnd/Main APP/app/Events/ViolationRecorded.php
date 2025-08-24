@@ -11,6 +11,7 @@ class ViolationRecorded
     use Dispatchable, SerializesModels;
 
     public Violation $violation;
+
     public array $driverInfo;
 
     public function __construct(Violation $violation, array $driverInfo)

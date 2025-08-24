@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\ActivityLog;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityLogController extends Controller
 {
@@ -15,10 +15,10 @@ class ActivityLogController extends Controller
         try {
             // أولًا تحقق من المدخلات (validation)
             $validated = $request->validate([
-                'action'    => 'nullable|string',
-                'username'  => 'nullable|string',
+                'action' => 'nullable|string',
+                'username' => 'nullable|string',
                 'from_time' => 'nullable|date',
-                'to_time'   => 'nullable|date',
+                'to_time' => 'nullable|date',
             ]);
 
             // قراءة القيم بعد التحقق
@@ -37,16 +37,16 @@ class ActivityLogController extends Controller
             }
 
             if ($username !== 'كل المستخدمين') {
-            $users = User::where('user_name', 'LIKE', '%' . $username . '%')->pluck('user_id');
+                $users = User::where('user_name', 'LIKE', '%'.$username.'%')->pluck('user_id');
 
-            if ($users->isEmpty()) {
-                return response()->json([
-                    'error' => "لا يوجد مستخدم يحتوي اسمه على: $username",
-                ], 404);
+                if ($users->isEmpty()) {
+                    return response()->json([
+                        'error' => "لا يوجد مستخدم يحتوي اسمه على: $username",
+                    ], 404);
+                }
+
+                $query->whereIn('user_id', $users);
             }
-
-            $query->whereIn('user_id', $users);
-        }
 
             $query->whereBetween('created_at', [$fromTime, $toTime]);
 
@@ -54,22 +54,22 @@ class ActivityLogController extends Controller
                 ->get()
                 ->map(function ($log) {
                     return [
-                        'user_name'   => $log->user ? $log->user->user_name : null,
-                        'action'      => $log->action_type,
+                        'user_name' => $log->user ? $log->user->user_name : null,
+                        'action' => $log->action_type,
                         'description' => $log->description,
-                        'model_type'  => $log->model_type,
-                        'time'        => $log->created_at->toDateTimeString(),
+                        'model_type' => $log->model_type,
+                        'time' => $log->created_at->toDateTimeString(),
                     ];
                 });
 
             ActivityLog::create([
-                'user_id'     => Auth::user()->user_id ?? null,
+                'user_id' => Auth::user()->user_id ?? null,
                 'action_type' => 'عرض سجل الانشطة',
                 'description' => "عرض سجل الانشطة حسب الفلاتر: نوع الحدث = {$actionType}, اسم المستخدم = {$username}, من الوقت = {$fromTime}, لإلى الوقت = {$toTime}.",
-                'model_type'  => 'ActivityLog',
-                'model_id'    => null,
-                'ip_address'  => $request->ip(),
-                'user_agent'  => $request->userAgent(),
+                'model_type' => 'ActivityLog',
+                'model_id' => null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
 
             return response()->json($logs);
@@ -87,5 +87,4 @@ class ActivityLogController extends Controller
             ], 500);
         }
     }
-
 }

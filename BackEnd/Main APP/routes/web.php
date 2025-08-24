@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ViolationController; // This line is new and important
-
+use App\Http\Controllers\Api\ViolationController;
+use Illuminate\Support\Facades\Route; // This line is new and important
 
 Route::get('/', function () {
     return view('welcome');

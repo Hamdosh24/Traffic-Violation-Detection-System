@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Statistics;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Violation;
 use App\Models\Accident;
+use App\Models\ActivityLog;
+use App\Models\Violation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Models\ActivityLog;
-use Illuminate\Support\Facades\Auth;
 
 class StatisticsController extends Controller
 {
@@ -18,11 +18,11 @@ class StatisticsController extends Controller
     {
         try {
             $validated = $request->validate([
-                'type_name'   => 'required|string',
+                'type_name' => 'required|string',
                 'governorate' => 'required|string',
-                'region'      => 'required|string',
-                'from_date'   => 'required|date',
-                'to_date'     => 'required|date',
+                'region' => 'required|string',
+                'from_date' => 'required|date',
+                'to_date' => 'required|date',
             ]);
 
             $isAccident = strtolower($validated['type_name']) === 'حوادث';
@@ -31,13 +31,13 @@ class StatisticsController extends Controller
 
             // ضبط بداية ونهاية اليوم
             $from = \Carbon\Carbon::parse($validated['from_date'])->startOfDay();
-            $to   = \Carbon\Carbon::parse($validated['to_date'])->endOfDay();
+            $to = \Carbon\Carbon::parse($validated['to_date'])->endOfDay();
 
             // حساب عدد الأيام شامل اليوم الأخير
             $days = $from->diffInDays($to) + 1;
 
             // بناء الاستعلام
-            if (!$isAccident) {
+            if (! $isAccident) {
                 $query = $baseModel::query()
                     ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
@@ -62,9 +62,9 @@ class StatisticsController extends Controller
 
             // جلب البيانات مجمعة حسب الساعة
             $violations = $query->select(
-                    DB::raw("HOUR($tableName.timestamp) as hour"),
-                    DB::raw("COUNT(*) as count")
-                )
+                DB::raw("HOUR($tableName.timestamp) as hour"),
+                DB::raw('COUNT(*) as count')
+            )
                 ->groupBy('hour')
                 ->orderBy('hour')
                 ->get();
@@ -73,25 +73,25 @@ class StatisticsController extends Controller
             $result = [];
             for ($i = 0; $i < 24; $i++) {
                 $next = ($i + 1) % 24;
-                $label = $i . '-' . $next;
+                $label = $i.'-'.$next;
                 $result[$label] = 0;
             }
 
             // تعبئة المتوسط لكل ساعة
             foreach ($violations as $v) {
                 $next = ($v->hour + 1) % 24;
-                $label = $v->hour . '-' . $next;
+                $label = $v->hour.'-'.$next;
                 $result[$label] = round($v->count / $days, 2);
             }
 
             ActivityLog::create([
-                'user_id'     => Auth::user()->user_id ?? null,
+                'user_id' => Auth::user()->user_id ?? null,
                 'action_type' => 'عرض الاحصاءات',
                 'description' => "عرض إحصاءات {$validated['type_name']} (كمعدل يومي) حسب ساعات اليوم في {$validated['region']},{$validated['governorate']} من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
-                'model_type'  => 'Violation | Accident',
-                'model_id'    => null,
-                'ip_address'  => $request->ip(),
-                'user_agent'  => $request->userAgent(),
+                'model_type' => 'Violation | Accident',
+                'model_id' => null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
 
             return response()->json([
@@ -116,10 +116,10 @@ class StatisticsController extends Controller
     {
         try {
             $validated = $request->validate([
-                'type_name'   => 'required|string',
+                'type_name' => 'required|string',
                 'governorate' => 'required|string',
-                'from_date'   => 'required|date',
-                'to_date'     => 'required|date',
+                'from_date' => 'required|date',
+                'to_date' => 'required|date',
             ]);
 
             $isAccident = strtolower($validated['type_name']) === 'حوادث';
@@ -129,9 +129,9 @@ class StatisticsController extends Controller
 
             // ضبط نطاق التاريخ ليشمل كامل اليوم
             $from = \Carbon\Carbon::parse($validated['from_date'])->startOfDay();
-            $to   = \Carbon\Carbon::parse($validated['to_date'])->endOfDay();
+            $to = \Carbon\Carbon::parse($validated['to_date'])->endOfDay();
 
-            if (!$isAccident) {
+            if (! $isAccident) {
                 $query = $baseModel::query()
                     ->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id')
                     ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
@@ -152,9 +152,9 @@ class StatisticsController extends Controller
 
             // جلب البيانات مجمعة حسب المنطقة
             $violationsByRegion = $query->select(
-                    'cameras.region',
-                    DB::raw('COUNT(*) as count')
-                )
+                'cameras.region',
+                DB::raw('COUNT(*) as count')
+            )
                 ->groupBy('cameras.region')
                 ->orderBy('cameras.region')
                 ->get();
@@ -164,7 +164,7 @@ class StatisticsController extends Controller
             foreach ($violationsByRegion as $item) {
                 $result[] = [
                     'region' => $item->region,
-                    'count'  => $item->count,
+                    'count' => $item->count,
                 ];
             }
 
@@ -172,36 +172,38 @@ class StatisticsController extends Controller
             if (empty($result)) {
                 $result[] = [
                     'region' => 'كل المناطق',
-                    'count'  => 0,
+                    'count' => 0,
                 ];
             }
 
             ActivityLog::create([
-                'user_id'     => Auth::user()->user_id ?? null,
+                'user_id' => Auth::user()->user_id ?? null,
                 'action_type' => 'عرض الاحصاءات',
                 'description' => "عرض إحصاءات {$validated['type_name']} حسب توزعها في المناطق من تاريخ {$validated['from_date']} إلى تاريخ {$validated['to_date']}",
-                'model_type'  => 'Violation | Accident',
-                'model_id'    => null,
-                'ip_address'  => $request->ip(),
-                'user_agent'  => $request->userAgent(),
+                'model_type' => 'Violation | Accident',
+                'model_id' => null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
 
             return response()->json([
                 'status' => true,
-                'data'   => $result,
+                'data' => $result,
             ]);
 
         } catch (ValidationException $e) {
-            Log::error('فشل التحقق من البيانات: ' . json_encode($e->errors()));
+            Log::error('فشل التحقق من البيانات: '.json_encode($e->errors()));
+
             return response()->json([
                 'status' => false,
                 'message' => 'فشل التحقق من البيانات.',
-                'errors'  => $e->errors(),
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('خطأ في getViolationsByRegion: ' . $e->getMessage());
+            Log::error('خطأ في getViolationsByRegion: '.$e->getMessage());
+
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'حدث خطأ أثناء معالجة الطلب.',
             ], 500);
         }

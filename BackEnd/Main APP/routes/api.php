@@ -1,19 +1,18 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Statistics\StatisticsController;
-use App\Http\Controllers\Statistics\FiltersController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\CameraController;
-use App\Http\Controllers\Api\CameraReceiverController;
 use App\Http\Controllers\Api\AiController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CameraReceiverController;
 use App\Http\Controllers\Api\WebhookController;
-use App\Http\Controllers\Dashboard\ChartsController;
+use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Dashboard\BasicInfosController;
-
+use App\Http\Controllers\Dashboard\ChartsController;
+use App\Http\Controllers\Statistics\FiltersController;
+use App\Http\Controllers\Statistics\StatisticsController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 // Public route for user login
 Route::post('/login', [AuthController::class, 'login'])->middleware('customThrottle:5,1');
@@ -26,7 +25,7 @@ Route::middleware(['auth:sanctum', 'token.expires'])->get('/user', function (Req
 // Routes from the 'kareem' branch
 Route::prefix('admin')->group(base_path('routes/api/admin.php'));
 Route::prefix('system')->group(base_path('routes/api/system.php'));
-//------------------------
+// ------------------------
 
 // CRUD System
 Route::prefix('admin')->middleware(['auth:sanctum', 'token.expires', 'manager'])->group(function () {

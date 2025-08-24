@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\ViolationType; // استدعاء المودل الخاص بجدول أنواع المخالفات
+use App\Models\ViolationType;
+use Illuminate\Http\Request; // استدعاء المودل الخاص بجدول أنواع المخالفات
 use Illuminate\Support\Facades\Log; // لاستخدام اللوقات لتسجيل العمليات
 
 class WebhookController extends Controller
@@ -12,7 +12,6 @@ class WebhookController extends Controller
     /**
      * يستقبل تحديثات قيمة الغرامة من النظام الخارجي عبر Webhook.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function handleFineUpdate(Request $request)
@@ -37,7 +36,7 @@ class WebhookController extends Controller
             // 4. إرجاع رسالة نجاح
             return response()->json([
                 'status' => 'success',
-                'message' => 'Violation fine amount updated successfully.'
+                'message' => 'Violation fine amount updated successfully.',
             ], 200);
 
         } else {
@@ -46,7 +45,7 @@ class WebhookController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Violation key not found.'
+                'message' => 'Violation key not found.',
             ], 404); // 404 Not Found
         }
     }

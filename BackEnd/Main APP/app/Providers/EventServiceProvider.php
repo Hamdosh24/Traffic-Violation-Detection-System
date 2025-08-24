@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Auth\Events\Login;
-use Illuminate\Auth\Events\Logout;
+use App\Events\ViolationRecorded;
 use App\Listeners\LogSuccessfulLogin;
 use App\Listeners\LogSuccessfulLogout;
-use App\Events\ViolationRecorded; // <-- إضافة جديدة
-use App\Listeners\SendViolationNotifications; // <-- إضافة جديدة
+use App\Listeners\SendViolationNotifications;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout; // <-- إضافة جديدة
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider; // <-- إضافة جديدة
 
 class EventServiceProvider extends ServiceProvider
 {

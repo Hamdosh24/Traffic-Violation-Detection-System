@@ -11,7 +11,9 @@ class ViolationType extends Model
     use HasFactory, HasUuids;
 
     protected $primaryKey = 'v_type_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     /**
@@ -25,7 +27,6 @@ class ViolationType extends Model
         'key',
         'fine_amount',
     ];
-
 
     public function violations()
     {

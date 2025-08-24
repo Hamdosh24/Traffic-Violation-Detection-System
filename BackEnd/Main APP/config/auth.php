@@ -43,7 +43,7 @@ return [
         'api' => [
             'driver' => 'sanctum',
             'provider' => 'users',
-    ],
+        ],
     ],
 
     /*
@@ -63,9 +63,6 @@ return [
     |
     */
 
-
-
-    
     'providers' => [
         'users' => [
             'driver' => 'eloquent',

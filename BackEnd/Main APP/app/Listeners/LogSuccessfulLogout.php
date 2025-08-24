@@ -2,10 +2,8 @@
 
 namespace App\Listeners;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Auth\Events\Logout;
 use App\Models\ActivityLog;
+use Illuminate\Auth\Events\Logout;
 
 class LogSuccessfulLogout
 {

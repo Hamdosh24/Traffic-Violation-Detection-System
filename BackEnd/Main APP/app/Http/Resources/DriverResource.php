@@ -16,7 +16,7 @@ class DriverResource extends JsonResource
     {
         return [
             // التعديل: تم تغيير طريقة الوصول من -> إلى [] لتناسب المصفوفات
-            'full_name' => $this['first_name'] . ' ' . $this['last_name'],
+            'full_name' => $this['first_name'].' '.$this['last_name'],
             'phone_num' => $this['phone_num'],
             'plate_num' => $this['plate_num'],
         ];
