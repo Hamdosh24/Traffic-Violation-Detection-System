@@ -14,13 +14,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AccidentController extends Controller
 {
-    /**
-     * ✅ هذه هي الدالة المفقودة
-     * Store a new accident. Called by the AI system.
-     */
     public function store(StoreAccidentRequest $request): JsonResponse
     {
-            return response()->json(['errors' => $validator->errors()], 422);
         // 3. تم حذف كل كود التحقق والتعامل مع الأخطاء
 
         $accident = Accident::create($request->validated());
