@@ -51,10 +51,10 @@ class Violation extends Model
         return $this->belongsTo(ViolationType::class, 'v_type_id', 'v_type_id');
     }
 
-    
+    // In Violation.php
     public function camera()
     {
+        // Explicitly define the foreign and owner keys
         return $this->belongsTo(Camera::class, 'camera_id', 'camera_id');
     }
-
 }

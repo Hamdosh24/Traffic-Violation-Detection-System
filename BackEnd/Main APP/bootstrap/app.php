@@ -3,8 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\CheckManagerRole;
-
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,12 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         //
         // $middleware->alias('manager', \App\Http\Middleware\CheckManagerRole::class);
         $middleware->alias([
-                'manager' => \App\Http\Middleware\CheckManagerRole::class,
-                'employee' => \App\Http\Middleware\CheckEmployee::class,
-                'customThrottle' => \App\Http\Middleware\CustomThrottleRequests::class,
-                'token.expires' => \App\Http\Middleware\TokenExpiryMiddleware::class,
-                'check.external.api_key' => \App\Http\Middleware\CheckExternalApiKey::class,
-]);
+            'manager' => \App\Http\Middleware\CheckManagerRole::class,
+            'employee' => \App\Http\Middleware\CheckEmployee::class,
+            'customThrottle' => \App\Http\Middleware\CustomThrottleRequests::class,
+            'token.expires' => \App\Http\Middleware\TokenExpiryMiddleware::class,
+            'check.external.api_key' => \App\Http\Middleware\CheckExternalApiKey::class,
+        ]);
 
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -32,7 +32,7 @@ class SendViolationNotifications implements ShouldQueue
         // 2. إرسال إشعار Telegram
         // <-- 2. استدعاء الـ Builder للحصول على الرسالة بدلاً من بنائها هنا
         $message = ViolationMessageBuilder::buildTelegramMessage($event->violation, $event->driverInfo);
-        
+
         $this->telegramService->sendMessage($message);
     }
 }

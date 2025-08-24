@@ -15,12 +15,12 @@ class ViolationMessageBuilder
         $location = self::getViolationLocation($violation);
 
         return "*تم تسجيل مخالفة جديدة* 🚗\n\n"
-            . "*اسم السائق:* " . ($driverName ?: 'غير متوفر') . "\n"
-            . "*رقم اللوحة:* " . $violation->plate_num . "\n"
-            . "*نوع المخالفة:* " . $violation->violationType?->type_name . "\n"
-            . "*قيمة الغرامة:* " . $violation->violationType?->fine_amount . " ليرة \n"
-            . "*الموقع:* " . ($location ?: 'غير محدد') . "\n"
-            . "*الوقت:* " . $violation->timestamp;
+            .'*اسم السائق:* '.($driverName ?: 'غير متوفر')."\n"
+            .'*رقم اللوحة:* '.$violation->plate_num."\n"
+            .'*نوع المخالفة:* '.$violation->violationType?->type_name."\n"
+            .'*قيمة الغرامة:* '.$violation->violationType?->fine_amount." ليرة \n"
+            .'*الموقع:* '.($location ?: 'غير محدد')."\n"
+            .'*الوقت:* '.$violation->timestamp;
     }
 
     /**
@@ -28,7 +28,7 @@ class ViolationMessageBuilder
      */
     public static function getDriverFullName(array $driverInfo): string
     {
-        return trim(($driverInfo['first_name'] ?? '') . ' ' . ($driverInfo['last_name'] ?? ''));
+        return trim(($driverInfo['first_name'] ?? '').' '.($driverInfo['last_name'] ?? ''));
     }
 
     /**

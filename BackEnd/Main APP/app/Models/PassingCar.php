@@ -12,7 +12,9 @@ class PassingCar extends Model
 
     // --- نفس الإعدادات الاحترافية لمفتاح UUID الأساسي ---
     protected $primaryKey = 'p_car_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     // الحقول التي نسمح بتعبئتها

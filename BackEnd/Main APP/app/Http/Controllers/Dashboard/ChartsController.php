@@ -1,12 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\Violation;
 use App\Models\Accident;
+use App\Models\Violation;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class ChartsController extends Controller
 {
@@ -28,7 +29,7 @@ class ChartsController extends Controller
             $result = $violations->map(function ($violation) use ($total) {
                 return [
                     'type' => $violation->violationType->type_name ?? 'غير معروف',
-                    'percentage' => round(($violation->total / $total) * 100, 2)
+                    'percentage' => round(($violation->total / $total) * 100, 2),
                 ];
             });
 
@@ -50,11 +51,11 @@ class ChartsController extends Controller
 
             // جلب بيانات المخالفات من قاعدة البيانات مع تحويلها إلى مصفوفة date => total
             $violations = Violation::select(
-                    DB::raw("DATE(timestamp) as date"),
-                    DB::raw("count(*) as total")
-                )
+                DB::raw('DATE(timestamp) as date'),
+                DB::raw('count(*) as total')
+            )
                 ->whereBetween('timestamp', [$startDate, $endDate])
-                ->groupBy(DB::raw("DATE(timestamp)"))
+                ->groupBy(DB::raw('DATE(timestamp)'))
                 ->orderBy('date')
                 ->pluck('total', 'date');
 
@@ -66,7 +67,7 @@ class ChartsController extends Controller
                 $dateStr = $currentDate->toDateString();
                 $trendData[] = [
                     'date' => $dateStr,
-                    'total' => $violations[$dateStr] ?? 0
+                    'total' => $violations[$dateStr] ?? 0,
                 ];
                 $currentDate->addDay();
             }
@@ -80,7 +81,6 @@ class ChartsController extends Controller
         }
     }
 
-
     // 3. خط زمني للحوادث
     public function getAccidentsTrendLine()
     {
@@ -90,11 +90,11 @@ class ChartsController extends Controller
 
             // جلب بيانات الحوادث من قاعدة البيانات
             $accidents = Accident::select(
-                    DB::raw("DATE(timestamp) as date"),
-                    DB::raw("count(*) as total")
-                )
+                DB::raw('DATE(timestamp) as date'),
+                DB::raw('count(*) as total')
+            )
                 ->whereBetween('timestamp', [$startDate, $endDate])
-                ->groupBy(DB::raw("DATE(timestamp)"))
+                ->groupBy(DB::raw('DATE(timestamp)'))
                 ->orderBy('date')
                 ->pluck('total', 'date'); // يرجع [ '2025-08-10' => 5, ...]
 
@@ -106,7 +106,7 @@ class ChartsController extends Controller
                 $dateStr = $currentDate->toDateString();
                 $trendData[] = [
                     'date' => $dateStr,
-                    'total' => $accidents[$dateStr] ?? 0
+                    'total' => $accidents[$dateStr] ?? 0,
                 ];
                 $currentDate->addDay();
             }

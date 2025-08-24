@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Camera;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Camera;
 
 class CameraReceiverController extends Controller
 {
@@ -28,7 +28,7 @@ class CameraReceiverController extends Controller
         if ($validated->fails()) {
             return response()->json([
                 'status' => 'error',
-                'errors' => $validated->errors()
+                'errors' => $validated->errors(),
             ], 422);
         }
 
@@ -37,10 +37,10 @@ class CameraReceiverController extends Controller
             ['external_id' => $request->external_id],
             $validated->validated()
         );
-        
+
         return response()->json([
             'status' => 'success',
-            'message' => 'تم استقبال البيانات وتخزينها بنجاح'
+            'message' => 'تم استقبال البيانات وتخزينها بنجاح',
         ]);
     }
 
@@ -51,10 +51,10 @@ class CameraReceiverController extends Controller
     {
         $camera = Camera::where('external_id', $external_id)->first();
 
-        if (!$camera) {
+        if (! $camera) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Camera not found'
+                'message' => 'Camera not found',
             ], 404);
         }
 
@@ -62,7 +62,7 @@ class CameraReceiverController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Camera deleted successfully'
+            'message' => 'Camera deleted successfully',
         ]);
     }
 }

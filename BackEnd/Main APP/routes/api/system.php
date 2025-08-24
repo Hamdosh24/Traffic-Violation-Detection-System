@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ViolationController;
-use App\Http\Controllers\Api\PassingCarController;
 use App\Http\Controllers\Api\AccidentController;
+use App\Http\Controllers\Api\PassingCarController;
+use App\Http\Controllers\Api\ViolationController;
+use Illuminate\Support\Facades\Route;
 
 // All routes here are protected and used by the AI System
 Route::middleware('check.external.api_key')->group(function () {

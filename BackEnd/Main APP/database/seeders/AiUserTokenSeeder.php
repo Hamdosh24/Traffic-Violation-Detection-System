@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class AiUserTokenSeeder extends Seeder
@@ -24,7 +24,7 @@ class AiUserTokenSeeder extends Seeder
                 'phone_num' => '0999999999',
                 'age' => 0,
                 'gender' => 'male',
-                'password' => Str::random(16) // كلمة مرور عشوائية قوية
+                'password' => Str::random(16), // كلمة مرور عشوائية قوية
             ]
         );
 

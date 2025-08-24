@@ -8,8 +8,8 @@ use App\Http\Requests\StoreViolationRequest;
 use App\Models\Violation;
 use App\Models\ViolationType;
 use App\Services\TrafficAPIService;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class ViolationController extends Controller
 {
@@ -20,7 +20,7 @@ class ViolationController extends Controller
         try {
             $driverInfo = $trafficService->getDriverInfoByPlate($request->plate_number);
         } catch (\Exception $e) {
-            Log::error('API Call Failed: ' . $e->getMessage());
+            Log::error('API Call Failed: '.$e->getMessage());
         }
 
         if ($driverInfo === null) {
@@ -36,7 +36,7 @@ class ViolationController extends Controller
             'plate_num' => $request->plate_number,
             'timestamp' => $request->timestamp,
         ]);
-        
+
         $violation->load('violationType', 'camera');
 
         // سيتم إطلاق الحدث مع بيانات السائق الكاملة للمعالجة في الخلفية
@@ -45,7 +45,7 @@ class ViolationController extends Controller
         // التعديل هنا: تم حذف حقل driver_info من الاستجابة
         return response()->json([
             'message' => 'Violation recorded successfully.',
-            'v_id'    => $violation->v_id,
+            'v_id' => $violation->v_id,
         ], 201);
     }
 
@@ -53,8 +53,8 @@ class ViolationController extends Controller
     {
         return [
             'first_name' => null,
-            'last_name'  => null,
-            'email'      => null,
+            'last_name' => null,
+            'email' => null,
             'license_no' => null,
         ];
     }

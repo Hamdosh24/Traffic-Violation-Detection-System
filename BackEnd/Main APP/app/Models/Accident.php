@@ -12,7 +12,9 @@ class Accident extends Model
 
     // المفتاح الأساسي
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     /**

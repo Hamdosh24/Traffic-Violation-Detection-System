@@ -11,7 +11,7 @@ class ViolationsAndAccidentsSeeder extends Seeder
     public function run(): void
     {
         $startDate = strtotime('2025-01-01');
-        $endDate   = strtotime('2025-08-10');
+        $endDate = strtotime('2025-08-10');
 
         // 100 مخالفة
         for ($i = 0; $i < 200; $i++) {
@@ -24,7 +24,7 @@ class ViolationsAndAccidentsSeeder extends Seeder
                 'v_id' => Str::uuid(),
                 'v_type_id' => $this->getRandomVTypeUUID(),
                 'camera_id' => (string) rand(1, 16),
-                'plate_num' => strtoupper(Str::random(3)) . rand(1000, 9999),
+                'plate_num' => strtoupper(Str::random(3)).rand(1000, 9999),
                 'timestamp' => $randomTimestamp,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -56,8 +56,8 @@ class ViolationsAndAccidentsSeeder extends Seeder
             for ($i = 1; $i <= 5; $i++) {
                 DB::table('violation_types')->insert([
                     'v_type_id' => Str::uuid(),
-                    'type_name' => 'Type ' . $i,
-                    'key' => 'type_' . $i,
+                    'type_name' => 'Type '.$i,
+                    'key' => 'type_'.$i,
                     'fine_amount' => rand(50, 500) * 10,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -65,6 +65,7 @@ class ViolationsAndAccidentsSeeder extends Seeder
             }
             $ids = DB::table('violation_types')->pluck('v_type_id')->toArray();
         }
+
         return $ids[array_rand($ids)];
     }
 }

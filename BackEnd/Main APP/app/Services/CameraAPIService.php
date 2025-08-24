@@ -15,13 +15,15 @@ class CameraAPIService
 
     public function getAllCameras(): ?array
     {
-        $response = Http::acceptJson()->get($this->baseUrl . '/cameras');
+        $response = Http::acceptJson()->get($this->baseUrl.'/cameras');
+
         return $response->successful() ? $response->json() : null;
     }
 
     public function getCameraById(string $cameraId): ?array
     {
-        $response = Http::acceptJson()->get($this->baseUrl . '/cameras/' . $cameraId);
+        $response = Http::acceptJson()->get($this->baseUrl.'/cameras/'.$cameraId);
+
         return $response->successful() ? $response->json() : null;
     }
 }

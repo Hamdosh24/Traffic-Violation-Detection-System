@@ -1,13 +1,14 @@
 <?php
+
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\Violation;
 use App\Models\Accident;
 use App\Models\Camera;
-use Illuminate\Support\Facades\DB;
+use App\Models\Violation;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class BasicInfosController extends Controller
 {
@@ -35,12 +36,9 @@ class BasicInfosController extends Controller
                 ->pluck('total')
                 ->first();
 
-            if ($maxCount === null) 
-            {
+            if ($maxCount === null) {
                 $mostCommonViolations = collect();
-            } 
-            else 
-            {
+            } else {
                 $mostCommonViolations = Violation::whereBetween('timestamp', [$startOfMonth, $endOfMonth])
                     ->select('v_type_id', DB::raw('count(*) as total'))
                     ->groupBy('v_type_id')
@@ -64,7 +62,6 @@ class BasicInfosController extends Controller
         }
     }
 
-    
     public function topAccidentStreets()
     {
         try {
@@ -87,10 +84,10 @@ class BasicInfosController extends Controller
                 ->get();
 
             // صياغة النتائج بالشكل المطلوب
-            $result = $topStreets->map(function($item) {
+            $result = $topStreets->map(function ($item) {
                 return [
                     'street_name' => $item->street,
-                    'region_governorate' => $item->region . ', ' . $item->governorate,
+                    'region_governorate' => $item->region.', '.$item->governorate,
                     'accident_count' => $item->accident_count,
                 ];
             });
