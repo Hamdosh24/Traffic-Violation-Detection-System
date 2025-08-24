@@ -40,15 +40,6 @@ class AccidentController extends Controller
     /**
      * Get a list of active (new) accidents for the shared task list.
      */
-    public function getActive(Request $request)
-    {
-        $activeAccidents = Accident::with('camera')
-            ->where('status', 'new')
-            ->latest()
-            ->get();
-        
-        return AccidentResource::collection($activeAccidents);
-    }
     
     /**
      * Mark an accident as acknowledged by an employee.
@@ -113,7 +104,12 @@ class AccidentController extends Controller
 
     public function indexAll(Request $request)
     {
-        $allAccidents = Accident::with('camera')->latest()->paginate(20);
-        return AccidentResource::collection($allAccidents);
+        // يجلب جميع الحوادث خلال آخر 24 ساعة بدون بيانات الترقيم
+        $recentAccidents = Accident::with('camera')
+            ->where('timestamp', '>=', now()->subHours(24))
+            ->latest()
+            ->get();
+
+        return AccidentResource::collection($recentAccidents);
     }
 }
