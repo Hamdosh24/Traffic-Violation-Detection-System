@@ -4,32 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\AccidentAcknowledged;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreAccidentRequest; // <-- 1. استيراد الكلاس الجديد
 use App\Http\Resources\AccidentResource;
 use App\Models\Accident;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AccidentController extends Controller
 {
-    /**
-     * ✅ هذه هي الدالة المفقودة
-     * Store a new accident. Called by the AI system.
-     */
-    public function store(Request $request): JsonResponse
+    public function store(StoreAccidentRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'camera_id' => 'required|integer|exists:cameras,camera_id',
-            'timestamp' => 'required|date',
-        ]);
+        // 3. تم حذف كل كود التحقق والتعامل مع الأخطاء
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $accident = Accident::create($validator->validated());
+        $accident = Accident::create($request->validated());
 
         return response()->json([
             'message' => 'Accident recorded successfully.',

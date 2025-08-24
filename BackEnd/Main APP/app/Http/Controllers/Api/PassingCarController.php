@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePassingCarRequest;
 use App\Http\Resources\DriverResource;
 use App\Http\Resources\SightingResource;
 use App\Models\ActivityLog;
 use App\Models\PassingCar;
-use App\Services\TrafficAPIService;
+use App\Services\TrafficAPIService; // <-- 1. استيراد الكلاس الجديد
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
 class PassingCarController extends Controller
 {
@@ -21,19 +20,11 @@ class PassingCarController extends Controller
      * Called by the AI system.
      * (This method remains unchanged)
      */
-    public function store(Request $request): JsonResponse
+    public function store(StorePassingCarRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'plate_num' => 'required|string|max:255',
-            'camera_id' => 'required|string|max:255|exists:cameras,camera_id',
-            'timestamp' => 'required|date',
-        ]);
+        // 3. تم حذف كل كود التحقق والتعامل مع الأخطاء من هنا
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $passingCar = PassingCar::create($validator->validated());
+        $passingCar = PassingCar::create($request->validated());
 
         return response()->json([
             'message' => 'Passing car recorded successfully.',
