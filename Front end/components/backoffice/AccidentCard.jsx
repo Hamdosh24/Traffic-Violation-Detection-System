@@ -1,9 +1,18 @@
 "use client";
 import { useState } from "react";
-import { AlertTriangle, MapPin, Clock, Eye, CheckCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  MapPin,
+  Clock,
+  Eye,
+  CheckCheck,
+  Camera,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AccidentCard({ accident, onMarkAsViewed }) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const router = useRouter();
 
   const handleMarkAsViewed = async (e) => {
     e.stopPropagation();
@@ -15,6 +24,12 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleCameraStream = (e) => {
+    e.stopPropagation();
+    // الانتقال إلى صفحة بث الكاميرا
+    router.push(`/employeeDashboard/cameras/${accident.camera.camera_id}`);
   };
 
   const formattedDate = new Date(accident.timestamp).toLocaleString("ar-EG", {
@@ -78,28 +93,39 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
                 </p>
               </div>
 
-              <button
-                onClick={handleMarkAsViewed}
-                disabled={isUpdating || accident.status === "acknowledged"}
-                className={`p-1.5 rounded-full transition-colors ${
-                  accident.status === "new"
-                    ? "text-red-600 hover:bg-red-100/50 dark:text-red-400 dark:hover:bg-red-900/20"
-                    : "text-gray-400 cursor-default"
-                }`}
-                aria-label={
-                  accident.status === "acknowledged"
-                    ? "تمت المشاهدة"
-                    : "تعليم كمشاهدة"
-                }
-              >
-                {isUpdating ? (
-                  <Clock size={18} className="animate-spin" />
-                ) : accident.status === "acknowledged" ? (
-                  <CheckCheck className="text-customGreen" size={18} />
-                ) : (
-                  <Eye size={18} />
-                )}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleMarkAsViewed}
+                  disabled={isUpdating || accident.status === "acknowledged"}
+                  className={`p-1.5 rounded-full transition-colors ${
+                    accident.status === "new"
+                      ? "text-red-600 hover:bg-red-100/50 dark:text-red-400 dark:hover:bg-red-900/20"
+                      : "text-gray-400 cursor-default"
+                  }`}
+                  aria-label={
+                    accident.status === "acknowledged"
+                      ? "تمت المشاهدة"
+                      : "تعليم كمشاهدة"
+                  }
+                >
+                  {isUpdating ? (
+                    <Clock size={18} className="animate-spin" />
+                  ) : accident.status === "acknowledged" ? (
+                    <CheckCheck className="text-customGreen" size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+
+                {/* زر الانتقال إلى بث الكاميرا */}
+                <button
+                  onClick={handleCameraStream}
+                  className="p-1.5 rounded-full transition-colors text-blue-600 hover:bg-blue-100/50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                  aria-label="عرض بث الكاميرا"
+                >
+                  <Camera size={18} />
+                </button>
+              </div>
             </div>
 
             {/* معلومات الموقع */}

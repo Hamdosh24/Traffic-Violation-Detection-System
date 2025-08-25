@@ -22,10 +22,11 @@ export default function AccidentsPage() {
     return () => cleanupSSE();
   }, [setupSSEConnection, cleanupSSE]);
 
+  // التصحيح: استخدام accident.status بدلاً من accident.acknowledged و accident.isViewed
   const filteredAccidents = accidents.filter((accident) => {
-    if (filter === "acknowledged") return accident.acknowledged;
-    if (filter === "unviewed") return !accident.isViewed;
-    return true;
+    if (filter === "acknowledged") return accident.status === "acknowledged";
+    if (filter === "new") return accident.status === "new";
+    return true; // "all" - عرض جميع الحوادث
   });
 
   return (
@@ -67,8 +68,8 @@ export default function AccidentsPage() {
             className="appearance-none pl-3 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-customGreen focus:border-customGreen outline-none"
           >
             <option value="all">الكل</option>
-            <option value="unviewed">غير المشاهدة</option>
-            <option value="viewed">المشاهدة</option>
+            <option value="new">جديد</option> {/* تم التصحيح */}
+            <option value="acknowledged">تمت مشاهدته</option> {/* تم التصحيح */}
           </select>
         </div>
       </div>
