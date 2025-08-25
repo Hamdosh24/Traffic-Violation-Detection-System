@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
+    public function up(): void
     {
         Schema::create('violation_types', function (Blueprint $table) {
             $table->uuid('v_type_id')->primary();

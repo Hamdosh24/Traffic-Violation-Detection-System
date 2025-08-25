@@ -12,13 +12,13 @@ class TokenExpiryMiddleware
     {
         $token = $request->bearerToken();
 
-        if (!$token) {
+        if (! $token) {
             return response()->json(['message' => 'Token not provided'], 401);
         }
 
         $accessToken = PersonalAccessToken::findToken($token);
 
-        if (!$accessToken) {
+        if (! $accessToken) {
             return response()->json(['message' => 'Invalid token'], 401);
         }
 

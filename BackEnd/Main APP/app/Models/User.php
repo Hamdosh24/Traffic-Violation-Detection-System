@@ -3,19 +3,15 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Concerns\HasUuids; // أضف هذا السطر
-use Laravel\Sanctum\HasApiTokens; // <-- أضف هذا السطر
-
-
-
-
+use Laravel\Sanctum\HasApiTokens;// ✅ أضف هذا السطر
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuids; // أضف HasUuids هنا
+    use HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     /**
      * The primary key for the model.
@@ -37,9 +33,8 @@ class User extends Authenticatable
      * @var string
      */
     protected $keyType = 'string';
+
     protected $dates = ['last_login_at'];
-
-
 
     /**
      * The attributes that are mass assignable.
@@ -66,7 +61,6 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        // 'remember_token', // قمنا بإزالته من جدول قاعدة البيانات
     ];
 
     /**
@@ -77,7 +71,6 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            // 'email_verified_at' => 'datetime', // قمنا بإزالته
             'password' => 'hashed',
         ];
     }

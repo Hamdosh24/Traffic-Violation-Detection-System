@@ -17,9 +17,10 @@ class CheckEmployee
     {
         $user = $request->user();
 
-        if (!$user || !$user->roles()->where('role_name', 'Employee')->exists()) {
+        if (! $user || ! $user->roles()->where('role_name', 'Employee')->exists()) {
             return response()->json(['message' => 'Unauthorized - You are not a Employee'], 403);
         }
+
         return $next($request);
     }
 }

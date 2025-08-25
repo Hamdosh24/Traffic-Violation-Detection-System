@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\PassingCar;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class PrunePassingCars extends Command
@@ -36,9 +36,7 @@ class PrunePassingCars extends Command
         // حذف السجلات الأقدم من التاريخ الفاصل
         $deletedRows = PassingCar::where('timestamp', '<', $cutoffDate)->delete();
 
-        Log::info($deletedRows . ' records were pruned from the passing_cars table.');
-        $this->info('Done! ' . $deletedRows . ' records were pruned.');
+        Log::info($deletedRows.' records were pruned from the passing_cars table.');
+        $this->info('Done! '.$deletedRows.' records were pruned.');
     }
-
-    
 }

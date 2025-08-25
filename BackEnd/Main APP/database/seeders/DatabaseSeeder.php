@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Role;
 use App\Models\Permission;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -74,7 +74,7 @@ class DatabaseSeeder extends Seeder
             $managerUser->roles()->attach($managerRole->role_id);
             $this->command->info('Manager user created and role has been attached.');
         }
-        
+
         // --- 6. SEED OTHER APPLICATION DATA ---
         $this->call([
             ViolationTypeSeeder::class,

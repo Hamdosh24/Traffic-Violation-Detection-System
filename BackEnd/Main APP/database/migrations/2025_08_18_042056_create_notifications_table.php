@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('type');
-            
+
             // ✅ التعديل: استخدام uuidMorphs بدلاً من morphs
             // هذا السطر يُنشئ عمود notifiable_id من نوع UUID
             // وعمود notifiable_type من نوع string
-            $table->uuidMorphs('notifiable'); 
+            $table->uuidMorphs('notifiable');
 
             $table->text('data');
             $table->timestamp('read_at')->nullable();

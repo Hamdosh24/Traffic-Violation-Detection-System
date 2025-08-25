@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
 
 class ActivityLog extends Model
 {
@@ -31,5 +30,4 @@ class ActivityLog extends Model
     {
         return $this->belongsTo(user::class, 'user_id', 'user_id');
     }
-
 }

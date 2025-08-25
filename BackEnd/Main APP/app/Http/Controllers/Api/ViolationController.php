@@ -9,54 +9,53 @@ use App\Models\Violation;
 use App\Models\ViolationType;
 use App\Services\TrafficAPIService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Cache; // <-- 1. استيراد واجهة الكاش
 use Illuminate\Support\Facades\Log;
 
 class ViolationController extends Controller
 {
     public function store(StoreViolationRequest $request, TrafficAPIService $trafficService): JsonResponse
     {
+        $driverInfo = null;
+
         try {
-            // <-- 2. تطبيق التخزين المؤقت (Caching)
-            // أنشئ مفتاحًا فريدًا للكاش خاص برقم اللوحة هذا
-            $cacheKey = "driver_info_{$request->input('plate_number')}";
-
-            // اطلب من الكاش أن يتذكر هذه المعلومة لمدة 60 دقيقة
-            $driverInfo = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($trafficService, $request) {
-                // هذا الكود سينفذ فقط إذا لم تكن المعلومة في الكاش
-                // أو إذا انتهت مدة صلاحيتها
-                Log::info("Fetching driver info from external API for plate: {$request->input('plate_number')}");
-                return $trafficService->getDriverInfoByPlate($request->input('plate_number'));
-            });
-
-            if (!$driverInfo) {
-                // إذا لم يتم العثور على السائق، قم بحذف أي بيانات قديمة في الكاش
-                Cache::forget($cacheKey);
-                return response()->json(['message' => 'رقم اللوحة المدخل غير موجود في نظام المرور.'], 404);
-            }
+            $driverInfo = $trafficService->getDriverInfoByPlate($request->plate_number);
         } catch (\Exception $e) {
-            Log::error('API Call Failed: ' . $e->getMessage());
-            return response()->json(['message' => 'حدث خطأ أثناء محاولة الاتصال بنظام المرور الخارجي.'], 503);
+            Log::error('API Call Failed: '.$e->getMessage());
         }
 
-        $violationType = ViolationType::where('key', $request->input('violation_type_key'))->first();
+        if ($driverInfo === null) {
+            Log::warning("Driver info not found or API call failed for plate: {$request->plate_number}");
+            $driverInfo = $this->getEmptyDriverInfo();
+        }
+
+        $violationType = ViolationType::where('key', $request->violation_type_key)->first();
 
         $violation = Violation::create([
             'v_type_id' => $violationType->v_type_id,
-            'camera_id' => $request->input('camera_id'),
-            'plate_num' => $request->input('plate_number'),
-            'timestamp' => $request->input('timestamp'),
+            'camera_id' => $request->camera_id,
+            'plate_num' => $request->plate_number,
+            'timestamp' => $request->timestamp,
         ]);
 
-        // التحميل المسبق للعلاقات لتحسين الأداء
         $violation->load('violationType', 'camera');
 
-        // إطلاق الحدث مع تمرير كل البيانات المطلوبة
+        // سيتم إطلاق الحدث مع بيانات السائق الكاملة للمعالجة في الخلفية
         event(new ViolationRecorded($violation, $driverInfo));
 
+        // التعديل هنا: تم حذف حقل driver_info من الاستجابة
         return response()->json([
-            'message' => 'Violation recorded successfully and notifications are being processed.',
-            'v_id' => $violation->v_id
+            'message' => 'Violation recorded successfully.',
+            'v_id' => $violation->v_id,
         ], 201);
+    }
+
+    private function getEmptyDriverInfo(): array
+    {
+        return [
+            'first_name' => null,
+            'last_name' => null,
+            'email' => null,
+            'license_no' => null,
+        ];
     }
 }

@@ -34,8 +34,8 @@ class Camera extends Model
     public function PassingCars()
     {
         return $this->hasMany(PassingCar::class, 'camera_id', 'camera_id');
-    }    
-    
+    }
+
     public function Accidents()
     {
         return $this->hasMany(Accident::class, 'camera_id', 'camera_id');

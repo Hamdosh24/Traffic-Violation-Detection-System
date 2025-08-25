@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 class Home extends Controller
 {
-    public function index(){
-        echo("welcome Home");
+    public function index()
+    {
+        echo 'welcome Home';
     }
 }

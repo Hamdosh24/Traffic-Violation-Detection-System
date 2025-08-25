@@ -20,7 +20,7 @@ class AccidentObserver
         $employees = User::whereHas('roles', function ($query) {
             $query->where('role_name', 'Employee');
         })->get();
-        
+
         Notification::send($employees, new NewAccidentNotification($accident));
     }
 }

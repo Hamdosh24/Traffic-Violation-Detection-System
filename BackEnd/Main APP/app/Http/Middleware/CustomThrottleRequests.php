@@ -17,7 +17,7 @@ class CustomThrottleRequests
             $retryAfter = RateLimiter::availableIn($key);
 
             return response()->json([
-                'message' => 'لقد تجاوزت عدد محاولات الدخول المسموح بها. الرجاء المحاولة بعد ' . $retryAfter . ' ثانية.',
+                'message' => 'لقد تجاوزت عدد محاولات الدخول المسموح بها. الرجاء المحاولة بعد '.$retryAfter.' ثانية.',
             ], Response::HTTP_TOO_MANY_REQUESTS);
         }
 
@@ -28,6 +28,6 @@ class CustomThrottleRequests
 
     protected function resolveRequestSignature(Request $request)
     {
-        return sha1($request->ip() . '|' . $request->path());
+        return sha1($request->ip().'|'.$request->path());
     }
 }
