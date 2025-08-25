@@ -15,6 +15,7 @@ class RoleSeeder extends Seeder
         Role::updateOrCreate(
             ['role_name' => 'Manager'],
             [
+                'role_id' => 1,
                 'guard_name' => 'web',
                 'description' => 'System Administrator with full permissions',
             ]
@@ -23,6 +24,7 @@ class RoleSeeder extends Seeder
         Role::updateOrCreate(
             ['role_name' => 'Employee'],
             [
+                'role_id' => 2,
                 'guard_name' => 'web',
                 'description' => 'System user with limited permissions',
             ]
