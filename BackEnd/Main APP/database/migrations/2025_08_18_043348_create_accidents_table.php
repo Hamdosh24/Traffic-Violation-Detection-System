@@ -10,18 +10,13 @@ return new class extends Migration
     {
         Schema::create('accidents', function (Blueprint $table) {
             $table->uuid('id')->primary();
-
-            // ✅ تعريف العمود بالنوع الرقمي الصحيح
-            $table->unsignedBigInteger('camera_id');
-
+            $table->unsignedBigInteger('camera_id'); 
+            
             $table->timestamp('timestamp');
             $table->string('status')->default('new');
             $table->timestamps();
 
-            $table->foreign('camera_id')
-                ->references('camera_id')
-                ->on('cameras')
-                ->cascadeOnDelete();
+            $table->foreign('camera_id')->references('camera_id')->on('cameras')->cascadeOnDelete();
         });
     }
 

@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cameras', function (Blueprint $table) {
-            $table->id('camera_id')->primary();
-            $table->string('location');
-            $table->string('key');
+            $table->id('camera_id');
+            $table->unsignedBigInteger('external_id')->nullable();
+            $table->string('rtsp_url')->nullable();
+            $table->string('hls_path')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->string('region');
+            $table->string('governorate');
+            $table->string('street')->nullable();
+            $table->string('coordinates')->nullable();
             $table->timestamps();
         });
     }

@@ -14,7 +14,14 @@ class Role extends Model
      *
      * @var string
      */
+    
     protected $primaryKey = 'role_id';
+
+        protected $fillable = [
+        'role_name',
+        'guard_name',
+        'description',
+    ];
 
     /**
      * The users that belong to the role.

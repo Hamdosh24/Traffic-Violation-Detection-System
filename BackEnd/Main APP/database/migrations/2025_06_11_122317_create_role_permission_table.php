@@ -12,15 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('role_permission', function (Blueprint $table) {
-            // Foreign key for the roles table
             $table->unsignedBigInteger('role_id');
             $table->foreign('role_id')->references('role_id')->on('roles')->onDelete('cascade');
-
-            // Foreign key for the permissions table
             $table->unsignedBigInteger('permission_id');
             $table->foreign('permission_id')->references('permission_id')->on('permissions')->onDelete('cascade');
-
-            // Setting the primary key
             $table->primary(['role_id', 'permission_id']);
         });
     }
