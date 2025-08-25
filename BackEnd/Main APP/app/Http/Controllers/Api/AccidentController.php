@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\AccidentAcknowledged;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreAccidentRequest; // <-- 1. استيراد الكلاس الجديد
+use App\Http\Requests\StoreAccidentRequest;
 use App\Http\Resources\AccidentResource;
 use App\Models\Accident;
 use Illuminate\Http\JsonResponse;
@@ -27,10 +27,6 @@ class AccidentController extends Controller
     }
 
     /**
-     * Get a list of active (new) accidents for the shared task list.
-     */
-
-    /**
      * Mark an accident as acknowledged by an employee.
      */
     public function acknowledge(Request $request, Accident $accident): JsonResponse
@@ -49,7 +45,6 @@ class AccidentController extends Controller
         event(new AccidentAcknowledged($accident));
 
         return response()->json([
-            'message' => 'Accident acknowledged successfully.',
             'data' => new AccidentResource($accident),
         ]);
     }
@@ -93,7 +88,6 @@ class AccidentController extends Controller
 
     public function indexAll(Request $request)
     {
-        // يجلب جميع الحوادث خلال آخر 24 ساعة بدون بيانات الترقيم
         $recentAccidents = Accident::with('camera')
             ->where('timestamp', '>=', now()->subHours(24))
             ->latest()
