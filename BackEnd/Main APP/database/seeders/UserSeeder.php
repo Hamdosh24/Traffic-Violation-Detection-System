@@ -17,15 +17,15 @@ class UserSeeder extends Seeder
         $managerUser = User::updateOrCreate(
             ['email' => 'manager@app.com'],
             [
-                'user_name' => 'manager',
-                'first_name' => 'System',
-                'last_name' => 'Manager',
-                'national_num' => '00000000000',
-                'phone_num' => '0900000000',
-                'age' => 30,
+                'user_name' => 'Beshr',
+                'first_name' => 'بشر',
+                'last_name' => 'القده',
+                'national_num' => '1234567890',
+                'phone_num' => '0987654321',
+                'age' => 23,
                 'gender' => 'male',
                 // For better security, get password from .env file
-                'password' => env('DEFAULT_MANAGER_PASSWORD', 'password'),
+                'password' => env('DEFAULT_MANAGER_PASSWORD', 'password123'),
             ]
         );
 

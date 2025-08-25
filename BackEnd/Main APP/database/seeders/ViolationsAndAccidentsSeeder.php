@@ -11,10 +11,10 @@ class ViolationsAndAccidentsSeeder extends Seeder
     public function run(): void
     {
         $startDate = strtotime('2025-01-01');
-        $endDate = strtotime('2025-08-10');
+        $endDate = strtotime('2025-08-25');
 
-        // 100 مخالفة
-        for ($i = 0; $i < 200; $i++) {
+        // 250 مخالفة
+        for ($i = 0; $i < 250; $i++) {
             $randomTimestamp = date(
                 'Y-m-d H:i:s',
                 mt_rand($startDate, $endDate)
@@ -31,8 +31,8 @@ class ViolationsAndAccidentsSeeder extends Seeder
             ]);
         }
 
-        // 50 حادث
-        for ($i = 0; $i < 50; $i++) {
+        // 100 حادث
+        for ($i = 0; $i < 100; $i++) {
             $randomTimestamp = date(
                 'Y-m-d H:i:s',
                 mt_rand($startDate, $endDate)

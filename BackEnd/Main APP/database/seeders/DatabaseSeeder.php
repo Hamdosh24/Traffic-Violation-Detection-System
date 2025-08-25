@@ -28,21 +28,40 @@ class DatabaseSeeder extends Seeder
         $this->command->info('All relevant tables have been cleared.');
 
         // --- 2. CREATE ROLES ---
-        $adminRole = Role::create(['name' => 'admin', 'display_name' => 'Administrator']);
-        $managerRole = Role::create(['name' => 'manager', 'display_name' => 'Manager']);
+        $adminRole = Role::updateOrCreate(
+            ['role_name' => 'Manager'],
+            [
+                'guard_name' => 'web',
+                'description' => 'System Administrator with full permissions',
+            ]
+        );
+
+        $managerRole = Role::updateOrCreate(
+            ['role_name' => 'Employee'],
+            [
+                'guard_name' => 'web',
+                'description' => 'System user with limited permissions',
+            ]
+        );
+
         $this->command->info('Roles (admin, manager) created successfully.');
 
         // --- 3. CREATE PERMISSIONS ---
         $permissions = [
-            ['name' => 'view_dashboard', 'display_name' => 'View Dashboard'],
-            ['name' => 'manage_employees', 'display_name' => 'Manage Employees'],
-            ['name' => 'view_reports', 'display_name' => 'View Reports'],
-            ['name' => 'manage_violations', 'display_name' => 'Manage Violations'],
-            ['name' => 'view_activity_logs', 'display_name' => 'View Activity Logs'],
+            'view_dashboard',
+            'manage_employees',
+            'view_reports',
+            'manage_violations',
+            'view_activity_logs',
         ];
-        foreach ($permissions as $permission) {
-            Permission::create($permission);
+
+        foreach ($permissions as $permissionName) {
+            \App\Models\Permission::updateOrCreate(
+                ['permission_name' => $permissionName],
+                ['guard_name' => 'web']
+            );
         }
+
         $this->command->info('Permissions created successfully.');
 
         // --- 4. ATTACH PERMISSIONS TO ROLES ---
@@ -52,7 +71,7 @@ class DatabaseSeeder extends Seeder
             $this->command->info('All permissions have been attached to the Admin role.');
         }
 
-        $manager_permissions = Permission::whereIn('name', ['view_dashboard', 'manage_violations'])->get();
+        $manager_permissions = Permission::whereIn('permission_name', ['view_dashboard', 'manage_violations'])->get();
         if ($managerRole) {
             $managerRole->permissions()->attach($manager_permissions->pluck('permission_id'));
             $this->command->info('Specific permissions have been attached to the Manager role.');
