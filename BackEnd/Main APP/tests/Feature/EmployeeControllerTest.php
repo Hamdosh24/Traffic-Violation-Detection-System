@@ -32,6 +32,8 @@ class EmployeeControllerTest extends TestCase
 
         // تسجيل الدخول بالمستخدم (Sanctum)
         Sanctum::actingAs($this->user, ['*']);
+
+        $this->withoutExceptionHandling();
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -70,7 +72,7 @@ class EmployeeControllerTest extends TestCase
 
         // إرسال الطلب
         $response = $this->postJson('/api/admin/employees', $data);
-
+        
         // تحقق من الاستجابة
         $response->assertStatus(200)
                 ->assertJsonFragment(['user_name' => 'newuser']);
