@@ -20,7 +20,7 @@ class EmployeeControllerTest extends TestCase
         parent::setUp();
 
         // تعطيل Middleware الخاص بفحص التوكن
-        $this->withoutMiddleware(TokenExpiryMiddleware::class);
+        $this->withoutMiddleware();
 
         // تشغيل السيدر لتأكيد وجود الأدوار
         $this->seed(\Database\Seeders\RoleSeeder::class);
