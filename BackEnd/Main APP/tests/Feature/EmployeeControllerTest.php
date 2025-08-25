@@ -48,11 +48,13 @@ class EmployeeControllerTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function test_it_can_create_a_new_employee()
     {
-        // تأكد أن الأدوار موجودة
-        $this->seed(\Database\Seeders\RoleSeeder::class);
+        // تأكد من وجود الدور أو إنشائه إذا لم يكن موجود
+        $role = \App\Models\Role::firstOrCreate(
+            ['role_name' => 'Employee'],
+            ['description' => 'Standard employee']
+        );
 
-        $role = \App\Models\Role::where('role_name', 'Employee')->first();
-
+        // بيانات الموظف الجديد
         $data = [
             'user_name'    => 'newuser',
             'first_name'   => 'John',
@@ -62,14 +64,18 @@ class EmployeeControllerTest extends TestCase
             'phone_num'    => '0599999999',
             'age'          => 30,
             'gender'       => 'male',
-            'password'     => 'password123',
+            'password'     => bcrypt('password123'), // تشفير كلمة المرور
             'role_id'      => $role->role_id,
         ];
 
+        // إرسال الطلب
         $response = $this->postJson('/api/admin/employees', $data);
+
+        // تحقق من الاستجابة
         $response->assertStatus(200)
                 ->assertJsonFragment(['user_name' => 'newuser']);
 
+        // تحقق من قاعدة البيانات
         $this->assertDatabaseHas('users', ['email' => 'newuser@example.com']);
     }
 

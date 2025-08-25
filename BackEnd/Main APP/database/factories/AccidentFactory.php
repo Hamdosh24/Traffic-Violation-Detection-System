@@ -22,4 +22,10 @@ class AccidentFactory extends Factory
             'status' => 'new',
         ];
     }
+
+    public function forCamera($camera)
+    {
+        return $this->for($camera, 'camera'); // تأكد أن العلاقة camera() موجودة في موديل Accident
+    }
+
 }
