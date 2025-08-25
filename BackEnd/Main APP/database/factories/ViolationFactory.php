@@ -12,9 +12,9 @@ class ViolationFactory extends Factory
 {
     protected $model = Violation::class;
 
-    public function definition()
+   public function definition()
     {
-        $violationType = ViolationType::factory()->create();
+        $violationType = ViolationType::inRandomOrder()->first();
         $camera = Camera::factory()->create();
 
         return [
@@ -24,5 +24,15 @@ class ViolationFactory extends Factory
             'plate_num' => strtoupper($this->faker->bothify('???-####')),
             'timestamp' => $this->faker->dateTimeBetween('-30 days', 'now'),
         ];
+    }
+
+    public function forCamera($camera)
+    {
+        return $this->for($camera, 'camera');
+    }
+
+    public function forType($type)
+    {
+        return $this->for($type, 'violationType'); // اسم العلاقة كما في المودل
     }
 }
