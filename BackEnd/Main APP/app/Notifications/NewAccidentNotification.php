@@ -22,7 +22,6 @@ class NewAccidentNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        // <-- التعديل: تحديد وجهة الإشعار إلى قاعدة البيانات
         return ['database'];
     }
 
