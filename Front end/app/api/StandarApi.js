@@ -1,8 +1,9 @@
 export class StandardApi {
   static BASE_URL = "http://localhost:8000/api";
+  static STREAM_URL = "http://localhost:8002/api";
 
   // get all notifications
-  static async fetchNewAccidents() {
+  static async fetchAllAccidents() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -32,26 +33,28 @@ export class StandardApi {
         const errorData = await response.json();
         return {
           success: false,
-          error: errorData.message || "فشل في جلب الحوادث الجديدة",
+          error: errorData.message || "فشل في جلب الحوادث",
         };
       }
 
       const data = await response.json();
+
+      // التصحيح: إرجاع كامل بيانات التقسيم
       return {
         success: true,
-        data: data.data || data,
+        data: data, // إرجاع الكائن كاملاً وليس data.data فقط
       };
     } catch (err) {
-      console.error("API Error [fetchNewAccidents]:", err);
+      console.error("API Error [fetchAllAccidents]:", err);
       return {
         success: false,
-        error: err.message || "حدث خطأ أثناء جلب الحوادث الجديدة",
+        error: err.message || "حدث خطأ أثناء جلب الحوادث",
       };
     }
   }
 
-  // mark notification as read
-  static async markAccidentAsViewed(accidentId) {
+  // 2. التعرف على حادث (صحيح)
+  static async markAccidentAsViewed(accident_id) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -62,7 +65,7 @@ export class StandardApi {
       }
 
       const response = await fetch(
-        `${this.BASE_URL}/admin/accidents/${accidentId}/viewed`,
+        `${this.BASE_URL}/admin/accidents/${accident_id}/acknowledge`,
         {
           method: "PATCH",
           headers: {
@@ -109,36 +112,41 @@ export class StandardApi {
     }
   }
 
-  // SSE function
-  static setupAccidentSSE(callback) {
+  static async setupAccidentSSE(callback) {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No token found for SSE connection");
       return null;
     }
 
-    const eventSource = new EventSource(
-      `${this.BASE_URL}/admin/accidents/stream?token=${encodeURIComponent(
-        token
-      )}`
-    );
+    try {
+      const eventSource = new EventSource(
+        `${this.STREAM_URL}/admin/accidents/stream?token=${encodeURIComponent(
+          token
+        )}`
+      );
 
-    eventSource.addEventListener("new-accident", (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        callback(data);
-      } catch (err) {
-        console.error("Error parsing accident data:", err);
-      }
-    });
+      // التصحيح: استخدام addEventListener بدلاً من onmessage
+      eventSource.addEventListener("new-accident", (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          callback(data);
+        } catch (err) {
+          console.error("Error parsing accident data:", err);
+        }
+      });
 
-    eventSource.onerror = (err) => {
-      console.error("Accident SSE Error:", err);
-      eventSource.close();
+      eventSource.onerror = (err) => {
+        console.error("SSE Error:", err);
+        eventSource.close();
+        setTimeout(() => this.setupAccidentSSE(callback), 5000);
+      };
+
+      return eventSource;
+    } catch (err) {
+      console.error("Failed to establish SSE connection:", err);
       setTimeout(() => this.setupAccidentSSE(callback), 5000);
-    };
-
-    return eventSource;
+    }
   }
 
   static setupNotificationCountSSE(callback) {
@@ -171,7 +179,7 @@ export class StandardApi {
 
     return eventSource;
   }
-  
+
   // region filter
   static async fetchViolationFiltersByRegion() {
     try {

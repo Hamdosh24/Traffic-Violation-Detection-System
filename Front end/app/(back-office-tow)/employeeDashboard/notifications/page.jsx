@@ -1,30 +1,30 @@
 "use client";
 import { useState, useEffect } from "react";
-import { BellRing, Filter } from "lucide-react";
-import NotificationList from "@/components/backoffice/NotificationList";
-import useNotificationStore from "@/stores/notificationStore";
+import { AlertTriangle, Filter } from "lucide-react";
+import AccidentList from "@/components/backoffice/AccidentList";
+import useAccidentStore from "@/stores/useAccidentStore";
 
-export default function NotificationsPage() {
+export default function AccidentsPage() {
   const [filter, setFilter] = useState("all");
   const {
-    notifications,
-    unreadCount,
+    accidents,
+    unviewedCount,
     isLoading,
     error,
     setupSSEConnection,
     cleanupSSE,
-    markAsRead,
-    markAllAsRead,
-  } = useNotificationStore();
+    markAsViewed,
+    markAllAsViewed,
+  } = useAccidentStore();
 
   useEffect(() => {
     setupSSEConnection();
     return () => cleanupSSE();
   }, [setupSSEConnection, cleanupSSE]);
 
-  const filteredNotifications = notifications.filter((notification) => {
-    if (filter === "read") return notification.isRead;
-    if (filter === "unread") return !notification.isRead;
+  const filteredAccidents = accidents.filter((accident) => {
+    if (filter === "acknowledged") return accident.acknowledged;
+    if (filter === "unviewed") return !accident.isViewed;
     return true;
   });
 
@@ -33,25 +33,25 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <div className="relative">
-            {unreadCount > 0 && (
+            {unviewedCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount}
+                {unviewedCount}
               </span>
             )}
-            <BellRing className="h-8 w-8 text-customGreen ml-2" />
+            <AlertTriangle className="h-8 w-8 text-customGreen ml-2" />
           </div>
 
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-            الإشعارات
+            الحوادث
           </h1>
         </div>
 
         <button
-          onClick={markAllAsRead}
-          disabled={unreadCount === 0 || isLoading}
+          onClick={markAllAsViewed}
+          disabled={unviewedCount === 0 || isLoading}
           className="px-3 py-2 text-sm font-medium bg-customGreen text-white rounded-lg hover:bg-customGreen/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? "جاري التحميل..." : "تعيين الكل كمقروء"}
+          {isLoading ? "جاري التحميل..." : "تعيين الكل كمشاهدة"}
         </button>
       </div>
 
@@ -67,8 +67,8 @@ export default function NotificationsPage() {
             className="appearance-none pl-3 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-customGreen focus:border-customGreen outline-none"
           >
             <option value="all">الكل</option>
-            <option value="unread">غير المقروءة</option>
-            <option value="read">المقروءة</option>
+            <option value="unviewed">غير المشاهدة</option>
+            <option value="viewed">المشاهدة</option>
           </select>
         </div>
       </div>
@@ -80,10 +80,10 @@ export default function NotificationsPage() {
       )}
 
       <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-sm backdrop-blur-sm">
-        <NotificationList
-          notifications={filteredNotifications}
+        <AccidentList
+          accidents={filteredAccidents}
           loading={isLoading}
-          onMarkAsRead={markAsRead}
+          onMarkAsViewed={markAsViewed}
         />
       </div>
     </div>

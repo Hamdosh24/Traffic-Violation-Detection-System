@@ -12,26 +12,34 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { StandardApi } from "@/app/api/StandarApi";
 import Link from "next/link";
-import useNotificationStore from "@/stores/notificationStore";
+import useAccidentStore from "@/stores/useAccidentStore";
 
 export default function Navbar({ setShowSidebar, showSidebar }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { unreadCount, cleanupSSE } = useNotificationStore();
+  // التصحيح: استخدام unviewedCount بدلاً من unreadCount
+  const { unviewedCount, cleanupSSE, setupSSEConnection } = useAccidentStore();
 
   useEffect(() => {
+    // إعداد اتصال SSE عند تحميل المكون
+    setupSSEConnection();
+
     return () => cleanupSSE();
-  }, [cleanupSSE]);
+  }, [cleanupSSE, setupSSEConnection]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
+      cleanupSSE(); // تنظيف اتصال SSE قبل تسجيل الخروج
+
       const { success } = await StandardApi.logout();
       if (success) {
         localStorage.removeItem("token");
         localStorage.removeItem("userData");
         router.push("/");
       }
+    } catch (error) {
+      console.error("Logout error:", error);
     } finally {
       setIsLoggingOut(false);
     }
@@ -65,12 +73,15 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
 
         <div className="relative">
           <Link href="/employeeDashboard/notifications">
-            <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
+            <div className="relative p-1">
+              <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
+              {/* التصحيح: استخدام unviewedCount بدلاً من unreadCount */}
+              {unviewedCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {unviewedCount > 99 ? "99+" : unviewedCount}
+                </span>
+              )}
+            </div>
           </Link>
         </div>
 
@@ -83,13 +94,16 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
               <UserRound className="stroke-customGreen dark:hover:stroke-milkColor w-6 h-6" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-milkColor dark:bg-customDarkGreen rounded-md min-w-[180px]">
+          <DropdownMenuContent
+            className="bg-milkColor dark:bg-customDarkGreen rounded-md min-w-[180px]"
+            align="end"
+          >
             <DropdownMenuItem
-              className="hover:dark:bg-slate-700 hover:bg-slate-200"
+              className="hover:dark:bg-slate-700 hover:bg-slate-200 cursor-pointer"
               onClick={handleLogout}
               disabled={isLoggingOut}
             >
-              <div className="flex items-center px-4 py-2">
+              <div className="flex items-center px-4 py-2 w-full">
                 <LogOut className="mr-2 h-4 w-4" />
                 {isLoggingOut ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
               </div>
