@@ -19,7 +19,6 @@ return new class extends Migration
             $table->timestamp('timestamp');
             $table->timestamps();
 
-            // تعريف المفتاح الأجنبي لربط المخالفة بنوعها
             $table->foreign('v_type_id')->references('v_type_id')->on('violation_types')->onDelete('cascade');
         });
     }

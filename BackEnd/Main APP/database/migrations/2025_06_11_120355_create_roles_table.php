@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('roles', function (Blueprint $table) {
-            $table->id('role_id'); // Primary Key
-            $table->string('name')->unique(); // The machine-readable name (e.g., 'admin')
-            $table->string('display_name'); // The human-readable name (e.g., 'Administrator')
+            $table->id('role_id');
+            $table->string('role_name')->unique();
+            $table->string('guard_name');
             $table->text('description')->nullable();
             $table->timestamps();
         });

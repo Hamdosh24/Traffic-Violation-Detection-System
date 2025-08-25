@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('action_type');
             $table->text('description')->nullable();
 
-            $table->string('model_type')->nullable(); // User, Post, etc
-            $table->unsignedBigInteger('model_id')->nullable();
+            $table->string('model_type')->nullable(); // User, Camera, etc
+            $table->uuid('model_id')->nullable();
             $table->ipAddress('ip_address')->nullable();
             $table->string('user_agent')->nullable();
             $table->timestamps();

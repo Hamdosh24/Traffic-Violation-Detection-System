@@ -6,19 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Camera extends Model
 {
-    // تأكد أن اسم الجدول مطابق لما في قاعدة البيانات
     protected $table = 'cameras';
 
-    // المفتاح الأساسي
     protected $primaryKey = 'camera_id';
 
-    // المفتاح ليس auto-increment
     public $incrementing = true;
 
-    // نوع المفتاح الأساسي
     protected $keyType = 'int';
 
-    // الحقول القابلة للتعبئة (تعديل حسب الحقول الموجودة لديك)
     protected $fillable = [
         'region',
         'governorate',

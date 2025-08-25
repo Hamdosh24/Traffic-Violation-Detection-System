@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('permissions', function (Blueprint $table) {
             $table->id('permission_id'); // Primary Key
-            $table->string('name')->unique(); // The machine-readable name (e.g., 'manage_users')
-            $table->string('display_name'); // The human-readable name (e.g., 'Manage Users')
+            $table->string('permission_name')->unique(); // The machine-readable name (e.g., 'manage_users')
+            $table->string('guard_name'); // The human-readable name (e.g., 'Manage Users')
             $table->text('description')->nullable();
             $table->timestamps();
         });

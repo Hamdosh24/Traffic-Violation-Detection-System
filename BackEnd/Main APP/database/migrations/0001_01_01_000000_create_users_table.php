@@ -12,23 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            // مخطط ERD يطلب user_id من نوع VARCHAR. سنستخدم UUID وهو النوع الأفضل لمفاتيح نصية فريدة.
             $table->uuid('user_id')->primary();
-
             $table->string('user_name')->unique();
             $table->string('national_num')->unique();
             $table->string('password');
             $table->string('first_name');
             $table->string('last_name');
             $table->string('phone_num')->unique();
-            $table->string('email')->unique(); // ERD uses 'e-mail', though 'email' is more common.
+            $table->string('email')->unique();
+            $table->timestamp('last_login_at')->nullable();
             $table->integer('age');
-            $table->enum('gender', ['male', 'female']); // تأكد من أن هذه هي القيم التي تريدها
-
-            // لا داعي لإضافة rememberToken إلا إذا كنت ستستخدم ميزة "تذكرني" في تسجيل الدخول
-            // $table->rememberToken();
-
-            $table->timestamps(); // هذا ينشئ عمودي created_at و updated_at كما هو مطلوب
+            $table->enum('gender', ['male', 'female']);
+            $table->timestamps();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
