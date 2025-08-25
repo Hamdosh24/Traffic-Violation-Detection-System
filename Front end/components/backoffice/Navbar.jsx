@@ -1,112 +1,173 @@
-"use client";
-import { AlignJustify, BellRingIcon, LogOut, UserRound } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import {
+  AlignJustify,
+  Bell,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  X,
+} from "lucide-react";
+import Image from "next/image";
+import React from "react";
 import ThemeSwitcherBtn from "@/components/backoffice/ThemeSwitcherBtn";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  // DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { StandardApi } from "@/app/api/StandarApi";
 import Link from "next/link";
-import useAccidentStore from "@/stores/useAccidentStore";
 
 export default function Navbar({ setShowSidebar, showSidebar }) {
-  const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  // التصحيح: استخدام unviewedCount بدلاً من unreadCount
-  const { unviewedCount, cleanupSSE, setupSSEConnection } = useAccidentStore();
-
-  useEffect(() => {
-    // إعداد اتصال SSE عند تحميل المكون
-    setupSSEConnection();
-
-    return () => cleanupSSE();
-  }, [cleanupSSE, setupSSEConnection]);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      cleanupSSE(); // تنظيف اتصال SSE قبل تسجيل الخروج
-
-      const { success } = await StandardApi.logout();
-      if (success) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userData");
-        router.push("/");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
   return (
-    <div className="fixed top-0 left-0 right-0 h-16 bg-milkColor dark:bg-customDarkGreenbg shadow-md z-[100] flex items-center justify-center px-8">
-      <button
-        onClick={() => setShowSidebar(!showSidebar)}
-        className="absolute left-6 focus:outline-none"
-        aria-label="Toggle sidebar"
-      >
-        <AlignJustify className="text-customGreen dark:hover:text-milkColor w-6 h-6" />
+    <div className="flex items-center justify-between shadow-md bg-white dark:bg-slate-800 text-slate-50 h-16 py-8 fixed top-0 px-8 z-50 w-full sm:pr-[20rem]">
+      <Link href={"/dashboard"} className="sm:hidden">
+        Limi
+      </Link>
+      {/* {Icon} */}
+      <button onClick={() => setShowSidebar(!showSidebar)}>
+        {/* list  */}
+        <AlignJustify className="text-customGreen" />
       </button>
+      {/* 3 Icon */}
+      <div className="flex space-x-3">
+        {/* theme  */}
+        <ThemeSwitcherBtn className="text-customGreen" />
 
-      <div className="flex-shrink-0 z-[101]">
-        <Link href="/employeeDashboard">
-          <Image
-            src="/Logo1.png"
-            alt="Logo"
-            width={75}
-            height={100}
-            className="object-contain"
-            quality={100}
-          />
-        </Link>
-      </div>
-
-      <div className="absolute right-6 flex items-center space-x-4">
-        <ThemeSwitcherBtn />
-
-        <div className="relative">
-          <Link href="/employeeDashboard/notifications">
-            <div className="relative p-1">
-              <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
-              {/* التصحيح: استخدام unviewedCount بدلاً من unreadCount */}
-              {unviewedCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {unviewedCount > 99 ? "99+" : unviewedCount}
-                </span>
-              )}
-            </div>
-          </Link>
-        </div>
-
+        {/* notification  */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="focus:outline-none flex items-center">
+          <DropdownMenuTrigger className="focus:outline-none">
             <button
-              className="flex items-center justify-center"
-              aria-label="User menu"
+              type="button"
+              className="relative inline-flex items-center p-3 text-sm font-medium text-center text-white bg-transparent rounded-lg"
             >
-              <UserRound className="stroke-customGreen dark:hover:stroke-milkColor w-6 h-6" />
+              <Bell className="text-customGreen" />
+              <span className="sr-only">Notifications</span>
+              <div className="absolute inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-1 border-white rounded-full -top-0 end-6 dark:border-gray-900">
+                3
+              </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="bg-milkColor dark:bg-customDarkGreen rounded-md min-w-[180px]"
-            align="end"
-          >
-            <DropdownMenuItem
-              className="hover:dark:bg-slate-700 hover:bg-slate-200 cursor-pointer"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              <div className="flex items-center px-4 py-2 w-full">
-                <LogOut className="mr-2 h-4 w-4" />
-                {isLoggingOut ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+
+          <DropdownMenuContent className="m-1 bg-slate-50 text-black dark:bg-gray-800 dark:text-slate-100 mr-28 w-100 dark:border-slate-700 rounded-md">
+            {/* <DropdownMenuLabel>Notifications</DropdownMenuLabel> */}
+
+            {/* <DropdownMenuSeparator className="dark:bg-slate-700 bg-slate-400" /> */}
+
+            <DropdownMenuItem>
+              <div className="flex items-center space-x-5">
+                <Image
+                  src="/Profile.jpg"
+                  alt="User profile"
+                  width={200}
+                  height={200}
+                  className="w-8 h-8 rounded-full"
+                />
+                <div className="flex flex-col space-y-1">
+                  <p>Yellow Sweet Corn Stock out,</p>
+                  <div className="flex items-center space-x-2">
+                    <p className="px-3 py-0.5 bg-red-700 text-white rounded-full text-sm">
+                      Stock Out
+                    </p>
+                    <p>Dec 12 2021 - 12:40PM</p>
+                  </div>
+                </div>
+                <button className="hover:dark:bg-slate-700 hover:bg-slate-200 rounded-full p-1">
+                  <X />
+                </button>
               </div>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator className="dark:bg-slate-700 bg-slate-200" />
+
+            <DropdownMenuItem>
+              <div className="flex items-center space-x-5">
+                <Image
+                  src="/Profile.jpg"
+                  alt="User profile"
+                  width={200}
+                  height={200}
+                  className="w-8 h-8 rounded-full"
+                />
+                <div className="flex flex-col space-y-1">
+                  <p>Yellow Sweet Corn Stock out,</p>
+                  <div className="flex items-center space-x-2">
+                    <p className="px-3 py-0.5 bg-red-700 text-white rounded-full text-sm">
+                      Stock Out
+                    </p>
+                    <p>Dec 12 2021 - 12:40PM</p>
+                  </div>
+                </div>
+                <button className="hover:dark:bg-slate-700 hover:bg-slate-200 rounded-full p-1">
+                  <X />
+                </button>
+              </div>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator className="dark:bg-slate-700 bg-slate-200" />
+
+            <DropdownMenuItem>
+              <div className="flex items-center space-x-5">
+                <Image
+                  src="/Profile.jpg"
+                  alt="User profile"
+                  width={200}
+                  height={200}
+                  className="w-8 h-8 rounded-full"
+                />
+                <div className="flex flex-col space-y-1">
+                  <p>Yellow Sweet Corn Stock out,</p>
+                  <div className="flex items-center space-x-2">
+                    <p className="px-3 py-0.5 bg-red-700 text-white rounded-full text-sm">
+                      Stock Out
+                    </p>
+                    <p>Dec 12 2021 - 12:40PM</p>
+                  </div>
+                </div>
+                <button className="hover:dark:bg-slate-700 hover:bg-slate-200 rounded-full p-1">
+                  <X />
+                </button>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* profile  */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="focus:outline-none">
+            <button>
+              <Image
+                alt="Profile"
+                src="/Profile.jpg"
+                width={200}
+                height={200}
+                className="w-8 h-8 rounded-full"
+              />
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent className="bg-slate-50 text-black dark:bg-gray-800 dark:text-slate-100 dark:border-slate-700 rounded-md w-fit mr-14">
+            {/* <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator className="dark:bg-slate-600" /> */}
+            <DropdownMenuItem className="hover:dark:bg-slate-700 hover:bg-slate-200 w-full">
+              <button className="flex items-center space-x-2 pr-10">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </button>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:dark:bg-slate-700 hover:bg-slate-200 w-full">
+              <button className="flex items-center space-x-2 pr-10">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Edit Profile</span>
+              </button>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:dark:bg-slate-700 hover:bg-slate-200 w-full">
+              <button className="flex items-center space-x-2 pr-10">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
