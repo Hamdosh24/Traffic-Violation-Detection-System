@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Camera;
 use App\Models\Violation;
 use App\Models\ViolationType;
-use App\Models\Camera;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -12,7 +12,7 @@ class ViolationFactory extends Factory
 {
     protected $model = Violation::class;
 
-   public function definition()
+    public function definition()
     {
         $violationType = ViolationType::inRandomOrder()->first();
         $camera = Camera::factory()->create();

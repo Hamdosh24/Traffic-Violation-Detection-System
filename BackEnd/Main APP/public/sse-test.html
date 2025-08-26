@@ -134,7 +134,7 @@
             <h1>لوحة مراقبة الحوادث المباشرة</h1>
         </div>
         
-        <ul id="accidents-list">
+        <ul id="accidents-list" aria-live="polite">
             <div id="placeholder" class="placeholder">
                 في انتظار وصول إشعارات حوادث جديدة...
             </div>
@@ -155,32 +155,44 @@
                 placeholder.style.display = 'none';
             }
             
-            const accident = JSON.parse(event.data);
-            console.log('New accident received:', accident);
+            // تحسين: تم وضع تحليل البيانات داخل try-catch للتعامل مع أي أخطاء محتملة
+            try {
+                const accident = JSON.parse(event.data);
+                console.log('New accident received:', accident);
 
-            const cameraNumber = accident.camera.camera_id;
-            const location = `${accident.camera.street}, ${accident.camera.region}`;
-            const time = new Date(accident.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const cameraNumber = accident.camera.camera_id;
+                const location = `${accident.camera.street}, ${accident.camera.region}`;
+                const time = new Date(accident.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            const newLi = document.createElement('li');
-            newLi.className = 'accident-item';
-            
-            newLi.innerHTML = `
-                <div class="info-group">
-                    <span class="info-label">كاميرا رقم</span>
-                    <span class="info-value">${cameraNumber}</span>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">الموقع</span>
-                    <span class="info-value">${location}</span>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">وقت الحادث</span>
-                    <span class="info-value">${time}</span>
-                </div>
-            `;
-            
-            list.prepend(newLi);
+                const newLi = document.createElement('li');
+                newLi.className = 'accident-item';
+                
+                newLi.innerHTML = `
+                    <div class="info-group">
+                        <span class="info-label">كاميرا رقم</span>
+                        <span class="info-value">${cameraNumber}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">الموقع</span>
+                        <span class="info-value">${location}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">وقت الحادث</span>
+                        <span class="info-value">${time}</span>
+                    </div>
+                `;
+                
+                list.prepend(newLi);
+
+                // تحسين: الحفاظ على عدد محدود من العناصر في القائمة لمنع استهلاك ذاكرة المتصفح
+                const MAX_ITEMS = 25;
+                while (list.children.length > MAX_ITEMS) {
+                    list.lastElementChild.remove();
+                }
+
+            } catch (error) {
+                console.error('Failed to parse incoming event data:', error);
+            }
         });
 
         // Handle connection opening
@@ -193,6 +205,7 @@
         eventSource.onerror = error => {
             console.error('EventSource connection failed:', error);
             statusIndicator.className = 'status-dot error';
+            // يمكنك هنا إظهار رسالة تفيد بانقطاع الاتصال للمستخدم
         };
     </script>
 </body>

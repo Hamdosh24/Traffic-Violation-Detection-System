@@ -6,7 +6,6 @@ use App\Models\Accident;
 use App\Models\Camera;
 use App\Models\Violation;
 use App\Models\ViolationType;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

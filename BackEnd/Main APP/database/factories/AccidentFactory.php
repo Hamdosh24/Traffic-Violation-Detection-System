@@ -27,5 +27,4 @@ class AccidentFactory extends Factory
     {
         return $this->for($camera, 'camera'); // تأكد أن العلاقة camera() موجودة في موديل Accident
     }
-
 }

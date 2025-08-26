@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('accidents', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unsignedBigInteger('camera_id'); 
-            
+            $table->unsignedBigInteger('camera_id');
+
             $table->timestamp('timestamp');
             $table->string('status')->default('new');
             $table->timestamps();
