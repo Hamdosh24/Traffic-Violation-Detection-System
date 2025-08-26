@@ -2,21 +2,20 @@
 
 namespace Tests\Feature\Statistics;
 
-use Tests\TestCase;
+use App\Models\Accident;
+use App\Models\Camera;
 use App\Models\User;
 use App\Models\Violation;
 use App\Models\ViolationType;
-use App\Models\Accident;
-use App\Models\Camera;
-use Laravel\Sanctum\Sanctum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
 
 class StatisticsControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
-
 
     protected function setUp(): void
     {
@@ -55,7 +54,7 @@ class StatisticsControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJsonStructure(['status', 'data']);
+            ->assertJsonStructure(['status', 'data']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -73,7 +72,7 @@ class StatisticsControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJsonStructure(['status', 'data']);
+            ->assertJsonStructure(['status', 'data']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -95,7 +94,7 @@ class StatisticsControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJsonStructure(['status', 'data']);
+            ->assertJsonStructure(['status', 'data']);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -112,6 +111,6 @@ class StatisticsControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJsonStructure(['status', 'data']);
+            ->assertJsonStructure(['status', 'data']);
     }
 }

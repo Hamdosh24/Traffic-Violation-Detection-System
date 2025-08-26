@@ -4,7 +4,6 @@ use App\Http\Controllers\Api\AccidentController;
 use App\Http\Controllers\Api\PassingCarController;
 use Illuminate\Support\Facades\Route;
 
-// Accident & Search Management (For Employees & Managers)
 Route::middleware(['auth:sanctum', 'token.expires', 'employee'])->group(function () {
     Route::get('/accidents/stream', action: [AccidentController::class, 'streamNewAccidents']);
     Route::patch('/accidents/{accident}/acknowledge', [AccidentController::class, 'acknowledge']);

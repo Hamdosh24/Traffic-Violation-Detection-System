@@ -36,9 +36,9 @@ class ChartsControllerTest extends TestCase
 
         // Assert
         $response->assertStatus(200)
-                ->assertJsonFragment([
-                    'type' => 'تجاوز إشارة',
-                ]);
+            ->assertJsonFragment([
+                'type' => 'تجاوز إشارة',
+            ]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -57,9 +57,9 @@ class ChartsControllerTest extends TestCase
 
         // Assert
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    ['date', 'total']
-                ]);
+            ->assertJsonStructure([
+                ['date', 'total'],
+            ]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -75,8 +75,8 @@ class ChartsControllerTest extends TestCase
 
         // Assert
         $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     ['date', 'total']
-                 ]);
+            ->assertJsonStructure([
+                ['date', 'total'],
+            ]);
     }
 }

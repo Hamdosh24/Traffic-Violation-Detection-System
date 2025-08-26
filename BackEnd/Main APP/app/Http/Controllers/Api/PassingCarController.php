@@ -8,7 +8,7 @@ use App\Http\Resources\DriverResource;
 use App\Http\Resources\SightingResource;
 use App\Models\ActivityLog;
 use App\Models\PassingCar;
-use App\Services\TrafficAPIService; // <-- 1. استيراد الكلاس الجديد
+use App\Services\TrafficAPIService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -17,13 +17,10 @@ class PassingCarController extends Controller
 {
     /**
      * Store a newly created passing car record.
-     * Called by the AI system.
      * (This method remains unchanged)
      */
     public function store(StorePassingCarRequest $request): JsonResponse
     {
-        // 3. تم حذف كل كود التحقق والتعامل مع الأخطاء من هنا
-
         $passingCar = PassingCar::create($request->validated());
 
         return response()->json([
@@ -33,56 +30,64 @@ class PassingCarController extends Controller
     }
 
     /**
-     * Search for a plate number and return its history.
+     * Search for a plate number and return its history with a unified response structure.
      * Called by the frontend.
-     * ✅ This is the updated and corrected method.
+     * ✅ THIS IS THE UPDATED METHOD
      */
     public function searchByPlate(string $plate_num, TrafficAPIService $trafficService): JsonResponse
     {
-        // 1. Get driver's info from external API with robust error handling
+        // 1. Get driver's info from external API (no changes here)
         try {
             $driverInfo = $trafficService->getDriverInfoByPlate($plate_num);
         } catch (\Exception $e) {
-            // This catches critical connection errors (e.g., timeout)
             Log::error('Traffic API search failed critically: '.$e->getMessage(), ['plate' => $plate_num]);
 
-            return response()->json(['message' => 'Could not connect to the traffic service.'], 503); // 503 Service Unavailable
+            return response()->json(['message' => 'Could not connect to the traffic service.'], 503);
         }
 
-        // 2. Check if the service itself returned a failure signal (null)
+        // 2. Check for service failure (no changes here)
         if ($driverInfo === null) {
             return response()->json(['message' => 'The traffic service is currently unavailable.'], 503);
         }
 
-        // 3. Get all sightings from our local database
+        // 3. Get all sightings from our local database (no changes here)
         $sightings = PassingCar::with('camera')
             ->where('plate_num', $plate_num)
             ->latest('timestamp')
             ->get();
 
-        // 4. Log the search activity
+        // 4. Log the search activity (no changes here)
         ActivityLog::create([
             'user_id' => Auth::id(),
             'action_type' => 'بحث عن لوحة',
             'description' => "تم البحث عن معلومات السائق والمشاهدات للوحة رقم {$plate_num}",
             'model_type' => 'PassingCar',
-            'model_id' => null, // Can be improved later as discussed
+            'model_id' => null,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
 
-        // 5. Check if the driver was specifically not found (empty result)
+        $responseData = [];
+
         if (empty($driverInfo)) {
-            return response()->json([
-                'message' => 'Driver with this plate number was not found.',
-                'sightings' => SightingResource::collection($sightings), // Still return local sightings
-            ], 404); // 404 Not Found
+            // Case: Driver NOT found
+            $responseData = [
+                'data' => [
+                    'driver_info' => null, // Set driver_info to null
+                    'sightings' => SightingResource::collection($sightings),
+                ],
+            ];
+        } else {
+            // Case: Driver IS found ("Happy Path")
+            $responseData = [
+                'data' => [
+                    'driver_info' => new DriverResource($driverInfo),
+                    'sightings' => SightingResource::collection($sightings),
+                ],
+            ];
         }
 
-        // 6. Happy Path: Driver found, return all data
-        return response()->json([
-            'driver_info' => new DriverResource($driverInfo),
-            'sightings' => SightingResource::collection($sightings),
-        ]);
+        // 6. ✅ Return the single, unified response structure with a 200 OK status
+        return response()->json($responseData, 200);
     }
 }

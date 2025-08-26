@@ -15,10 +15,10 @@ class CameraFactory extends Factory
             'region' => $this->faker->city(),
             'governorate' => $this->faker->state(),
             'street' => $this->faker->streetName(),
-            'coordinates' => $this->faker->latitude() . ',' . $this->faker->longitude(),
+            'coordinates' => $this->faker->latitude().','.$this->faker->longitude(),
             'rtsp_url' => $this->faker->url(),
             'hls_path' => $this->faker->url(),
-            'status' => $this->faker->randomElement(['active','inactive']),
+            'status' => $this->faker->randomElement(['active', 'inactive']),
             'external_id' => $this->faker->randomNumber(),
         ];
     }

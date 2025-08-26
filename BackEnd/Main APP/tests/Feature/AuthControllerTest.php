@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
@@ -23,10 +23,10 @@ it('logs in with correct credentials', function () {
     ]);
 
     $response->assertStatus(200)
-             ->assertJsonStructure([
-                 'role',
-                 'access_token',
-             ]);
+        ->assertJsonStructure([
+            'role',
+            'access_token',
+        ]);
 
     expect($user->fresh()->last_login_at)->not()->toBeNull();
 });
@@ -47,9 +47,9 @@ it('fails login with wrong credentials', function () {
     ]);
 
     $response->assertStatus(401)
-             ->assertJson([
-                 'message' => 'الايميل او كلمة السر خطأ',
-             ]);
+        ->assertJson([
+            'message' => 'الايميل او كلمة السر خطأ',
+        ]);
 });
 
 // اختبار تسجيل الخروج
@@ -65,9 +65,9 @@ it('logs out successfully', function () {
     ]);
 
     $response->assertStatus(200)
-             ->assertJson([
-                 'message' => 'تم تسجيل الخروج بنجاح',
-             ]);
+        ->assertJson([
+            'message' => 'تم تسجيل الخروج بنجاح',
+        ]);
 
     // تحقق من جدول personal_access_tokens مباشرة
     $this->assertDatabaseMissing('personal_access_tokens', [
