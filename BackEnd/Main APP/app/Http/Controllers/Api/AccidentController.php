@@ -16,9 +16,10 @@ class AccidentController extends Controller
 {
     public function store(StoreAccidentRequest $request): JsonResponse
     {
-        // 3. تم حذف كل كود التحقق والتعامل مع الأخطاء
-
         $accident = Accident::create($request->validated());
+
+        // <<< الخطوة 1: إضافة الحادث الجديد إلى الكاش ليتمكن الـ Stream من التقاطه
+        Cache::put('latest_accident', $accident, now()->addMinutes(1));
 
         return response()->json([
             'message' => 'Accident recorded successfully.',
@@ -52,10 +53,19 @@ class AccidentController extends Controller
     /**
      * Stream new and acknowledged accidents in real-time using SSE.
      */
-    public function streamNewAccidents(): StreamedResponse
+    public function streamNewAccidents(Request $request): StreamedResponse // <<< يمكن إضافة Request هنا للمصادقة
     {
+        // <<< يمكنك إضافة تحقق من التوكن هنا إذا أرسلته كـ query parameter
+        // if (!$request->hasValidSignature()) {
+        //    abort(401);
+        // }
+        
         $response = new StreamedResponse(function () {
             set_time_limit(0);
+
+            // <<< الخطوة 2: إضافة عداد للـ Heartbeat
+            $counter = 0;
+
             while (true) {
                 if ($latestAccident = Cache::get('latest_accident')) {
                     echo "event: new-accident\n";
@@ -68,10 +78,16 @@ class AccidentController extends Controller
                     echo 'data: '.json_encode(['id' => $acknowledgedAccident->id])."\n\n";
                     Cache::forget('latest_acknowledged_accident');
                 }
+                
+                // <<< الخطوة 2: إرسال Heartbeat كل 15 ثانية لإبقاء الاتصال مفتوحاً
+                if ($counter % 15 == 0) {
+                    echo ": keep-alive\n\n";
+                }
 
                 ob_flush();
                 flush();
                 sleep(1);
+                $counter++; // <<< زيادة العداد
 
                 if (connection_aborted()) {
                     break;
