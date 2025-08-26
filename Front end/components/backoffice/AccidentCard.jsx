@@ -117,14 +117,16 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
                   )}
                 </button>
 
-                {/* زر الانتقال إلى بث الكاميرا */}
-                <button
-                  onClick={handleCameraStream}
-                  className="p-1.5 rounded-full transition-colors text-blue-600 hover:bg-blue-100/50 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                  aria-label="عرض بث الكاميرا"
-                >
-                  <Camera size={18} />
-                </button>
+                {/* زر الانتقال إلى بث الكاميرا - يظهر فقط للحوادث الجديدة */}
+                {accident.status === "new" && (
+                  <button
+                    onClick={handleCameraStream}
+                    className="p-1.5 rounded-full transition-colors text-blue-600 hover:bg-blue-100/50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                    aria-label="عرض بث الكاميرا"
+                  >
+                    <Camera size={18} />
+                  </button>
+                )}
               </div>
             </div>
 

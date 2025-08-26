@@ -3,9 +3,9 @@ import { Search, Trash2Icon, Upload } from "lucide-react";
 
 export default function TableActions() {
   return (
-    <div className="flex justify-center items-center py-6 px-12 bg-slate-50 dark:bg-slate-700 rounded-lg gap-8 shadow-md">
+    <div className="flex justify-center items-center  py-6 px-12 bg-slate-50 dark:bg-slate-700 rounded-lg gap-8 shadow-md">
       {/* <button>Export</button> */}
-      <button className="relative inline-flex items-center justify-center py-3 px-4 space-x-3 text-base font-medium group hover:text-green-700 text-gray-900 border border-slate-900 hover:border-customGreen bg-slate-100 focus:outline-none rounded-lg text-center dark:border-customGreen dark:text-customGreen dark:hover:text-white dark:hover:border-white dark:bg-slate-800">
+      <button className="flex items-center space-x-2 hover:text-green-700 text-slate-900 border border-slate-900 hover:border-customGreen bg-white focus:outline-none  font-normal rounded-md text-sm px-2 py-2 text-center dark:border-customGreen dark:text-customGreen dark:hover:text-white dark:hover:border-white dark:bg-slate-700">
         <Upload className="w-4 h-4 mr-2" />
         Export
       </button>
