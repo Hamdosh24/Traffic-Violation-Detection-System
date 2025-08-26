@@ -10,8 +10,11 @@ class PassingCar extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     // --- نفس الإعدادات الاحترافية لمفتاح UUID الأساسي ---
     protected $primaryKey = 'p_car_id';
+
 
     public $incrementing = false;
 
