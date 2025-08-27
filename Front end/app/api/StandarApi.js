@@ -11,89 +11,115 @@ export class StandardApi {
   }
 
   // إعداد اتصال SSE باستخدام EventSource فقط
-  static setupAccidentSSE(callback, onReconnect = null) {
+  // هذا التعديل يزيل منطق إعادة الاتصال من هنا ليتم إدارته في متجر Zustand.
+  static setupAccidentSSE(onNewAccident, onOpen, onError) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("No token found for SSE connection");
+        onError(new Error("No authentication token found."));
         return null;
       }
 
-      // تنظيف أي اتصال موجود مسبقاً
-      if (window.currentEventSource) {
-        window.currentEventSource.close();
-        window.currentEventSource = null;
-      }
-
-      console.log(
-        "Connecting to SSE at:",
-        `${this.STREAM_URL}/admin/accidents/stream`
-      );
-
-      // إنشاء EventSource مع إضافة التوكن كمعامل في الـ URL
       const eventSourceUrl = `${
         this.STREAM_URL
       }/admin/accidents/stream?token=${encodeURIComponent(token)}`;
       const eventSource = new EventSource(eventSourceUrl);
-
-      window.currentEventSource = eventSource;
 
       // معالجة حدث new-accident
       eventSource.addEventListener("new-accident", (event) => {
         try {
           if (event.data) {
             const data = JSON.parse(event.data);
-            console.log("New accident received via SSE:", data);
-            callback(data);
+            console.log("📨 SSE Event received:", data);
+            onNewAccident(data);
           }
         } catch (err) {
-          console.error("Error parsing accident data:", err, event);
+          console.error("❌ Error parsing accident data:", err, event);
         }
       });
 
       eventSource.onopen = () => {
-        console.log("SSE connection established successfully");
-        if (onReconnect) {
-          onReconnect();
-        }
+        console.log("✅ SSE connection established successfully");
+        onOpen();
       };
 
       eventSource.onerror = (error) => {
-        console.error("SSE connection error:", error);
-
-        // إعادة الاتصال بعد تأخير
-        setTimeout(() => {
-          this.setupAccidentSSE(callback, onReconnect);
-        }, 4000);
+        console.error("❌ SSE connection error:", error);
+        onError(error);
       };
 
       return eventSource;
     } catch (err) {
-      console.error("Failed to create SSE connection:", err);
-      setTimeout(() => {
-        this.setupAccidentSSE(callback, onReconnect);
-      }, 5000);
+      console.error("❌ Failed to create SSE connection:", err);
+      onError(err);
       return null;
     }
   }
 
-  // دالة إضافية لإغلاق الاتصال يدوياً
-  static closeSSEConnection() {
-    if (window.currentEventSource) {
-      window.currentEventSource.close();
-      window.currentEventSource = null;
-      console.log("SSE connection closed");
+  // دالة لإغلاق الاتصال بـ SSE
+  static disconnectSSE(eventSource) {
+    if (eventSource) {
+      eventSource.close();
+      console.log("🔌 SSE connection closed");
     }
   }
 
-  // دالة لقطع الاتصال بـ SSE
-  static disconnectSSE() {
-    if (window.currentEventSource) {
-      window.currentEventSource.close();
-      window.currentEventSource = null;
-      console.log("SSE connection closed");
+  // دالة تسجيل الخروج
+  static async logout() {
+    // هنا يجب إضافة منطق طلب تسجيل الخروج من الخادم
+    return { success: true }; // مثال بسيط
+  }
+
+  // get all notifications
+  static async fetchAllAccidents() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      const response = await fetch(`${this.BASE_URL}/admin/accidents/all`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || "فشل في جلب الحوادث",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.data || data,
+      };
+    } catch (err) {
+      console.error("API Error [fetchAllAccidents]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء جلب الحوادث",
+      };
     }
   }
+
   // get all notifications
   static async fetchAllAccidents() {
     try {

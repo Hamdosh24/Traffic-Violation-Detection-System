@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { StandardApi } from "@/app/api/StandarApi";
 import useAccidentStore from "@/stores/useAccidentStore";
+import { StandardApi } from "@/app/api/StandarApi";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -12,19 +12,12 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    return () => {
-      useAccidentStore.getState().cleanupSSE();
-    };
-  }, []);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      // استخدام تابع post الموجود في StandardApi بدلاً من الاتصال المباشر
       const {
         success,
         data,
@@ -44,17 +37,11 @@ export default function Login() {
         JSON.stringify({
           role: data.role,
           name: data.name || email,
-          // إضافة أي بيانات أخرى تحتاجها
         })
       );
 
       // تفعيل اتصال SSE بعد تسجيل الدخول بنجاح
-      try {
-        await useAccidentStore.getState().setupSSEConnection();
-      } catch (sseError) {
-        console.error("SSE connection error:", sseError);
-        // لا نوقف عملية تسجيل الدخول إذا فشل اتصال SSE
-      }
+      useAccidentStore.getState().setupSSEConnection();
 
       router.push(
         data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
@@ -62,7 +49,7 @@ export default function Login() {
     } catch (err) {
       setError(err.message);
       // تنظيف أي اتصالات SSE في حالة الخطأ
-      useAccidentStore.getState().cleanupSSE();
+      useAccidentStore.getState().disconnectSSE();
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +95,6 @@ export default function Login() {
             كلمة السر
           </label>
 
-          {/* حاوية relative لوضع زر العين داخل الحقل */}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -121,7 +107,6 @@ export default function Login() {
               disabled={isLoading}
             />
 
-            {/* زر العين */}
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}

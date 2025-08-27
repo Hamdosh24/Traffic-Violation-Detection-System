@@ -10,27 +10,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { StandardApi } from "@/app/api/StandarApi";
 import Link from "next/link";
 import useAccidentStore from "@/stores/useAccidentStore";
+import { StandardApi } from "@/app/api/StandarApi";
 
 export default function Navbar({ setShowSidebar, showSidebar }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  // التصحيح: استخدام unviewedCount بدلاً من unreadCount
-  const { unviewedCount, cleanupSSE, setupSSEConnection } = useAccidentStore();
+  const { unviewedCount, disconnectSSE, setupSSEConnection } =
+    useAccidentStore();
 
   useEffect(() => {
     // إعداد اتصال SSE عند تحميل المكون
     setupSSEConnection();
 
-    return () => cleanupSSE();
-  }, [cleanupSSE, setupSSEConnection]);
+    // فصل الاتصال عند إزالة المكون
+    return () => disconnectSSE();
+  }, [disconnectSSE, setupSSEConnection]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      cleanupSSE(); // تنظيف اتصال SSE قبل تسجيل الخروج
+      // استدعاء دالة فصل الاتصال الصحيحة من المتجر
+      disconnectSSE();
 
       const { success } = await StandardApi.logout();
       if (success) {
@@ -75,7 +77,6 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           <Link href="/employeeDashboard/notifications">
             <div className="relative p-1">
               <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
-              {/* التصحيح: استخدام unviewedCount بدلاً من unreadCount */}
               {unviewedCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {unviewedCount > 99 ? "99+" : unviewedCount}

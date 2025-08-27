@@ -20,7 +20,9 @@ export default function AccidentsPage() {
   } = useAccidentStore();
 
   useEffect(() => {
+    // إعداد اتصال SSE عند تحميل المكون
     setupSSEConnection();
+    // فصل الاتصال عند إزالة المكون (cleanup)
     return () => disconnectSSE();
   }, [setupSSEConnection, disconnectSSE]);
 
@@ -63,8 +65,8 @@ export default function AccidentsPage() {
 
           <button
             onClick={reconnectSSE}
-            disabled={isLoading}
-            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            disabled={isLoading || isConnected}
+            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="إعادة الاتصال"
           >
             <RefreshCw

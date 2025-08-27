@@ -6,8 +6,9 @@ const useAccidentStore = create((set, get) => ({
   unviewedCount: 0,
   isLoading: false,
   error: null,
-  sseConnection: null,
+  eventSource: null,
   isConnected: false,
+  reconnectionTimeout: null,
 
   // جلب جميع الحوادث
   fetchAccidents: async () => {
@@ -74,7 +75,6 @@ const useAccidentStore = create((set, get) => ({
         return;
       }
 
-      // إرسال طلبات لتحديث جميع الحوادث غير المشاهدة
       const updatePromises = unviewedAccidents.map((accident) =>
         StandardApi.markAccidentAsViewed(accident.id)
       );
@@ -99,32 +99,16 @@ const useAccidentStore = create((set, get) => ({
     }
   },
 
-  // تنظيف اتصال SSE
-  cleanupSSE: () => {
-    const { sseConnection } = get();
-    if (sseConnection && typeof sseConnection.close === "function") {
-      sseConnection.close();
-    }
-
-    if (window.currentEventSource) {
-      window.currentEventSource.close();
-      window.currentEventSource = null;
-    }
-
-    set({ sseConnection: null, isConnected: false });
-  },
-
   // معالج لبيانات الحادث الجديد
   handleNewAccident: (data) => {
     try {
       console.log("Processing new accident:", data);
 
-      // التأكد من أن البيانات تحتوي على الهيكل المتوقع
       const newAccident = {
         id: data.id,
         timestamp: data.timestamp,
         status: data.status || "new",
-        camera: data.camera || {}, // استخدام البيانات كما هي من الخادم
+        camera: data.camera || {},
       };
 
       set((state) => ({
@@ -147,40 +131,72 @@ const useAccidentStore = create((set, get) => ({
     }
   },
 
-  // معالج لإعادة الاتصال
-  handleReconnect: () => {
-    console.log("تم إعادة الاتصال، جلب الحوادث مرة أخرى...");
-    get().fetchAccidents();
-    set({ isConnected: true, error: null });
-  },
-
-  // إعداد اتصال SSE
+  // إعداد اتصال SSE (يجب أن يتم استدعاؤه مرة واحدة)
   setupSSEConnection: () => {
-    const { cleanupSSE, handleNewAccident, handleReconnect } = get();
-
-    // تنظيف أي اتصال موجود
-    cleanupSSE();
-
-    // جلب البيانات الحالية أولاً
-    get().fetchAccidents();
-
-    // إعداد اتصال SSE جديد
-    const sseConnection = StandardApi.setupAccidentSSE(
+    const {
+      eventSource,
+      fetchAccidents,
       handleNewAccident,
-      handleReconnect
+      reconnectionTimeout,
+    } = get();
+
+    // إذا كان هناك اتصال قائم أو جاري محاولة إعادة الاتصال، لا تفعل شيئاً
+    if (eventSource || reconnectionTimeout) {
+      return;
+    }
+
+    // قم بجلب الحوادث الموجودة أولاً
+    fetchAccidents();
+
+    const sse = StandardApi.setupAccidentSSE(
+      handleNewAccident,
+      // onOpen
+      () => {
+        set({ isConnected: true, error: null, reconnectionTimeout: null });
+      },
+      // onError
+      (error) => {
+        console.error(
+          "SSE connection error occurred. Attempting to reconnect...",
+          error
+        );
+        get().disconnectSSE(); // أغلق الاتصال الحالي
+        set({ isConnected: false });
+
+        // حاول إعادة الاتصال بعد 5 ثوانٍ
+        const timeoutId = setTimeout(() => {
+          get().setupSSEConnection();
+        }, 5000);
+
+        set({ reconnectionTimeout: timeoutId });
+      }
     );
 
-    set({ sseConnection, isConnected: true, error: null });
+    set({ eventSource: sse, isConnected: sse ? true : false });
   },
 
   // فصل اتصال SSE (للاستخدام في useEffect cleanup)
   disconnectSSE: () => {
-    get().cleanupSSE();
+    const { eventSource, reconnectionTimeout } = get();
+    if (eventSource) {
+      StandardApi.disconnectSSE(eventSource);
+      set({ eventSource: null });
+    }
+    if (reconnectionTimeout) {
+      clearTimeout(reconnectionTimeout);
+      set({ reconnectionTimeout: null });
+    }
+    set({ isConnected: false });
   },
 
   // إعادة الاتصال يدوياً
   reconnectSSE: () => {
-    get().setupSSEConnection();
+    const { isConnected, setupSSEConnection, disconnectSSE } = get();
+    // إذا لم يكن هناك اتصال، قم بإعادة الاتصال
+    if (!isConnected) {
+      disconnectSSE();
+      setupSSEConnection();
+    }
   },
 }));
 
