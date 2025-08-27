@@ -70,21 +70,23 @@ class PassingCarController extends Controller
         $responseData = [];
 
         if (empty($driverInfo)) {
+            return response()->json([
+                'message' => 'Driver with this plate number was not found.',
+                'sightings' => SightingResource::collection($sightings), // Still return local sightings
+            ], 404); // 404 Not Found
             // Case: Driver NOT found
             $responseData = [
-                'data' => [
                     'driver_info' => null, // Set driver_info to null
                     'sightings' => SightingResource::collection($sightings),
-                ],
             ];
         } else {
             // Case: Driver IS found ("Happy Path")
             $responseData = [
-                'data' => [
+
                     'driver_info' => new DriverResource($driverInfo),
                     'sightings' => SightingResource::collection($sightings),
-                ],
             ];
+
         }
 
         // 6. ✅ Return the single, unified response structure with a 200 OK status
