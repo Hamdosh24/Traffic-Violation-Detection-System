@@ -1,7 +1,88 @@
+import { EventSourcePolyfill } from "event-source-polyfill";
+
 export class StandardApi {
   static BASE_URL = "http://localhost:8000/api";
   static STREAM_URL = "http://localhost:8002/api";
 
+  static validateToken() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
+    }
+    return token;
+  }
+
+  // إعداد اتصال SSE بسيط وموثوق
+  static setupAccidentSSE(callback, onReconnect = null) {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found for SSE connection");
+        return null;
+      }
+
+      // تنظيف أي اتصال موجود مسبقاً
+      if (window.currentEventSource) {
+        window.currentEventSource.close();
+        window.currentEventSource = null;
+      }
+
+      console.log(
+        "Connecting to SSE at:",
+        `${this.STREAM_URL}/admin/accidents/stream`
+      );
+
+      const eventSource = new EventSourcePolyfill(
+        `${this.SREAM_URL}/admin/accidents/stream`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+          },
+          withCredentials: false, // جرب false إذا كان يعمل في HTML بدون credentials
+        }
+      );
+
+      window.currentEventSource = eventSource;
+
+      // معالجة حدث new-accident - بنفس الطريقة التي تعمل في HTML
+      eventSource.addEventListener("new-accident", (event) => {
+        try {
+          if (event.data) {
+            const data = JSON.parse(event.data);
+            console.log("New accident received via SSE:", data);
+            callback(data);
+          }
+        } catch (err) {
+          console.error("Error parsing accident data:", err, event);
+        }
+      });
+
+      eventSource.onopen = () => {
+        console.log("SSE connection established successfully");
+        if (onReconnect) {
+          onReconnect();
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error("SSE connection error:", error);
+
+        // إعادة الاتصال بعد تأخير قصير
+        setTimeout(() => {
+          this.setupAccidentSSE(callback, onReconnect);
+        }, 3000);
+      };
+
+      return eventSource;
+    } catch (err) {
+      console.error("Failed to create SSE connection:", err);
+      setTimeout(() => {
+        this.setupAccidentSSE(callback, onReconnect);
+      }, 3000);
+      return null;
+    }
+  }
   // get all notifications
   static async fetchAllAccidents() {
     try {
@@ -38,11 +119,9 @@ export class StandardApi {
       }
 
       const data = await response.json();
-
-      // التصحيح: إرجاع كامل بيانات التقسيم
       return {
         success: true,
-        data: data, // إرجاع الكائن كاملاً وليس data.data فقط
+        data: data.data || data,
       };
     } catch (err) {
       console.error("API Error [fetchAllAccidents]:", err);
@@ -54,18 +133,12 @@ export class StandardApi {
   }
 
   // 2. التعرف على حادث (صحيح)
-  static async markAccidentAsViewed(accident_id) {
+  static async markAccidentAsViewed(accidentId) {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return {
-          success: false,
-          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
-        };
-      }
+      const token = this.validateToken();
 
       const response = await fetch(
-        `${this.BASE_URL}/admin/accidents/${accident_id}/acknowledge`,
+        `${this.BASE_URL}/admin/accidents/${accidentId}/acknowledge`,
         {
           method: "PATCH",
           headers: {
@@ -77,25 +150,16 @@ export class StandardApi {
 
       if (response.status === 401) {
         localStorage.removeItem("token");
-        return {
-          success: false,
-          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
-        };
+        throw new Error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
       }
 
       if (response.status === 404) {
-        return {
-          success: false,
-          error: "الحادث غير موجود",
-        };
+        throw new Error("الحادث غير موجود");
       }
 
       if (!response.ok) {
         const errorData = await response.json();
-        return {
-          success: false,
-          error: errorData.message || "فشل في تحديث حالة الحادث",
-        };
+        throw new Error(errorData.message || "فشل في تحديث حالة الحادث");
       }
 
       const data = await response.json();
@@ -112,72 +176,25 @@ export class StandardApi {
     }
   }
 
-  static async setupAccidentSSE(callback) {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No token found for SSE connection");
-      return null;
-    }
-
+  static async testSSEConnection() {
     try {
-      const eventSource = new EventSource(
-        `${this.STREAM_URL}/admin/accidents/stream?token=${encodeURIComponent(
-          token
-        )}`
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${this.STREAM_URL}/admin/accidents/stream`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      // التصحيح: استخدام addEventListener بدلاً من onmessage
-      eventSource.addEventListener("new-accident", (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          callback(data);
-        } catch (err) {
-          console.error("Error parsing accident data:", err);
-        }
-      });
-
-      eventSource.onerror = (err) => {
-        console.error("SSE Error:", err);
-        eventSource.close();
-        setTimeout(() => this.setupAccidentSSE(callback), 5000);
-      };
-
-      return eventSource;
-    } catch (err) {
-      console.error("Failed to establish SSE connection:", err);
-      setTimeout(() => this.setupAccidentSSE(callback), 5000);
+      console.log("SSE Server connection test:", response.status);
+      return response.ok;
+    } catch (error) {
+      console.error("SSE Server is not reachable:", error);
+      return false;
     }
-  }
-
-  static setupNotificationCountSSE(callback) {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No token found for SSE connection");
-      return null;
-    }
-
-    const eventSource = new EventSource(
-      `${this.BASE_URL}/admin/notifications/count?token=${encodeURIComponent(
-        token
-      )}`
-    );
-
-    eventSource.addEventListener("count-update", (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        callback(data.change || 1);
-      } catch (err) {
-        console.error("Error parsing count data:", err);
-      }
-    });
-
-    eventSource.onerror = (err) => {
-      console.error("Count SSE Error:", err);
-      eventSource.close();
-      setTimeout(() => this.setupNotificationCountSSE(callback), 5000);
-    };
-
-    return eventSource;
   }
 
   // region filter

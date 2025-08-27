@@ -27,7 +27,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "components/backoffice/LineChartComponent.jsx",
-    "app/(front-end)/page.jsx"
+    "app/(front-end)/page.jsx",
+    "components/backoffice/ClientLayout.jsx"
   ],
   "exclude": ["node_modules"]
 }
