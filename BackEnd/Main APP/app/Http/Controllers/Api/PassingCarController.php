@@ -70,10 +70,6 @@ class PassingCarController extends Controller
         $responseData = [];
 
         if (empty($driverInfo)) {
-            return response()->json([
-                'message' => 'Driver with this plate number was not found.',
-                'sightings' => SightingResource::collection($sightings), // Still return local sightings
-            ], 404); // 404 Not Found
             // Case: Driver NOT found
             $responseData = [
                     'driver_info' => null, // Set driver_info to null
