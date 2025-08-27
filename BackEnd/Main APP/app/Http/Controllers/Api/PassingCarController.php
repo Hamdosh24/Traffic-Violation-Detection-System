@@ -73,10 +73,24 @@ class PassingCarController extends Controller
 
         // 5. Check if the driver was specifically not found (empty result)
         if (empty($driverInfo)) {
+<<<<<<< Updated upstream
             return response()->json([
                 'message' => 'Driver with this plate number was not found.',
                 'sightings' => SightingResource::collection($sightings), // Still return local sightings
             ], 404); // 404 Not Found
+=======
+            // Case: Driver NOT found
+            $responseData = [
+                    'driver_info' => null, // Set driver_info to null
+                    'sightings' => SightingResource::collection($sightings),
+            ];
+        } else {
+            // Case: Driver IS found ("Happy Path")
+            $responseData = [
+                    'driver_info' => new DriverResource($driverInfo),
+                    'sightings' => SightingResource::collection($sightings),
+            ];
+>>>>>>> Stashed changes
         }
 
         // 6. Happy Path: Driver found, return all data
