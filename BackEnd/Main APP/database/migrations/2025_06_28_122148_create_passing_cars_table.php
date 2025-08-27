@@ -26,10 +26,6 @@ return new class extends Migration
             // العمود الرابع: لتخزين وقت وتاريخ الرصد بدقة
             $table->timestamp('timestamp');
 
-            // هذان العمودان تضيفهما لارافيل تلقائيًا: created_at و updated_at
-            // لتسجيل وقت إنشاء السجل ووقت آخر تعديل عليه
-            $table->index('plate_num');
-            $table->index('timestamp');
         });
     }
 

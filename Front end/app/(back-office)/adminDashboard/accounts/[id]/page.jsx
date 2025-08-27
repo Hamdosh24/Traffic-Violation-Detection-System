@@ -128,7 +128,10 @@ export default function AccountDetail({ params }) {
               value={`${employee.first_name} ${employee.last_name}`}
             />
             <DetailItem label="الرقم الوطني" value={employee.national_num} />
-            <DetailItem label="تاريخ الانشاء" value={employee.created_at} />
+            <DetailItem
+              label="تاريخ الانشاء"
+              value={new Date(employee.created_at).toLocaleDateString()}
+            />
             <DetailItem label="العمر" value={employee.age} />
             <DetailItem
               label="الجنس"

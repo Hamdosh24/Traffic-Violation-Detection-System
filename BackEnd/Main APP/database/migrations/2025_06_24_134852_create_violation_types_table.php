@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('violation_types', function (Blueprint $table) {
             $table->uuid('v_type_id')->primary();
-            $table->string('type_name');    
+            $table->string('type_name');
             $table->string('key')->unique();
             $table->bigInteger('fine_amount');
             $table->timestamps();

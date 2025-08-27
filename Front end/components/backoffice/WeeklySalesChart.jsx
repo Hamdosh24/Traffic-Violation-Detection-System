@@ -35,11 +35,6 @@ export default function WeeklySalesChart() {
         text: "Chart.js Line Chart",
       },
     },
-    elements: {
-      line: {
-        tension: 0.2, // يجعل الخط أكثر انحناءً (اختياري)
-      },
-    },
   };
 
   const labels = [
@@ -84,7 +79,7 @@ export default function WeeklySalesChart() {
               faker.datatype.number({ min: -1000, max: 1000 })
             ),
             borderColor: "rgb(0, 137, 132)",
-            backgroundColor: "rgba(0, 137, 132, 0.8)",
+            backgroundColor: "rgba(0, 137, 132, 0.5)",
           },
         ],
       },
@@ -94,7 +89,7 @@ export default function WeeklySalesChart() {
 
   const [chartTodDisplay, setChartTodDisplay] = useState(tabs[0].type);
   return (
-    <div className="bg-milkColor dark:bg-customDarkGreen p-8 rounded-md shadow-xl py-8">
+    <div className="bg-slate-50 dark:bg-slate-700 p-8 rounded-md shadow-xl">
       <h2 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-50">
         Weekly Sales
       </h2>

@@ -5,7 +5,7 @@ namespace App\Observers;
 use App\Models\Accident;
 use App\Models\User;
 use App\Notifications\NewAccidentNotification;
-use Illuminate\Support\Facades\Cache; // ✅ استيراد الكاش
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 
 class AccidentObserver

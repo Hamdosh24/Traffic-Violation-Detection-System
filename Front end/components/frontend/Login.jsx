@@ -1,21 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useAccidentStore from "@/stores/useAccidentStore";
 import { StandardApi } from "@/app/api/StandarApi";
-import useNotificationStore from "@/stores/notificationStore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    return () => {
-      useNotificationStore.getState().cleanupSSE();
-    };
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,24 +22,34 @@ export default function Login() {
         success,
         data,
         error: apiError,
-      } = await StandardApi.post("/login", { email, password });
+      } = await StandardApi.post("/login", {
+        email,
+        password,
+      });
 
       if (!success) {
         throw new Error(apiError || "Login failed, please try again");
       }
 
       localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user", JSON.stringify({ role: data.role }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          role: data.role,
+          name: data.name || email,
+        })
+      );
 
-      // تفعيل اتصال SSE
-      useNotificationStore.getState().setupSSEConnection();
+      // تفعيل اتصال SSE بعد تسجيل الدخول بنجاح
+      useAccidentStore.getState().setupSSEConnection();
 
       router.push(
         data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
       );
     } catch (err) {
       setError(err.message);
-      useNotificationStore.getState().cleanupSSE();
+      // تنظيف أي اتصالات SSE في حالة الخطأ
+      useAccidentStore.getState().disconnectSSE();
     } finally {
       setIsLoading(false);
     }
@@ -89,16 +94,55 @@ export default function Login() {
           >
             كلمة السر
           </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="w-full p-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b7a579] focus:border-[#b7a579]"
-            required
-            disabled={isLoading}
-          />
+
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full p-3 pr-10 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b7a579] focus:border-[#b7a579]"
+              required
+              disabled={isLoading}
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute inset-y-0 right-2 flex items-center px-2 text-gray-600"
+              aria-label={showPassword ? "إخفاء كلمة السر" : "إظهار كلمة السر"}
+              tabIndex={0}
+              disabled={isLoading}
+            >
+              {showPassword ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M17.94 17.94A10.94 10.94 0 0112 19c-4.477 0-8.268-2.943-9.542-7a11.03 11.03 0 012.06-3.354" />
+                  <path d="M1 1l22 22" />
+                  <path d="M9.88 9.88A3 3 0 0012 15a3 3 0 003-3" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <button

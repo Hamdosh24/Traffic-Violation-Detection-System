@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
-use App\Http\Middleware\TokenExpiryMiddleware;
 
 class EmployeeControllerTest extends TestCase
 {
@@ -44,7 +43,7 @@ class EmployeeControllerTest extends TestCase
         $response = $this->getJson('/api/admin/employees');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(4); // 3 + المدير الحالي
+            ->assertJsonCount(4); // 3 + المدير الحالي
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -58,24 +57,24 @@ class EmployeeControllerTest extends TestCase
 
         // بيانات الموظف الجديد
         $data = [
-            'user_name'    => 'newuser',
-            'first_name'   => 'John',
-            'last_name'    => 'Doe',
+            'user_name' => 'newuser',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'national_num' => '123456789',
-            'email'        => 'newuser@example.com',
-            'phone_num'    => '0599999999',
-            'age'          => 30,
-            'gender'       => 'male',
-            'password'     => bcrypt('password123'), // تشفير كلمة المرور
-            'role_id'      => $role->role_id,
+            'email' => 'newuser@example.com',
+            'phone_num' => '0599999999',
+            'age' => 30,
+            'gender' => 'male',
+            'password' => bcrypt('password123'), // تشفير كلمة المرور
+            'role_id' => $role->role_id,
         ];
 
         // إرسال الطلب
         $response = $this->postJson('/api/admin/employees', $data);
-        
+
         // تحقق من الاستجابة
         $response->assertStatus(200)
-                ->assertJsonFragment(['user_name' => 'newuser']);
+            ->assertJsonFragment(['user_name' => 'newuser']);
 
         // تحقق من قاعدة البيانات
         $this->assertDatabaseHas('users', ['email' => 'newuser@example.com']);
@@ -89,7 +88,7 @@ class EmployeeControllerTest extends TestCase
         $response = $this->getJson("/api/admin/employees/{$employee->user_id}");
 
         $response->assertStatus(200)
-                 ->assertJsonFragment(['user_name' => $employee->user_name]);
+            ->assertJsonFragment(['user_name' => $employee->user_name]);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -102,7 +101,7 @@ class EmployeeControllerTest extends TestCase
         $response = $this->putJson("/api/admin/employees/{$employee->user_id}", $data);
 
         $response->assertStatus(200)
-                 ->assertJsonFragment(['first_name' => 'UpdatedName']);
+            ->assertJsonFragment(['first_name' => 'UpdatedName']);
 
         $this->assertDatabaseHas('users', ['first_name' => 'UpdatedName']);
     }
@@ -115,7 +114,7 @@ class EmployeeControllerTest extends TestCase
         $response = $this->deleteJson("/api/admin/employees/{$employee->user_id}");
 
         $response->assertStatus(200)
-                 ->assertJsonFragment(['message' => 'تم حذف الموظف بنجاح']);
+            ->assertJsonFragment(['message' => 'تم حذف الموظف بنجاح']);
 
         $this->assertDatabaseMissing('users', ['user_id' => $employee->user_id]);
     }

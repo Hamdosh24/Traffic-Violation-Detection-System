@@ -16,28 +16,28 @@ class ViolationTypeSeeder extends Seeder
             [
                 'key' => 'no_seatbelt',
                 'type_name' => 'اكتشاف عدم وضع حزام الأمان',
-                'fine_amount' => 150
+                'fine_amount' => 150,
             ],
             [
                 'key' => 'phone_usage',
                 'type_name' => 'اكتشاف استعمال الهاتف أثناء القيادة',
-                'fine_amount' => 200
+                'fine_amount' => 200,
             ],
             [
                 'key' => 'red_light',
                 'type_name' => 'اكتشاف تجاوز الإشارة الحمراء',
-                'fine_amount' => 500
+                'fine_amount' => 500,
             ],
             [
                 'key' => 'wrong_way',
                 'type_name' => 'اكتشاف القيادة عكس السير',
-                'fine_amount' => 500
+                'fine_amount' => 500,
             ],
             [
                 'key' => 'no_plate',
                 'type_name' => 'اكتشاف غياب لوحة المركبة',
-                'fine_amount' => 1000
-            ]
+                'fine_amount' => 1000,
+            ],
         ];
 
         foreach ($violations as $violation) {
