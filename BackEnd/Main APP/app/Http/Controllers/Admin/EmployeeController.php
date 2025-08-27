@@ -32,6 +32,7 @@ class EmployeeController extends Controller
                     'gender' => $user->gender,
                     'role_id' => $role ? $role->role_id : null,
                     'role_name' => $role ? $role->role_name : null,
+                    'created_at' => $user->created_at,
                 ];
             });
 
@@ -121,6 +122,7 @@ class EmployeeController extends Controller
                 'gender' => $employee->gender,
                 'role_id' => $role ? $role->role_id : null,
                 'role_name' => $role ? $role->role_name : null,
+                'created_at' => $employee->created_at,
             ];
             ActivityLog::create([
                 'user_id' => Auth::user() ? Auth::user()->user_id : null,
