@@ -46,9 +46,9 @@ class PassingCarController extends Controller
         }
 
         // 2. Check for service failure (no changes here)
-        if ($driverInfo === null) {
-            return response()->json(['message' => 'The traffic service is currently unavailable.'], 503);
-        }
+        // if ($driverInfo === null) {
+        //     return response()->json(['message' => 'The traffic service is currently unavailable.'], 503);
+        // }
 
         // 3. Get all sightings from our local database (no changes here)
         $sightings = PassingCar::with('camera')
