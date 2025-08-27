@@ -1,5 +1,3 @@
-import { EventSourcePolyfill } from "event-source-polyfill";
-
 export class StandardApi {
   static BASE_URL = "http://localhost:8000/api";
   static STREAM_URL = "http://localhost:8002/api";
@@ -12,7 +10,7 @@ export class StandardApi {
     return token;
   }
 
-  // إعداد اتصال SSE بسيط وموثوق
+  // إعداد اتصال SSE باستخدام EventSource فقط
   static setupAccidentSSE(callback, onReconnect = null) {
     try {
       const token = localStorage.getItem("token");
@@ -32,20 +30,15 @@ export class StandardApi {
         `${this.STREAM_URL}/admin/accidents/stream`
       );
 
-      const eventSource = new EventSourcePolyfill(
-        `${this.SREAM_URL}/admin/accidents/stream`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "text/event-stream",
-          },
-          withCredentials: false, // جرب false إذا كان يعمل في HTML بدون credentials
-        }
-      );
+      // إنشاء EventSource مع إضافة التوكن كمعامل في الـ URL
+      const eventSourceUrl = `${
+        this.STREAM_URL
+      }/admin/accidents/stream?token=${encodeURIComponent(token)}`;
+      const eventSource = new EventSource(eventSourceUrl);
 
       window.currentEventSource = eventSource;
 
-      // معالجة حدث new-accident - بنفس الطريقة التي تعمل في HTML
+      // معالجة حدث new-accident
       eventSource.addEventListener("new-accident", (event) => {
         try {
           if (event.data) {
@@ -68,10 +61,10 @@ export class StandardApi {
       eventSource.onerror = (error) => {
         console.error("SSE connection error:", error);
 
-        // إعادة الاتصال بعد تأخير قصير
+        // إعادة الاتصال بعد تأخير
         setTimeout(() => {
           this.setupAccidentSSE(callback, onReconnect);
-        }, 3000);
+        }, 4000);
       };
 
       return eventSource;
@@ -79,8 +72,26 @@ export class StandardApi {
       console.error("Failed to create SSE connection:", err);
       setTimeout(() => {
         this.setupAccidentSSE(callback, onReconnect);
-      }, 3000);
+      }, 5000);
       return null;
+    }
+  }
+
+  // دالة إضافية لإغلاق الاتصال يدوياً
+  static closeSSEConnection() {
+    if (window.currentEventSource) {
+      window.currentEventSource.close();
+      window.currentEventSource = null;
+      console.log("SSE connection closed");
+    }
+  }
+
+  // دالة لقطع الاتصال بـ SSE
+  static disconnectSSE() {
+    if (window.currentEventSource) {
+      window.currentEventSource.close();
+      window.currentEventSource = null;
+      console.log("SSE connection closed");
     }
   }
   // get all notifications
