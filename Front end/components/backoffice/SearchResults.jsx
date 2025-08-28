@@ -12,9 +12,6 @@ function SightingsTable({ sightings, driverInfo }) {
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                رقم اللوحة
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 معرف الكاميرا
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -34,9 +31,6 @@ function SightingsTable({ sightings, driverInfo }) {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {sightings.map((sighting, idx) => (
               <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {sighting.plate_num || driverInfo?.plate_num || "غير متوفر"}
-                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                   {sighting.camera?.camera_id || "غير متوفر"}
                 </td>

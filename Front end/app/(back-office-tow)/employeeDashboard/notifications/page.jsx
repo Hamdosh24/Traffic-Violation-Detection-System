@@ -2,35 +2,233 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, Filter, RefreshCw } from "lucide-react";
 import AccidentList from "@/components/backoffice/AccidentList";
-import useAccidentStore from "@/stores/useAccidentStore";
+
+// URL الثابت لنقطة نهاية SSE و API العادي
+const API_BASE_URL = "http://localhost:8000/api";
+const STREAM_URL = "http://localhost:8002/api";
+
+// كلاس StandardApi تم دمجه هنا للاستخدام المباشر
+class StandardApi {
+  static validateToken() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
+    }
+    return token;
+  }
+
+  static async fetchAllAccidents() {
+    try {
+      const token = this.validateToken();
+      const response = await fetch(`${API_BASE_URL}/admin/accidents/all`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || "فشل في جلب الحوادث",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.data || data,
+      };
+    } catch (err) {
+      console.error("API Error [fetchAllAccidents]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء جلب الحوادث",
+      };
+    }
+  }
+
+  static async markAccidentAsViewed(accidentId) {
+    try {
+      const token = this.validateToken();
+      const response = await fetch(
+        `${API_BASE_URL}/admin/accidents/${accidentId}/acknowledge`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        throw new Error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
+      }
+      if (response.status === 404) {
+        throw new Error("الحادث غير موجود");
+      }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "فشل في تحديث حالة الحادث");
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (err) {
+      console.error("API Error [markAccidentAsViewed]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء تحديث حالة الحادث",
+      };
+    }
+  }
+}
 
 export default function AccidentsPage() {
+  const [accidents, setAccidents] = useState([]);
+  const [unviewedCount, setUnviewedCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   const [filter, setFilter] = useState("all");
-  const {
-    accidents,
-    unviewedCount,
-    isLoading,
-    error,
-    isConnected,
-    setupSSEConnection,
-    disconnectSSE,
-    markAsViewed,
-    markAllAsViewed,
-    reconnectSSE,
-  } = useAccidentStore();
+
+  // دالة لجلب جميع الحوادث عند التحميل الأولي
+  const fetchAccidents = async () => {
+    setIsLoading(true);
+    const result = await StandardApi.fetchAllAccidents();
+    if (result.success) {
+      setAccidents(result.data);
+      setUnviewedCount(
+        result.data.filter((accident) => accident.status === "new").length
+      );
+    } else {
+      setError(result.error);
+    }
+    setIsLoading(false);
+  };
+
+  // دالة لتحديث حالة حادث واحد
+  const markAsViewed = async (accidentId) => {
+    setIsLoading(true);
+    const result = await StandardApi.markAccidentAsViewed(accidentId);
+    if (result.success) {
+      setAccidents((prevAccidents) => {
+        const updatedAccidents = prevAccidents.map((acc) =>
+          acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
+        );
+        return updatedAccidents;
+      });
+      setUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
+    } else {
+      setError(result.error);
+    }
+    setIsLoading(false);
+  };
+
+  // دالة لتحديث حالة جميع الحوادث الجديدة
+  const markAllAsViewed = async () => {
+    setIsLoading(true);
+    const unviewedAccidents = accidents.filter((acc) => acc.status === "new");
+    if (unviewedAccidents.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+    const updatePromises = unviewedAccidents.map((accident) =>
+      StandardApi.markAccidentAsViewed(accident.id)
+    );
+    const results = await Promise.all(updatePromises);
+    const allSuccess = results.every((result) => result && result.success);
+
+    if (allSuccess) {
+      setAccidents((prevAccidents) =>
+        prevAccidents.map((acc) =>
+          acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
+        )
+      );
+      setUnviewedCount(0);
+    } else {
+      setError("فشل في تحديث بعض الحوادث.");
+    }
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    // إعداد اتصال SSE عند تحميل المكون
-    setupSSEConnection();
-    // فصل الاتصال عند إزالة المكون (cleanup)
-    return () => disconnectSSE();
-  }, [setupSSEConnection, disconnectSSE]);
+    let eventSource;
+    let reconnectTimeout;
 
-  // تصفية الحوادث بناءً على الحالة
+    const connectSSE = () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
+        return;
+      }
+
+      const eventSourceUrl = `${STREAM_URL}/admin/accidents/stream?token=${encodeURIComponent(
+        token
+      )}`;
+      eventSource = new EventSource(eventSourceUrl);
+
+      eventSource.onopen = () => {
+        console.log("✅ SSE connection established.");
+        setIsConnected(true);
+        setError(null);
+        clearTimeout(reconnectTimeout);
+      };
+
+      eventSource.addEventListener("new-accident", (event) => {
+        try {
+          const newAccidentData = JSON.parse(event.data);
+          console.log("📨 New accident received:", newAccidentData);
+
+          setAccidents((prevAccidents) => [newAccidentData, ...prevAccidents]);
+          setUnviewedCount((prevCount) => prevCount + 1);
+        } catch (e) {
+          console.error("❌ Error parsing accident data:", e);
+        }
+      });
+
+      eventSource.onerror = (err) => {
+        console.error("❌ SSE connection error:", err);
+        setIsConnected(false);
+        setError("الاتصال غير نشط. جاري محاولة إعادة الاتصال...");
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = setTimeout(connectSSE, 5000);
+      };
+    };
+
+    // بدء الاتصال بـ SSE وجلب الحوادث الموجودة عند التحميل
+    fetchAccidents();
+    connectSSE();
+
+    // Cleanup function
+    return () => {
+      console.log("🔌 Disconnecting SSE...");
+      if (eventSource) {
+        eventSource.close();
+      }
+      clearTimeout(reconnectTimeout);
+    };
+  }, []);
+
   const filteredAccidents = accidents.filter((accident) => {
     if (filter === "acknowledged") return accident.status === "acknowledged";
     if (filter === "new") return accident.status === "new";
-    return true; // "all" - عرض جميع الحوادث
+    return true;
   });
 
   return (
@@ -64,8 +262,21 @@ export default function AccidentsPage() {
           </div>
 
           <button
-            onClick={reconnectSSE}
-            disabled={isLoading || isConnected}
+            onClick={() => {
+              if (isConnected) {
+                // أغلق الاتصال الحالي ثم أعد الاتصال
+                const token = localStorage.getItem("token");
+                const eventSourceUrl = `${STREAM_URL}/admin/accidents/stream?token=${encodeURIComponent(
+                  token
+                )}`;
+                const es = new EventSource(eventSourceUrl);
+                es.close(); // أغلق الاتصال القديم
+                setTimeout(() => window.location.reload(), 100);
+              } else {
+                window.location.reload();
+              }
+            }}
+            disabled={isLoading && isConnected}
             className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="إعادة الاتصال"
           >

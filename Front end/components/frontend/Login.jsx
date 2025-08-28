@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import useAccidentStore from "@/stores/useAccidentStore";
 import { StandardApi } from "@/app/api/StandarApi";
 
 export default function Login() {
@@ -40,16 +39,12 @@ export default function Login() {
         })
       );
 
-      // تفعيل اتصال SSE بعد تسجيل الدخول بنجاح
-      useAccidentStore.getState().setupSSEConnection();
-
+      // لا نقوم بتهيئة اتصال SSE هنا، بل سيتم ذلك في الصفحة المستهدفة
       router.push(
         data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
       );
     } catch (err) {
       setError(err.message);
-      // تنظيف أي اتصالات SSE في حالة الخطأ
-      useAccidentStore.getState().disconnectSSE();
     } finally {
       setIsLoading(false);
     }
