@@ -99,6 +99,26 @@ class StandardApi {
   }
 }
 
+// دالة لتحويل بيانات SSE إلى التنسيق المتوقع من قبل المكون
+function transformSseData(data) {
+  // استخدام أول sighting للحصول على بيانات timestamp و id إذا كانت موجودة
+  const firstSighting = data.sightings?.[0];
+
+  return {
+    id:
+      data.id ||
+      (firstSighting && firstSighting.p_car_id) ||
+      `temp-${Date.now()}`,
+    status: data.status || "new",
+    driver_info: data.driver_info,
+    sightings: data.sightings,
+    timestamp:
+      data.timestamp ||
+      (firstSighting && firstSighting.timestamp) ||
+      new Date().toISOString(),
+  };
+}
+
 export default function AccidentsPage() {
   const [accidents, setAccidents] = useState([]);
   const [unviewedCount, setUnviewedCount] = useState(0);
@@ -107,14 +127,14 @@ export default function AccidentsPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [filter, setFilter] = useState("all");
 
-  // دالة لجلب جميع الحوادث عند التحميل الأولي
   const fetchAccidents = async () => {
     setIsLoading(true);
     const result = await StandardApi.fetchAllAccidents();
     if (result.success) {
-      setAccidents(result.data);
+      const transformedData = result.data.map(transformSseData);
+      setAccidents(transformedData);
       setUnviewedCount(
-        result.data.filter((accident) => accident.status === "new").length
+        transformedData.filter((accident) => accident.status === "new").length
       );
     } else {
       setError(result.error);
@@ -122,7 +142,6 @@ export default function AccidentsPage() {
     setIsLoading(false);
   };
 
-  // دالة لتحديث حالة حادث واحد
   const markAsViewed = async (accidentId) => {
     setIsLoading(true);
     const result = await StandardApi.markAccidentAsViewed(accidentId);
@@ -140,7 +159,6 @@ export default function AccidentsPage() {
     setIsLoading(false);
   };
 
-  // دالة لتحديث حالة جميع الحوادث الجديدة
   const markAllAsViewed = async () => {
     setIsLoading(true);
     const unviewedAccidents = accidents.filter((acc) => acc.status === "new");
@@ -192,13 +210,16 @@ export default function AccidentsPage() {
 
       eventSource.addEventListener("new-accident", (event) => {
         try {
-          const newAccidentData = JSON.parse(event.data);
-          console.log("📨 New accident received:", newAccidentData);
+          const rawData = JSON.parse(event.data);
+          console.log("📨 New accident received:", rawData);
+
+          // تحويل البيانات المستلمة إلى التنسيق المتوقع
+          const newAccidentData = transformSseData(rawData);
 
           setAccidents((prevAccidents) => [newAccidentData, ...prevAccidents]);
           setUnviewedCount((prevCount) => prevCount + 1);
         } catch (e) {
-          console.error("❌ Error parsing accident data:", e);
+          console.error("❌ Error parsing or transforming accident data:", e);
         }
       });
 
@@ -211,11 +232,9 @@ export default function AccidentsPage() {
       };
     };
 
-    // بدء الاتصال بـ SSE وجلب الحوادث الموجودة عند التحميل
     fetchAccidents();
     connectSSE();
 
-    // Cleanup function
     return () => {
       console.log("🔌 Disconnecting SSE...");
       if (eventSource) {
@@ -225,7 +244,17 @@ export default function AccidentsPage() {
     };
   }, []);
 
-  const filteredAccidents = accidents.filter((accident) => {
+  const sortedAccidents = [...accidents].sort((a, b) => {
+    if (a.status === "new" && b.status !== "new") {
+      return -1;
+    }
+    if (a.status !== "new" && b.status === "new") {
+      return 1;
+    }
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+
+  const filteredAccidents = sortedAccidents.filter((accident) => {
     if (filter === "acknowledged") return accident.status === "acknowledged";
     if (filter === "new") return accident.status === "new";
     return true;
@@ -262,21 +291,8 @@ export default function AccidentsPage() {
           </div>
 
           <button
-            onClick={() => {
-              if (isConnected) {
-                // أغلق الاتصال الحالي ثم أعد الاتصال
-                const token = localStorage.getItem("token");
-                const eventSourceUrl = `${STREAM_URL}/admin/accidents/stream?token=${encodeURIComponent(
-                  token
-                )}`;
-                const es = new EventSource(eventSourceUrl);
-                es.close(); // أغلق الاتصال القديم
-                setTimeout(() => window.location.reload(), 100);
-              } else {
-                window.location.reload();
-              }
-            }}
-            disabled={isLoading && isConnected}
+            onClick={() => window.location.reload()}
+            disabled={isLoading}
             className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="إعادة الاتصال"
           >

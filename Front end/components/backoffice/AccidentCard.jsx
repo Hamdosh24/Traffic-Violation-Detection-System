@@ -28,21 +28,28 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
 
   const handleCameraStream = (e) => {
     e.stopPropagation();
-    // الانتقال إلى صفحة بث الكاميرا
-    router.push(`/employeeDashboard/cameras/${accident.camera.camera_id}`);
+    // التأكد من وجود البيانات قبل الانتقال
+    if (accident.camera?.camera_id) {
+      router.push(`/employeeDashboard/cameras/${accident.camera.camera_id}`);
+    } else {
+      console.error("Camera ID is not available.");
+    }
   };
 
-  const formattedDate = new Date(accident.timestamp).toLocaleString("ar-EG", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedDate = accident.timestamp
+    ? new Date(accident.timestamp).toLocaleString("ar-EG", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "غير معروف";
 
-  // إنشاء عنوان ووصف من البيانات المتاحة
-  const accidentTitle = `حادث في ${accident.camera.street}`;
-  const accidentDescription = `منطقة ${accident.camera.region}`;
-  const locationText = `${accident.camera.street}, ${accident.camera.region}, ${accident.camera.governorate}`;
+  // استخدام optional chaining للوصول الآمن للبيانات
+  const locationText = `${accident.camera?.street || "غير معروف"}, ${
+    accident.camera?.region || "غير معروف"
+  }, ${accident.camera?.governorate || "غير معروف"}`;
+  const cameraID = accident.camera?.camera_id || "غير معروف";
 
   return (
     <div
@@ -86,10 +93,10 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
                       : "text-gray-800 dark:text-gray-200"
                   }`}
                 >
-                  {accidentTitle}
+                  {`حادث في ${accident.camera?.street || "موقع غير معروف"}`}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {accidentDescription}
+                  {`منطقة ${accident.camera?.region || "غير معروفة"}`}
                 </p>
               </div>
 
@@ -137,7 +144,7 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
                 {locationText}
               </span>
               <span className="inline-flex items-center text-xs bg-white/80 dark:bg-gray-700/80 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-600">
-                الكاميرا #{accident.camera.camera_id}
+                الكاميرا #{cameraID}
               </span>
             </div>
 
