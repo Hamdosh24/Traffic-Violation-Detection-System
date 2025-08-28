@@ -12,15 +12,17 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { StandardApi } from "@/app/api/StandarApi";
+import { useSSE } from "@/context/SSEContext"; // استيراد الـ hook
 
 export default function Navbar({ setShowSidebar, showSidebar }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { disconnectSSE, unviewedCount } = useSSE(); // استخدام الـ hook
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // استدعاء دالة فصل الاتصال الصحيحة من المتجر
+      // استدعاء دالة فصل الاتصال من الـ context
       disconnectSSE();
 
       const { success } = await StandardApi.logout();
@@ -66,6 +68,12 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
           <Link href="/employeeDashboard/notifications">
             <div className="relative p-1">
               <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
+              {/* عرض عداد الإشعارات الجديدة */}
+              {unviewedCount > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                  {unviewedCount}
+                </span>
+              )}
             </div>
           </Link>
         </div>

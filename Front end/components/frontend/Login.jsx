@@ -1,7 +1,10 @@
+// file: components/frontend/Login.jsx
+
 "use client";
+import { StandardApi } from "@/app/api/StandarApi";
+import { useSSE } from "@/context/SSEContext";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { StandardApi } from "@/app/api/StandarApi";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -10,6 +13,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { connectSSE } = useSSE();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,9 +41,10 @@ export default function Login() {
           role: data.role,
           name: data.name || email,
         })
-      );
+      ); // هنا، بعد نجاح تسجيل الدخول، سنبدأ اتصال SSE
 
-      // لا نقوم بتهيئة اتصال SSE هنا، بل سيتم ذلك في الصفحة المستهدفة
+      connectSSE();
+
       router.push(
         data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
       );
@@ -56,13 +61,11 @@ export default function Login() {
         <h5 className="text-2xl text-center font-bold text-milkColor">
           تسجيل الدخول
         </h5>
-
         {error && (
           <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">
             {error}
           </div>
         )}
-
         <div>
           <label
             htmlFor="email"
@@ -81,7 +84,6 @@ export default function Login() {
             disabled={isLoading}
           />
         </div>
-
         <div>
           <label
             htmlFor="password"
@@ -89,7 +91,6 @@ export default function Login() {
           >
             كلمة السر
           </label>
-
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -101,7 +102,6 @@ export default function Login() {
               required
               disabled={isLoading}
             />
-
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
@@ -139,7 +139,6 @@ export default function Login() {
             </button>
           </div>
         </div>
-
         <button
           type="submit"
           disabled={isLoading}

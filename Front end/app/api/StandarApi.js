@@ -3,17 +3,18 @@ export class StandardApi {
   static BASE_URL = "http://localhost:8000/api";
   static STREAM_URL = "http://localhost:8002/api";
 
+  static validateToken() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
+    }
+    return token;
+  }
+
   // get all notifications
   static async fetchAllAccidents() {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return {
-          success: false,
-          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
-        };
-      }
-
+      const token = this.validateToken();
       const response = await fetch(`${this.BASE_URL}/admin/accidents/all`, {
         method: "GET",
         headers: {

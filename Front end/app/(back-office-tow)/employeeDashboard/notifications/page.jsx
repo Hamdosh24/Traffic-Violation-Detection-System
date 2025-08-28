@@ -2,108 +2,11 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, Filter, RefreshCw } from "lucide-react";
 import AccidentList from "@/components/backoffice/AccidentList";
+import { StandardApi } from "@/app/api/StandarApi";
+import { useSSE } from "@/context/SSEContext";
 
-// URL الثابت لنقطة نهاية SSE و API العادي
-const API_BASE_URL = "http://localhost:8000/api";
-const STREAM_URL = "http://localhost:8002/api";
-
-// كلاس StandardApi تم دمجه هنا للاستخدام المباشر
-class StandardApi {
-  static validateToken() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
-    }
-    return token;
-  }
-
-  static async fetchAllAccidents() {
-    try {
-      const token = this.validateToken();
-      const response = await fetch(`${API_BASE_URL}/admin/accidents/all`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem("token");
-        return {
-          success: false,
-          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
-        };
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return {
-          success: false,
-          error: errorData.message || "فشل في جلب الحوادث",
-        };
-      }
-
-      const data = await response.json();
-      return {
-        success: true,
-        data: data.data || data,
-      };
-    } catch (err) {
-      console.error("API Error [fetchAllAccidents]:", err);
-      return {
-        success: false,
-        error: err.message || "حدث خطأ أثناء جلب الحوادث",
-      };
-    }
-  }
-
-  static async markAccidentAsViewed(accidentId) {
-    try {
-      const token = this.validateToken();
-      const response = await fetch(
-        `${API_BASE_URL}/admin/accidents/${accidentId}/acknowledge`,
-        {
-          method: "PATCH",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 401) {
-        localStorage.removeItem("token");
-        throw new Error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
-      }
-      if (response.status === 404) {
-        throw new Error("الحادث غير موجود");
-      }
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "فشل في تحديث حالة الحادث");
-      }
-
-      const data = await response.json();
-      return {
-        success: true,
-        data: data,
-      };
-    } catch (err) {
-      console.error("API Error [markAccidentAsViewed]:", err);
-      return {
-        success: false,
-        error: err.message || "حدث خطأ أثناء تحديث حالة الحادث",
-      };
-    }
-  }
-}
-
-// دالة لتحويل بيانات SSE إلى التنسيق المتوقع من قبل المكون
 function transformSseData(data) {
-  // استخدام أول sighting للحصول على بيانات timestamp و id إذا كانت موجودة
   const firstSighting = data.sightings?.[0];
-
   return {
     id:
       data.id ||
@@ -121,11 +24,11 @@ function transformSseData(data) {
 
 export default function AccidentsPage() {
   const [accidents, setAccidents] = useState([]);
-  const [unviewedCount, setUnviewedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [filter, setFilter] = useState("all");
+
+  const { isConnected, unviewedCount, updateUnviewedCount } = useSSE();
 
   const fetchAccidents = async () => {
     setIsLoading(true);
@@ -133,9 +36,10 @@ export default function AccidentsPage() {
     if (result.success) {
       const transformedData = result.data.map(transformSseData);
       setAccidents(transformedData);
-      setUnviewedCount(
-        transformedData.filter((accident) => accident.status === "new").length
-      );
+      const newCount = transformedData.filter(
+        (accident) => accident.status === "new"
+      ).length;
+      updateUnviewedCount(newCount);
     } else {
       setError(result.error);
     }
@@ -146,13 +50,12 @@ export default function AccidentsPage() {
     setIsLoading(true);
     const result = await StandardApi.markAccidentAsViewed(accidentId);
     if (result.success) {
-      setAccidents((prevAccidents) => {
-        const updatedAccidents = prevAccidents.map((acc) =>
+      setAccidents((prevAccidents) =>
+        prevAccidents.map((acc) =>
           acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
-        );
-        return updatedAccidents;
-      });
-      setUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
+        )
+      );
+      updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
     } else {
       setError(result.error);
     }
@@ -166,6 +69,7 @@ export default function AccidentsPage() {
       setIsLoading(false);
       return;
     }
+
     const updatePromises = unviewedAccidents.map((accident) =>
       StandardApi.markAccidentAsViewed(accident.id)
     );
@@ -178,7 +82,7 @@ export default function AccidentsPage() {
           acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
         )
       );
-      setUnviewedCount(0);
+      updateUnviewedCount(0);
     } else {
       setError("فشل في تحديث بعض الحوادث.");
     }
@@ -186,62 +90,7 @@ export default function AccidentsPage() {
   };
 
   useEffect(() => {
-    let eventSource;
-    let reconnectTimeout;
-
-    const connectSSE = () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
-        return;
-      }
-
-      const eventSourceUrl = `${STREAM_URL}/admin/accidents/stream?token=${encodeURIComponent(
-        token
-      )}`;
-      eventSource = new EventSource(eventSourceUrl);
-
-      eventSource.onopen = () => {
-        console.log("✅ SSE connection established.");
-        setIsConnected(true);
-        setError(null);
-        clearTimeout(reconnectTimeout);
-      };
-
-      eventSource.addEventListener("new-accident", (event) => {
-        try {
-          const rawData = JSON.parse(event.data);
-          console.log("📨 New accident received:", rawData);
-
-          // تحويل البيانات المستلمة إلى التنسيق المتوقع
-          const newAccidentData = transformSseData(rawData);
-
-          setAccidents((prevAccidents) => [newAccidentData, ...prevAccidents]);
-          setUnviewedCount((prevCount) => prevCount + 1);
-        } catch (e) {
-          console.error("❌ Error parsing or transforming accident data:", e);
-        }
-      });
-
-      eventSource.onerror = (err) => {
-        console.error("❌ SSE connection error:", err);
-        setIsConnected(false);
-        setError("الاتصال غير نشط. جاري محاولة إعادة الاتصال...");
-        clearTimeout(reconnectTimeout);
-        reconnectTimeout = setTimeout(connectSSE, 5000);
-      };
-    };
-
     fetchAccidents();
-    connectSSE();
-
-    return () => {
-      console.log("🔌 Disconnecting SSE...");
-      if (eventSource) {
-        eventSource.close();
-      }
-      clearTimeout(reconnectTimeout);
-    };
   }, []);
 
   const sortedAccidents = [...accidents].sort((a, b) => {
@@ -272,12 +121,10 @@ export default function AccidentsPage() {
             )}
             <AlertTriangle className="h-8 w-8 text-customGreen ml-2" />
           </div>
-
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             الحوادث
           </h1>
         </div>
-
         <div className="flex items-center gap-2">
           <div className="flex items-center text-sm">
             <div
@@ -289,7 +136,6 @@ export default function AccidentsPage() {
               {isConnected ? "متصل" : "غير متصل"}
             </span>
           </div>
-
           <button
             onClick={() => window.location.reload()}
             disabled={isLoading}
@@ -300,7 +146,6 @@ export default function AccidentsPage() {
               className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
             />
           </button>
-
           <button
             onClick={markAllAsViewed}
             disabled={unviewedCount === 0 || isLoading}
@@ -310,7 +155,6 @@ export default function AccidentsPage() {
           </button>
         </div>
       </div>
-
       <div className="flex items-center mb-4 gap-2">
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
           <Filter className="h-4 w-4 ml-1" />
@@ -333,19 +177,16 @@ export default function AccidentsPage() {
           </select>
         </div>
       </div>
-
       {error && (
         <div className="p-4 mb-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-300 rounded-lg">
           {error}
         </div>
       )}
-
       {!isConnected && (
         <div className="p-4 mb-4 text-sm text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-300 rounded-lg">
           الاتصال غير نشط. جاري محاولة إعادة الاتصال تلقائياً...
         </div>
       )}
-
       <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-sm backdrop-blur-sm">
         <AccidentList
           accidents={filteredAccidents}
@@ -353,7 +194,6 @@ export default function AccidentsPage() {
           onMarkAsViewed={markAsViewed}
         />
       </div>
-
       {filteredAccidents.length === 0 && !isLoading && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           {filter === "all"
