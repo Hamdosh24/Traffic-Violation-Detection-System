@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\QueryStringTokenAuth;
+
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'customThrottle' => \App\Http\Middleware\CustomThrottleRequests::class,
             'token.expires' => \App\Http\Middleware\TokenExpiryMiddleware::class,
             'check.external.api_key' => \App\Http\Middleware\CheckExternalApiKey::class,
+            'query.token' => \App\Http\Middleware\QueryStringTokenAuth::class,
+
         ]);
 
     })
