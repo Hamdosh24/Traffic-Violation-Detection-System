@@ -5,6 +5,7 @@ import React, {
   useState,
   useRef,
   useCallback,
+  useEffect,
 } from "react";
 import { StandardApi } from "@/app/api/StandarApi";
 
@@ -14,17 +15,16 @@ export const SSEProvider = ({ children }) => {
   const [unviewedCount, setUnviewedCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
 
   const connectSSE = useCallback(() => {
-    // إذا كان الاتصال موجودًا بالفعل، لا تقم بإنشاء اتصال جديد
     if (eventSourceRef.current) {
-      console.log("SSE connection already exists.");
       return;
     }
 
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("No token found. Cannot establish SSE connection.");
+      console.error("No token found");
       return;
     }
 
@@ -37,11 +37,17 @@ export const SSEProvider = ({ children }) => {
     eventSource.onopen = () => {
       console.log("✅ SSE connection established.");
       setIsConnected(true);
+      // مسح أي محاولة إعادة اتصال سابقة
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
     };
 
     eventSource.addEventListener("new-accident", (event) => {
       try {
-        console.log("📨 New accident received:", event.data);
+        const data = JSON.parse(event.data);
+        console.log("📨 New accident received:", data);
         setUnviewedCount((prevCount) => prevCount + 1);
       } catch (e) {
         console.error("❌ Error parsing accident data:", e);
@@ -53,22 +59,43 @@ export const SSEProvider = ({ children }) => {
       setIsConnected(false);
       eventSource.close();
       eventSourceRef.current = null;
-      // محاولة إعادة الاتصال بعد 5 ثوانٍ
-      setTimeout(connectSSE, 5000);
+
+      // إعادة الاتصال بعد 5 ثوانٍ فقط إذا لم يكن هناك محاولة سابقة
+      if (!reconnectTimeoutRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          reconnectTimeoutRef.current = null;
+          connectSSE();
+        }, 5000);
+      }
     };
   }, []);
 
   const disconnectSSE = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
     if (eventSourceRef.current) {
-      console.log("🔌 Disconnecting SSE...");
       eventSourceRef.current.close();
       eventSourceRef.current = null;
       setIsConnected(false);
-      setUnviewedCount(0); // إعادة تعيين العداد عند تسجيل الخروج
     }
   }, []);
 
-  // دالة لتحديث عدد الإشعارات يدويًا (عند مشاهدة الحوادث)
+  // الاتصال تلقائياً عند التحميل وفصل عند الخروج
+  useEffect(() => {
+    // الانتظار قليلاً قبل الاتصال
+    const timeout = setTimeout(() => {
+      connectSSE();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+      disconnectSSE();
+    };
+  }, [connectSSE, disconnectSSE]);
+
   const updateUnviewedCount = useCallback((newCount) => {
     setUnviewedCount(newCount);
   }, []);

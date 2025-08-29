@@ -1,3 +1,4 @@
+// app/(dashboard)/employeeDashboard/layout.js
 "use client";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -5,7 +6,8 @@ import Sidebar from "@/components/backoffice/Sidebar";
 import Navbar from "@/components/backoffice/Navbar";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { SSEProvider } from "@/context/SSEContext";
+// احذفي هذا السطر ↓
+// import { SSEProvider } from "@/context/SSEContext";
 
 export default function EmployeeLayout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -53,7 +55,8 @@ export default function EmployeeLayout({ children }) {
   return (
     <div className="flex min-h-screen">
       {isEmployee ? (
-        <SSEProvider>
+        // احذفي الـ SSEProvider من هنا ↓
+        <>
           <Sidebar
             role="Employee"
             showSidebar={showSidebar}
@@ -84,7 +87,7 @@ export default function EmployeeLayout({ children }) {
               {children}
             </main>
           </div>
-        </SSEProvider>
+        </>
       ) : (
         <div className="flex items-center justify-center h-full w-full">
           <p className="text-lg">غير مصرح لك بالوصول إلى هذه الصفحة</p>

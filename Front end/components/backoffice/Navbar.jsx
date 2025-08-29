@@ -12,12 +12,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { StandardApi } from "@/app/api/StandarApi";
-import { useSSE } from "@/context/SSEContext"; // استيراد الـ hook
+import { useSSE } from "@/context/SSEContext"; // هذا يجب أن يعمل الآن
 
 export default function Navbar({ setShowSidebar, showSidebar }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { disconnectSSE, unviewedCount } = useSSE(); // استخدام الـ hook
+  const { disconnectSSE, unviewedCount } = useSSE();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
