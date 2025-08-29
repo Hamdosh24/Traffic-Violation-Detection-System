@@ -11,6 +11,7 @@ use App\Http\Controllers\Dashboard\BasicInfosController;
 use App\Http\Controllers\Dashboard\ChartsController;
 use App\Http\Controllers\Statistics\FiltersController;
 use App\Http\Controllers\Statistics\StatisticsController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -81,3 +82,6 @@ Route::prefix('dashboard')->middleware(['auth:sanctum', 'token.expires'])->group
     Route::get('/infos', [BasicInfosController::class, 'getDashboardInfo']);
     Route::get('/acc-streets', [BasicInfosController::class, 'topAccidentStreets']);    // API لإرجاع أكثر 4 شوارع بها حوادث هذا الشهر
 });
+
+// سجل المخالفات و الحوادث
+Route::middleware(['auth:sanctum', 'token.expires', 'employee'])->get('/records', [ReportController::class, 'getByDate']);
