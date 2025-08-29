@@ -1,164 +1,208 @@
 "use client";
 import { useState, useEffect } from "react";
-import NotificationList from "@/components/backoffice/NotificationList";
-import { BellRingIcon } from "lucide-react";
+import { AlertTriangle, Filter, RefreshCw } from "lucide-react";
+import AccidentList from "@/components/backoffice/AccidentList";
+import { StandardApi } from "@/app/api/StandarApi";
+import { useSSE } from "@/context/SSEContext";
 
-export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // 'all', 'read', 'unread'
+function transformSseData(data) {
+  const firstSighting = data.sightings?.[0];
+  return {
+    id:
+      data.id ||
+      (firstSighting && firstSighting.p_car_id) ||
+      `temp-${Date.now()}`,
+    status: data.status || "new",
+    driver_info: data.driver_info,
+    sightings: data.sightings,
+    timestamp:
+      data.timestamp ||
+      (firstSighting && firstSighting.timestamp) ||
+      new Date().toISOString(),
+  };
+}
 
-  const filteredNotifications = notifications.filter((notification) => {
-    if (filter === "read") return notification.isRead;
-    if (filter === "unread") return !notification.isRead;
+export default function AccidentsPage() {
+  const [accidents, setAccidents] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState("all");
+
+  const { isConnected, unviewedCount, updateUnviewedCount } = useSSE();
+
+  const fetchAccidents = async () => {
+    setIsLoading(true);
+    const result = await StandardApi.fetchAllAccidents();
+    if (result.success) {
+      const transformedData = result.data.map(transformSseData);
+      setAccidents(transformedData);
+      const newCount = transformedData.filter(
+        (accident) => accident.status === "new"
+      ).length;
+      updateUnviewedCount(newCount);
+    } else {
+      setError(result.error);
+    }
+    setIsLoading(false);
+  };
+
+  const markAsViewed = async (accidentId) => {
+    setIsLoading(true);
+    const result = await StandardApi.markAccidentAsViewed(accidentId);
+    if (result.success) {
+      setAccidents((prevAccidents) =>
+        prevAccidents.map((acc) =>
+          acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
+        )
+      );
+      updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
+    } else {
+      setError(result.error);
+    }
+    setIsLoading(false);
+  };
+
+  const markAllAsViewed = async () => {
+    setIsLoading(true);
+    const unviewedAccidents = accidents.filter((acc) => acc.status === "new");
+    if (unviewedAccidents.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    const updatePromises = unviewedAccidents.map((accident) =>
+      StandardApi.markAccidentAsViewed(accident.id)
+    );
+    const results = await Promise.all(updatePromises);
+    const allSuccess = results.every((result) => result && result.success);
+
+    if (allSuccess) {
+      setAccidents((prevAccidents) =>
+        prevAccidents.map((acc) =>
+          acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
+        )
+      );
+      updateUnviewedCount(0);
+    } else {
+      setError("فشل في تحديث بعض الحوادث.");
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchAccidents();
+  }, []);
+
+  const sortedAccidents = [...accidents].sort((a, b) => {
+    if (a.status === "new" && b.status !== "new") {
+      return -1;
+    }
+    if (a.status !== "new" && b.status === "new") {
+      return 1;
+    }
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+
+  const filteredAccidents = sortedAccidents.filter((accident) => {
+    if (filter === "acknowledged") return accident.status === "acknowledged";
+    if (filter === "new") return accident.status === "new";
     return true;
   });
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        // التحقق من وجود بيانات مخزنة محلياً
-        const cachedNotifications = localStorage.getItem("cachedNotifications");
-        const cacheTime = localStorage.getItem("notificationsCacheTime");
-
-        if (
-          cachedNotifications &&
-          cacheTime &&
-          Date.now() - parseInt(cacheTime) < 5 * 60 * 1000
-        ) {
-          setNotifications(JSON.parse(cachedNotifications));
-          setLoading(false);
-          return;
-        }
-
-        const response = await fetch("/api/notifications");
-        const data = await response.json();
-        setNotifications(data);
-
-        localStorage.setItem("cachedNotifications", JSON.stringify(data));
-        localStorage.setItem("notificationsCacheTime", Date.now().toString());
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNotifications();
-  }, []);
-
-  useEffect(() => {
-    const eventSource = new EventSource("/api/notifications/stream");
-
-    eventSource.onmessage = (event) => {
-      const newNotification = JSON.parse(event.data);
-      setNotifications((prev) => [newNotification, ...prev]);
-
-      const updatedCache = [
-        newNotification,
-        ...JSON.parse(localStorage.getItem("cachedNotifications") || "[]"),
-      ];
-      localStorage.setItem("cachedNotifications", JSON.stringify(updatedCache));
-    };
-
-    return () => eventSource.close();
-  }, []);
-
-  const markAllAsRead = async () => {
-    try {
-      await fetch("/api/notifications/mark-all-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
-
-      const updatedCache = notifications.map((n) => ({ ...n, isRead: true }));
-      localStorage.setItem("cachedNotifications", JSON.stringify(updatedCache));
-    } catch (error) {
-      console.error("Failed to mark all as read:", error);
-    }
-  };
-
-  const markAsRead = async (id) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-  };
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
   return (
-    <div>
-      <div className="max-w-4xl mx-auto p-4">
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <div className="relative">
-              <BellRingIcon className="h-8 w-8 text-customGreen mr-2" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-              الإشعارات
-            </h1>
+    <div className="max-w-3xl mx-auto p-4" dir="rtl">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <div className="relative">
+            {unviewedCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {unviewedCount}
+              </span>
+            )}
+            <AlertTriangle className="h-8 w-8 text-customGreen ml-2" />
           </div>
-
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+            الحوادث
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center text-sm">
+            <div
+              className={`w-3 h-3 rounded-full mr-2 ${
+                isConnected ? "bg-green-500" : "bg-red-500"
+              }`}
+            ></div>
+            <span className="text-gray-600 dark:text-gray-300">
+              {isConnected ? "متصل" : "غير متصل"}
+            </span>
+          </div>
           <button
-            onClick={markAllAsRead}
-            className="px-3 py-2 font-bold bg-customGreen text-white rounded hover:bg-customGreen/80 text-sm"
-            disabled={unreadCount === 0}
+            onClick={() => window.location.reload()}
+            disabled={isLoading}
+            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="إعادة الاتصال"
           >
-            تعيين الكل كمقروء
+            <RefreshCw
+              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </button>
+          <button
+            onClick={markAllAsViewed}
+            disabled={unviewedCount === 0 || isLoading}
+            className="px-3 py-2 text-sm font-medium bg-customGreen text-white rounded-lg hover:bg-customGreen/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "جاري التحميل..." : "تعيين الكل كمشاهدة"}
           </button>
         </div>
-
-        {/* Filter Section */}
-        <div className="flex items-center mb-4 gap-2">
-          <div className="relative inline-block">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="appearance-none p-2 pr-8 text-sm border rounded bg-white font-bold dark:bg-customDarkGreen focus:outline-none focus:ring-2 focus:ring-customGreen"
-            >
-              <option value="all">الكل</option>
-              <option value="unread">غير المقروءة</option>
-              <option value="read">المقروءة</option>
-            </select>
-            <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
-              <svg
-                className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-          <span className="text-sm font-bold text-gray-600 dark:text-gray-300">
-            :تصفية
-          </span>
+      </div>
+      <div className="flex items-center mb-4 gap-2">
+        <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+          <Filter className="h-4 w-4 ml-1" />
+          <span>تصفية:</span>
         </div>
-
-        {/* Notifications List */}
-        <div className="bg-white dark:bg-customDarkGreen rounded-lg shadow">
-          <NotificationList
-            notifications={filteredNotifications}
-            loading={loading}
-            onMarkAsRead={markAsRead}
-          />
+        <div className="relative">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="appearance-none pl-3 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-customGreen focus:border-customGreen outline-none"
+          >
+            <option value="all">الكل ({accidents.length})</option>
+            <option value="new">
+              جديد ({accidents.filter((a) => a.status === "new").length})
+            </option>
+            <option value="acknowledged">
+              تمت مشاهدته (
+              {accidents.filter((a) => a.status === "acknowledged").length})
+            </option>
+          </select>
         </div>
       </div>
+      {error && (
+        <div className="p-4 mb-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-300 rounded-lg">
+          {error}
+        </div>
+      )}
+      {!isConnected && (
+        <div className="p-4 mb-4 text-sm text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-300 rounded-lg">
+          الاتصال غير نشط. جاري محاولة إعادة الاتصال تلقائياً...
+        </div>
+      )}
+      <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-sm backdrop-blur-sm">
+        <AccidentList
+          accidents={filteredAccidents}
+          loading={isLoading}
+          onMarkAsViewed={markAsViewed}
+        />
+      </div>
+      {filteredAccidents.length === 0 && !isLoading && (
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          {filter === "all"
+            ? "لا توجد حوادث حتى الآن"
+            : filter === "new"
+            ? "لا توجد حوادث جديدة"
+            : "لا توجد حوادث تمت مشاهدتها"}
+        </div>
+      )}
     </div>
   );
 }

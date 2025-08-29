@@ -11,6 +11,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        cairo: ["Cairo", "sans-serif"],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -20,6 +23,7 @@ const config: Config = {
         customDarkGreen: "rgba(32, 70, 72)",
         customDarkGreenbg: "rgba(3, 45, 48)",
         maximumGreen: "#628B35",
+        maxGreen: "#364b44",
         phthaloGreen: "#103713",
         bone: "#E2DBD0",
         milkColor: "#FFFDF5",
@@ -67,6 +71,7 @@ const config: Config = {
         // md: "calc(var(--radius) - 2px)",
         // sm: "calc(var(--radius) - 4px)",
       },
+
       transitionProperty: {
         left: "left",
       },

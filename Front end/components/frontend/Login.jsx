@@ -1,59 +1,177 @@
-import Link from "next/link";
-import React from "react";
+// file: components/frontend/Login.jsx
+
+"use client";
+import { StandardApi } from "@/app/api/StandarApi";
+import { useSSE } from "@/context/SSEContext";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { connectSSE } = useSSE();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const {
+        success,
+        data,
+        error: apiError,
+      } = await StandardApi.post("/login", {
+        email,
+        password,
+      });
+
+      if (!success) {
+        throw new Error(apiError || "Login failed, please try again");
+      }
+
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          role: data.role,
+          name: data.name || email,
+        })
+      ); // هنا، بعد نجاح تسجيل الدخول، سنبدأ اتصال SSE
+
+      connectSSE();
+
+      router.push(
+        data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="w-500 max-w-sm p-4 bg-customDarkGreenbg transparent/20 rounded-lg shadow-sm sm:p-6 md:p-8 ">
-      <form className="space-y-6" action="#">
-        <h5 className="text-xl items-center justify-center flex font-medium  text-white">
-          Sign in
+    <div className="w-full p-8 bg-customDarkGreenbg rounded-lg shadow-lg">
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <h5 className="text-2xl text-center font-bold text-milkColor">
+          تسجيل الدخول
         </h5>
+        {error && (
+          <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
         <div>
           <label
-            for="email"
-            className="block mb-2 text-sm font-medium  text-white"
+            htmlFor="email"
+            className="block mb-2 text-sm font-medium text-gray-700"
           >
-            Your email
+            البريد الالكتروني
           </label>
           <input
             type="email"
-            name="email"
             id="email"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customDarkGreen focus:border-customDarkGreen block w-full p-2.5 "
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b7a579] focus:border-[#b7a579]"
             placeholder="name@company.com"
             required
+            disabled={isLoading}
           />
         </div>
         <div>
           <label
-            for="password"
-            className="block mb-2 text-sm font-medium text-white"
+            htmlFor="password"
+            className="block mb-2 text-sm font-medium text-gray-700"
           >
-            Your password
+            كلمة السر
           </label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="••••••••"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full p-3 pr-10 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b7a579] focus:border-[#b7a579]"
+              required
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute inset-y-0 right-2 flex items-center px-2 text-gray-600"
+              aria-label={showPassword ? "إخفاء كلمة السر" : "إظهار كلمة السر"}
+              tabIndex={0}
+              disabled={isLoading}
+            >
+              {showPassword ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M17.94 17.94A10.94 10.94 0 0112 19c-4.477 0-8.268-2.943-9.542-7a11.03 11.03 0 012.06-3.354" />
+                  <path d="M1 1l22 22" />
+                  <path d="M9.88 9.88A3 3 0 0012 15a3 3 0 003-3" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
-        <Link
-          href="/employeeDashboard"
-          className="w-full"
-          passHref
-          legacyBehavior
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full px-5 py-3 text-sm font-medium text-white bg-customDarkGreen rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#b7a579] focus:ring-opacity-50 disabled:opacity-50 flex items-center justify-center transition-colors duration-300"
         >
-          <button
-            className="w-full text-white bg-customDarkGreen hover:bg-blue-800
-                  focus:outline-none font-medium rounded-lg
-                  text-sm px-5 py-2.5 text-center transition-colors duration-200"
-          >
-            Login to your account
-          </button>
-        </Link>
+          {isLoading ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              جاري المعالجة...
+            </>
+          ) : (
+            "تسجيل الدخول"
+          )}
+        </button>
       </form>
     </div>
   );

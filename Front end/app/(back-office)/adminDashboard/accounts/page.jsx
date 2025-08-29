@@ -7,9 +7,9 @@ export default function page() {
     <div>
       {/* Header */}
       <PageHeader
-        heading="Accounts"
+        heading="الحسابات"
         href="/adminDashboard/accounts/new"
-        LinkTitle="Add Account"
+        LinkTitle="اضافة حساب"
       />
       {/* Table Actions */}
 

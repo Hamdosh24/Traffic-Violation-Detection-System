@@ -1,201 +1,168 @@
 "use client";
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { utils, writeFile } from "xlsx";
 import { useReactToPrint } from "react-to-print";
+import { StandardApi } from "@/app/api/StandarApi";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend
 );
 
 export default function TrafficViolationsChartByTime() {
-  const violationTypes = [
-    "سرعة زائدة",
-    "إشارة حمراء",
-    "عدم ربط حزام الأمان",
-    "استخدام الهاتف",
-    "تجاوز غير قانوني",
-  ];
-
-  const governorates = [
-    "دمشق",
-    "ريف دمشق",
-    "حلب",
-    "حمص",
-    "حماه",
-    "اللاذقية",
-    "طرطوس",
-    "دير الزور",
-    "الحسكة",
-    "الرقة",
-    "إدلب",
-    "السويداء",
-    "درعا",
-    "القنيطرة",
-  ];
-
-  // إنشاء بيانات وهمية لـ 150 منطقة مع المحافظات
-  const generateMockData = useMemo(() => {
-    const mockData = [];
-
-    governorates.forEach((governorate) => {
-      const locationsInGovernorate = Math.floor(Math.random() * 15) + 5;
-
-      for (let i = 1; i <= locationsInGovernorate; i++) {
-        const location = `${governorate} - المنطقة ${i}`;
-
-        violationTypes.forEach((type) => {
-          // توزيع المخالفات على أشهر السنة وساعات اليوم
-          for (let month = 0; month < 12; month++) {
-            for (let hour = 0; hour < 24; hour++) {
-              mockData.push({
-                governorate,
-                location,
-                type,
-                date: new Date(2023, month, 1, hour), // إضافة ساعة اليوم
-                hour, // تخزين ساعة اليوم كحقل منفصل
-                count: Math.floor(Math.random() * 10) + 1, // 1-10 مخالفة لكل نوع في كل ساعة
-              });
-            }
-          }
-        });
-      }
-    });
-
-    return mockData;
-  }, []);
-
-  const [filteredData, setFilteredData] = useState([]);
-  const [selectedType, setSelectedType] = useState("كل الأنواع");
-  const [selectedGovernorate, setSelectedGovernorate] = useState("دمشق");
-  const [selectedLocation, setSelectedLocation] = useState("كل المناطق");
-  const [startDate, setStartDate] = useState(new Date(2023, 0, 1));
-  const [endDate, setEndDate] = useState(new Date(2023, 11, 31));
-  const [currentPage, setCurrentPage] = useState(0);
-  const [viewMode, setViewMode] = useState("time"); // 'locations' or 'time'
-  const itemsPerPage = 30;
+  const [hourlyData, setHourlyData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedGovernorate, setSelectedGovernorate] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [filters, setFilters] = useState({
+    regions: [],
+    governorates: [],
+    violation_types: [],
+  });
+  const [filtersLoading, setFiltersLoading] = useState(true);
+  const [reportType, setReportType] = useState("مخالفات"); // ['حوادث', 'مخالفات']
   const chartRef = useRef();
   const componentRef = useRef();
 
-  // استخراج المناطق المتاحة بناءً على المحافظة المحددة
-  const availableLocations = useMemo(() => {
-    const locations = new Set();
-    generateMockData.forEach((item) => {
-      if (
-        selectedGovernorate === "كل المحافظات" ||
-        item.governorate === selectedGovernorate
-      ) {
-        locations.add(item.location);
-      }
-    });
-    return ["كل المناطق", ...Array.from(locations)];
-  }, [generateMockData, selectedGovernorate]);
-
+  // جلب بيانات الفلاتر عند تحميل الصفحة
   useEffect(() => {
-    const filtered = generateMockData.filter((item) => {
-      const typeMatch =
-        selectedType === "كل الأنواع" || item.type === selectedType;
-      const governorateMatch = item.governorate === selectedGovernorate; // إزالة التحقق من "كل المحافظات"
-      const locationMatch =
-        selectedLocation === "كل المناطق" || item.location === selectedLocation;
-      const dateMatch = item.date >= startDate && item.date <= endDate;
+    const fetchFilters = async () => {
+      try {
+        setFiltersLoading(true);
+        const response = await StandardApi.get("/violations/filters/by-hour");
 
-      return typeMatch && governorateMatch && locationMatch && dateMatch;
+        if (response.success) {
+          setFilters(response.data);
+
+          // تعيين أول قيمة متاحة لكل فلتر
+          if (response.data.violation_types.length > 0) {
+            setSelectedType(response.data.violation_types[0]);
+          }
+          if (response.data.governorates.length > 0) {
+            setSelectedGovernorate(response.data.governorates[0]);
+          }
+          if (response.data.regions.length > 0) {
+            setSelectedLocation(response.data.regions[0]);
+          }
+        } else {
+          throw new Error(response.error || "Failed to fetch filters");
+        }
+      } catch (err) {
+        console.error("Error fetching filters:", err);
+        setError(err.message);
+      } finally {
+        setFiltersLoading(false);
+      }
+    };
+
+    if (reportType === "مخالفات") {
+      fetchFilters();
+    }
+  }, [reportType]);
+
+  const fetchHourlyViolations = async () => {
+    try {
+      if (
+        reportType === "مخالفات" &&
+        (!selectedType || !selectedGovernorate || !selectedLocation)
+      ) {
+        throw new Error("الرجاء تحديد جميع الفلاتر المطلوبة");
+      }
+
+      setLoading(true);
+      setError(null);
+
+      const params = {
+        type_name: reportType === "حوادث" ? "حوادث" : selectedType,
+        governorate: selectedGovernorate,
+        region: selectedLocation,
+        from_date: formatDate(startDate),
+        to_date: formatDate(endDate),
+      };
+
+      const response = await StandardApi.fetchViolationsByHour(params);
+
+      if (!response.success) {
+        throw new Error(response.error || "Failed to fetch data");
+      }
+
+      setHourlyData(response.data);
+    } catch (err) {
+      console.error("Error fetching hourly violations:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const prepareChartData = () => {
+    if (!hourlyData) return null;
+
+    const labels = Object.keys(hourlyData).map((hourRange) => {
+      const [startHour, endHour] = hourRange.split("-");
+      return `${startHour}:00 - ${endHour}:00`;
     });
 
-    setFilteredData(filtered);
-    setCurrentPage(0);
-  }, [
-    generateMockData,
-    selectedType,
-    selectedGovernorate,
-    selectedLocation,
-    startDate,
-    endDate,
-  ]);
+    const data = Object.values(hourlyData);
 
-  // تجميع البيانات حسب الوقت
-  const aggregatedData = useMemo(() => {
-    if (viewMode === "locations" && selectedLocation === "كل المناطق") {
-      // تجميع حسب الموقع (يبقى كما هو)
-      const aggregation = {};
-      filteredData.forEach((item) => {
-        if (!aggregation[item.location]) {
-          aggregation[item.location] = 0;
-        }
-        aggregation[item.location] += item.count;
-      });
-      const sorted = Object.entries(aggregation)
-        .map(([location, count]) => ({ location, count }))
-        .sort((a, b) => b.count - a.count);
-      return {
-        type: "locations",
-        allData: sorted,
-        paginatedData: sorted.slice(
-          currentPage * itemsPerPage,
-          (currentPage + 1) * itemsPerPage
-        ),
-        totalPages: Math.ceil(sorted.length / itemsPerPage),
-      };
-    } else {
-      // تجميع حسب ساعات اليوم
-      const hourlyData = Array(24)
-        .fill(0)
-        .map((_, hour) => ({
-          hour,
-          hourLabel: `${hour}:00 - ${hour + 1}:00`, // تسمية لكل ساعة
-          count: 0,
-        }));
-
-      filteredData.forEach((item) => {
-        hourlyData[item.hour].count += item.count;
-      });
-
-      return {
-        type: "time",
-        allData: hourlyData,
-        paginatedData: hourlyData,
-        totalPages: 1,
-      };
-    }
-  }, [filteredData, currentPage, viewMode, selectedLocation]);
-
-  const chartData = {
-    labels: aggregatedData.paginatedData.map((item) =>
-      aggregatedData.type === "locations" ? item.location : item.hourLabel
-    ),
-    datasets: [
-      {
-        label: "عدد المخالفات",
-        data: aggregatedData.paginatedData.map((item) => item.count),
-        backgroundColor:
-          aggregatedData.type === "locations"
-            ? "rgb(13, 158, 109)"
-            : "rgba(54, 162, 235, 0.7)",
-        borderColor:
-          aggregatedData.type === "locations"
-            ? "rgb(13, 158, 109, 0.7)"
-            : "rgba(54, 162, 235, 1)",
-        borderWidth: 1,
-      },
-    ],
+    return {
+      labels,
+      datasets: [
+        {
+          label: reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات",
+          data,
+          backgroundColor:
+            reportType === "حوادث"
+              ? "rgba(220, 53, 69, 0.7)"
+              : "rgba(54, 162, 235, 0.7)",
+          borderColor:
+            reportType === "حوادث"
+              ? "rgba(220, 53, 69, 1)"
+              : "rgba(54, 162, 235, 1)",
+          borderWidth: 2,
+          tension: 0.4,
+          fill: false,
+          pointBackgroundColor:
+            reportType === "حوادث"
+              ? "rgba(220, 53, 69, 1)"
+              : "rgba(54, 162, 235, 1)",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    };
   };
+
+  const chartData = prepareChartData();
 
   const options = {
     responsive: true,
@@ -205,8 +172,10 @@ export default function TrafficViolationsChartByTime() {
       },
       title: {
         display: true,
-        text: `توزيع المخالفات المرورية حسب ساعات اليوم ${
-          selectedLocation !== "كل المناطق" ? `في ${selectedLocation}` : ""
+        text: `توزيع ${
+          reportType === "حوادث" ? "الحوادث" : "المخالفات"
+        } المرورية حسب ساعات اليوم ${
+          selectedLocation ? `في ${selectedLocation}` : ""
         }`,
         font: {
           size: 16,
@@ -214,7 +183,10 @@ export default function TrafficViolationsChartByTime() {
       },
       tooltip: {
         callbacks: {
-          label: (context) => ` ${context.parsed.y} مخالفة`,
+          label: (context) =>
+            ` ${context.parsed.y} ${
+              reportType === "حوادث" ? "حادث" : "مخالفة"
+            }`,
         },
       },
     },
@@ -236,7 +208,7 @@ export default function TrafficViolationsChartByTime() {
         beginAtZero: true,
         title: {
           display: true,
-          text: "عدد المخالفات",
+          text: reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات",
           font: {
             size: 12,
           },
@@ -247,103 +219,74 @@ export default function TrafficViolationsChartByTime() {
       },
     },
     maintainAspectRatio: false,
-    barPercentage: 0.8,
-    categoryPercentage: 0.9,
   };
 
   const exportToExcel = () => {
-    // تحضير البيانات الرئيسية مع الساعات
-    const mainData = aggregatedData.allData.map((item) => ({
-      "الفترة الزمنية": item.hourLabel || item.monthName, // استخدام hourLabel إذا كان موجوداً
-      "عدد المخالفات": item.count,
-      "نوع المخالفة":
-        selectedType === "كل الأنواع" ? "جميع الأنواع" : selectedType,
+    if (!hourlyData) return;
+
+    const mainData = Object.entries(hourlyData).map(([hourRange, count]) => ({
+      "الفترة الزمنية": hourRange.replace("-", ":00 - ") + ":00",
+      [reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات"]: count,
+      "نوع التقرير": reportType,
+      "نوع المخالفة": reportType === "حوادث" ? "حوادث" : selectedType,
       المحافظة: selectedGovernorate,
       المنطقة: selectedLocation,
-      التاريخ: `من ${startDate.toLocaleDateString(
-        "ar-EG"
-      )} إلى ${endDate.toLocaleDateString("ar-EG")}`,
+      التاريخ: `من ${formatDate(startDate)} إلى ${formatDate(endDate)}`,
     }));
 
-    // تحضير قائمة أنواع المخالفات
-    const violationTypesData = violationTypes.map((type) => ({
-      "نوع المخالفة": type,
-      الوصف: getViolationDescription(type),
-    }));
+    const violationTypesData =
+      reportType === "مخالفات"
+        ? filters.violation_types.map((type) => ({
+            "نوع المخالفة": type,
+          }))
+        : [];
 
-    // إنشاء ملف Excel متعدد الأوراق
     const wb = utils.book_new();
-
-    // ورقة البيانات الرئيسية
     const wsMain = utils.json_to_sheet(mainData);
     utils.book_append_sheet(wb, wsMain, "البيانات حسب الساعة");
 
-    // ورقة أنواع المخالفات
-    const wsViolations = utils.json_to_sheet(violationTypesData);
-    utils.book_append_sheet(wb, wsViolations, "أنواع المخالفات");
+    if (reportType === "مخالفات") {
+      const wsViolations = utils.json_to_sheet(violationTypesData);
+      utils.book_append_sheet(wb, wsViolations, "أنواع المخالفات");
+    }
 
-    // ورقة ملخص البيانات
+    const totalViolations = Object.values(hourlyData).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    const averageViolations = totalViolations / Object.keys(hourlyData).length;
+    const maxHour = Object.entries(hourlyData).reduce(
+      (max, [hour, count]) => (count > max.count ? { hour, count } : max),
+      { hour: "", count: 0 }
+    );
+
     const summaryData = [
       [
-        "إجمالي المخالفات",
-        aggregatedData.allData.reduce((sum, item) => sum + item.count, 0),
+        `إجمالي ${reportType === "حوادث" ? "الحوادث" : "المخالفات"}`,
+        totalViolations,
       ],
       [
-        "متوسط المخالفات لكل ساعة",
-        (
-          aggregatedData.allData.reduce((sum, item) => sum + item.count, 0) /
-          aggregatedData.allData.length
-        ).toFixed(2),
+        `متوسط ${reportType === "حوادث" ? "الحوادث" : "المخالفات"} لكل ساعة`,
+        averageViolations.toFixed(2),
       ],
       [
-        "أعلى ساعة في المخالفات",
-        aggregatedData.allData.reduce(
-          (max, item) => (item.count > max.count ? item : max),
-          aggregatedData.allData[0]
-        ).hourLabel,
+        `أعلى ساعة في ${reportType === "حوادث" ? "الحوادث" : "المخالفات"}`,
+        maxHour.hour.replace("-", ":00 - ") + ":00",
       ],
-      ["عدد الساعات", aggregatedData.allData.length],
+      ["عدد الساعات", Object.keys(hourlyData).length],
     ];
 
     const wsSummary = utils.aoa_to_sheet(summaryData);
     utils.book_append_sheet(wb, wsSummary, "ملخص البيانات");
 
-    // إضافة تنسيقات للخلايا
-    if (!wb.SSF) {
-      wb.SSF = {};
-    }
-    wb.SSF["#,##0"] = "#,##0";
-
-    // تعيين عرض الأعمدة
-    wsMain["!cols"] = [
-      { wch: 15 }, // عرض عمود الفترة الزمنية
-      { wch: 15 }, // عدد المخالفات
-      { wch: 20 }, // نوع المخالفة
-      { wch: 15 }, // المحافظة
-      { wch: 25 }, // المنطقة
-      { wch: 25 }, // التاريخ
-    ];
-
-    // تصدير الملف
     writeFile(
       wb,
-      `تقرير_المخالفات_حسب_الساعة_${new Date().toISOString().slice(0, 10)}.xlsx`
+      `تقرير_${
+        reportType === "حوادث" ? "الحوادث" : "المخالفات"
+      }_حسب_الساعة_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
 
-  // دالة مساعدة لوصف أنواع المخالفات
-  const getViolationDescription = (type) => {
-    const descriptions = {
-      "سرعة زائدة": "تجاوز السرعة المحددة حسب القانون",
-      "إشارة حمراء": "عدم التوقف عند الإشارة الضوئية الحمراء",
-      "عدم ربط حزام الأمان": "عدم استخدام حزام الأمان أثناء القيادة",
-      "استخدام الهاتف": "استخدام الهاتف المحمول أثناء القيادة بدون سماعات",
-      "تجاوز غير قانوني": "تجاوز المركبات في أماكن غير مسموح بها",
-    };
-    return descriptions[type] || "لا يوجد وصف متاح";
-  };
-
-  // طباعة التقرير
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     pageStyle: `
@@ -391,12 +334,14 @@ export default function TrafficViolationsChartByTime() {
   });
 
   return (
-    <div className="bg-milkColor dark:bg-customDarkGreen p-6 rounded-md shadow-xl">
+    <div className="bg-milkColor dark:bg-customDarkGreen p-4 md:p-6 rounded-md shadow-xl">
       {/* Reference for printing */}
       <div className="hidden">
         <div ref={componentRef} className="p-6">
           <div className="print-header">
-            <h1 className="text-2xl font-bold">تقرير المخالفات المرورية</h1>
+            <h1 className="text-2xl font-bold">
+              تقرير {reportType === "حوادث" ? "الحوادث" : "المخالفات"} المرورية
+            </h1>
             <p className="text-gray-600">
               تاريخ التقرير: {new Date().toLocaleDateString("ar-EG")}
             </p>
@@ -404,9 +349,15 @@ export default function TrafficViolationsChartByTime() {
 
           <div className="print-filters">
             <div className="print-filter-item">
-              <strong>نوع المخالفة: </strong>
-              {selectedType}
+              <strong>نوع التقرير: </strong>
+              {reportType}
             </div>
+            {reportType === "مخالفات" && (
+              <div className="print-filter-item">
+                <strong>نوع المخالفة: </strong>
+                {selectedType}
+              </div>
+            )}
             <div className="print-filter-item">
               <strong>المحافظة: </strong>
               {selectedGovernorate}
@@ -417,51 +368,99 @@ export default function TrafficViolationsChartByTime() {
             </div>
             <div className="print-filter-item">
               <strong>الفترة الزمنية: </strong>
-              من {startDate.toLocaleDateString("ar-EG")} إلى{" "}
-              {endDate.toLocaleDateString("ar-EG")}
+              من {formatDate(startDate)} إلى {formatDate(endDate)}
             </div>
           </div>
 
-          <div className="print-chart-container">
-            <Bar data={chartData} options={options} />
-          </div>
+          {chartData && (
+            <div className="print-chart-container">
+              <Line data={chartData} options={options} />
+            </div>
+          )}
 
-          <table className="print-data-table">
-            <thead>
-              <tr>
-                <th>
-                  {aggregatedData.type === "locations" ? "المنطقة" : "الشهر"}
-                </th>
-                <th>عدد المخالفات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {aggregatedData.allData.map((item) => (
-                <tr
-                  key={
-                    aggregatedData.type === "locations"
-                      ? item.location
-                      : item.monthName
-                  }
-                >
-                  <td>
-                    {aggregatedData.type === "locations"
-                      ? item.location
-                      : item.monthName}
-                  </td>
-                  <td>{item.count}</td>
+          {hourlyData && (
+            <table className="print-data-table">
+              <thead>
+                <tr>
+                  <th>الفترة الزمنية</th>
+                  <th>
+                    {reportType === "حوادث" ? "عدد الحوادث" : "عدد المخالفات"}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Object.entries(hourlyData).map(([hourRange, count]) => (
+                  <tr key={hourRange}>
+                    <td>{hourRange.replace("-", ":00 - ") + ":00"}</td>
+                    <td>{count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-2">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
+        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+          <button
+            onClick={fetchHourlyViolations}
+            disabled={
+              loading ||
+              filtersLoading ||
+              (reportType === "مخالفات" &&
+                (!selectedType || !selectedGovernorate || !selectedLocation))
+            }
+            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
+          >
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                جاري التحميل...
+              </>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                جلب البيانات
+              </>
+            )}
+          </button>
           <button
             onClick={exportToExcel}
-            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+            disabled={!hourlyData}
+            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 disabled:opacity-50 min-w-[100px] justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -481,7 +480,8 @@ export default function TrafficViolationsChartByTime() {
           </button>
           <button
             onClick={handlePrint}
-            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+            disabled={!hourlyData}
+            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 min-w-[100px] justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -500,14 +500,32 @@ export default function TrafficViolationsChartByTime() {
             طباعة
           </button>
         </div>
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50">
-          توزيع عدد المخالفات المرورية حسب ساعات اليوم
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 text-center md:text-right">
+          توزيع عدد {reportType === "حوادث" ? "الحوادث" : "المخالفات"} المرورية
+          حسب ساعات اليوم
         </h2>
       </div>
 
       {/* فلترات */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="flex flex-col items-end">
+          <label className="block mb-2 text-sm font-medium dark:text-gray-300">
+            نوع التقرير
+          </label>
+          <select
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            value={reportType}
+            onChange={(e) => {
+              setReportType(e.target.value);
+              setHourlyData(null); // إعادة تعيين البيانات عند تغيير نوع التقرير
+            }}
+          >
+            <option value="حوادث">حوادث</option>
+            <option value="مخالفات">مخالفات</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col items-end">
           <label className="block mb-2 text-sm font-medium dark:text-gray-300">
             نوع المخالفة
           </label>
@@ -515,17 +533,23 @@ export default function TrafficViolationsChartByTime() {
             className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
+            disabled={filtersLoading || reportType === "حوادث"}
           >
-            <option value="كل الأنواع">كل الأنواع</option>
-            {violationTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
+            {filters.violation_types.length > 0 ? (
+              filters.violation_types.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))
+            ) : (
+              <option value="">
+                {filtersLoading ? "جاري التحميل..." : "لا توجد بيانات"}
               </option>
-            ))}
+            )}
           </select>
         </div>
 
-        <div>
+        <div className="flex flex-col items-end">
           <label className="block mb-2 text-sm font-medium dark:text-gray-300">
             المحافظة
           </label>
@@ -534,153 +558,139 @@ export default function TrafficViolationsChartByTime() {
             value={selectedGovernorate}
             onChange={(e) => {
               setSelectedGovernorate(e.target.value);
-              setSelectedLocation("كل المناطق");
+              setSelectedLocation(filters.regions[0] || "");
             }}
+            disabled={filtersLoading}
           >
-            {governorates.map((gov) => (
-              <option key={gov} value={gov}>
-                {gov}
+            {filters.governorates.length > 0 ? (
+              filters.governorates.map((gov) => (
+                <option key={gov} value={gov}>
+                  {gov}
+                </option>
+              ))
+            ) : (
+              <option value="">
+                {filtersLoading ? "جاري التحميل..." : "لا توجد بيانات"}
               </option>
-            ))}
+            )}
           </select>
         </div>
 
-        <div>
+        <div className="flex flex-col items-end">
           <label className="block mb-2 text-sm font-medium dark:text-gray-300">
             المنطقة
           </label>
           <select
             className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={selectedLocation}
-            onChange={(e) => {
-              setSelectedLocation(e.target.value);
-              setViewMode(
-                e.target.value === "كل المناطق" ? "locations" : "time"
-              );
-            }}
-            disabled={availableLocations.length <= 1}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            disabled={filtersLoading || filters.regions.length === 0}
           >
-            {availableLocations.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
+            {filters.regions.length > 0 ? (
+              filters.regions.map((region) => (
+                <option key={region} value={region}>
+                  {region}
+                </option>
+              ))
+            ) : (
+              <option value="">
+                {filtersLoading ? "جاري التحميل..." : "لا توجد بيانات"}
               </option>
-            ))}
+            )}
           </select>
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col items-end">
+            <label className="block mb-2 text-sm font-medium dark:text-gray-300">
+              من تاريخ
+            </label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+
+          <div className="flex flex-col items-end">
+            <label className="block mb-2 text-sm font-medium dark:text-gray-300">
+              إلى تاريخ
+            </label>
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block mb-2 text-sm font-medium dark:text-gray-300">
-            من تاريخ
-          </label>
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          />
+      {/* حالة التحميل والخطأ */}
+      {filtersLoading && (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-2">جاري تحميل الفلاتر...</p>
         </div>
+      )}
 
-        <div>
-          <label className="block mb-2 text-sm font-medium dark:text-gray-300">
-            إلى تاريخ
-          </label>
-          <DatePicker
-            selected={endDate}
-            onChange={(date) => setEndDate(date)}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            minDate={startDate}
-            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          />
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <strong>خطأ!</strong> {error}
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+          >
+            <svg
+              className="fill-current h-6 w-6 text-red-500"
+              role="button"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+            >
+              <title>إغلاق</title>
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
+            </svg>
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* المخطط مع التمرير */}
+      {/* المخطط */}
       <div className="relative">
         <div
           className="bg-white dark:bg-customDarkGreenbg p-4 rounded-lg overflow-x-auto"
           ref={chartRef}
         >
-          <div className="min-w-[200px] h-[300px]">
-            <Bar data={chartData} options={options} />
-          </div>
-        </div>
-
-        {/* تنقل بين الصفحات */}
-        {aggregatedData.type === "locations" &&
-          aggregatedData.totalPages > 1 && (
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))}
-                disabled={currentPage === 0}
-                className="px-4 py-2 mx-1 bg-gray-200 text-black rounded disabled:opacity-50"
-              >
-                السابق
-              </button>
-
-              {Array.from(
-                { length: Math.min(5, aggregatedData.totalPages) },
-                (_, i) => {
-                  const page =
-                    currentPage < 3
-                      ? i
-                      : currentPage > aggregatedData.totalPages - 4
-                      ? aggregatedData.totalPages - 5 + i
-                      : currentPage - 2 + i;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-4 py-2 mx-1 rounded ${
-                        currentPage === page
-                          ? "bg-customGreen text-white"
-                          : "bg-gray-200 text-black"
-                      }`}
-                    >
-                      {page + 1}
-                    </button>
-                  );
-                }
-              )}
-
-              <button
-                onClick={() =>
-                  setCurrentPage((p) =>
-                    Math.min(p + 1, aggregatedData.totalPages - 1)
-                  )
-                }
-                disabled={currentPage === aggregatedData.totalPages - 1}
-                className="px-4 py-2 mx-1 bg-gray-200 text-black rounded disabled:opacity-50"
-              >
-                التالي
-              </button>
+          {chartData ? (
+            <div className="min-w-[200px] h-[300px]">
+              <Line data={chartData} options={options} />
             </div>
+          ) : (
+            !loading &&
+            !filtersLoading && (
+              <div className="text-center py-8 text-gray-500">
+                {reportType === "مخالفات" &&
+                (!selectedType || !selectedGovernorate || !selectedLocation)
+                  ? "الرجاء تحديد جميع الفلاتر المطلوبة"
+                  : "لا توجد بيانات متاحة لعرضها. يرجى تحديد الفلاتر والضغط على زر جلب البيانات."}
+              </div>
+            )
           )}
+        </div>
       </div>
 
       {/* ملخص النتائج */}
-      <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-        {aggregatedData.type === "locations" ? (
-          <>
-            عرض المناطق من {currentPage * itemsPerPage + 1} إلى{" "}
-            {Math.min(
-              (currentPage + 1) * itemsPerPage,
-              aggregatedData.allData.length
-            )}{" "}
-            من أصل {aggregatedData.allData.length} منطقة
-          </>
-        ) : (
-          <>
-            عرض التوزيع الزمني للمخالفات حسب ساعات اليوم{" "}
-            {selectedLocation !== "كل المناطق" ? `في ${selectedLocation}` : ""}
-          </>
-        )}
-      </div>
+      {hourlyData && (
+        <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+          عرض التوزيع الزمني ل{reportType === "حوادث" ? "الحوادث" : "المخالفات"}{" "}
+          حسب ساعات اليوم {selectedLocation ? `في ${selectedLocation}` : ""}
+        </div>
+      )}
     </div>
   );
 }
