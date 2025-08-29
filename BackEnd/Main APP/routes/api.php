@@ -84,4 +84,4 @@ Route::prefix('dashboard')->middleware(['auth:sanctum', 'token.expires'])->group
 });
 
 // سجل المخالفات و الحوادث
-Route::middleware(['auth:sanctum', 'token.expires', 'employee'])->get('/records', [ReportController::class, 'getByDate']);
+Route::middleware(['auth:sanctum', 'token.expires', 'employee'])->post('/records', [ReportController::class, 'getByDate']);
