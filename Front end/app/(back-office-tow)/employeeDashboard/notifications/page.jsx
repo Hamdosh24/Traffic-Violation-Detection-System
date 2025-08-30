@@ -31,8 +31,6 @@ export default function AccidentsPage() {
     unviewedCount,
     newAccidents,
     updateUnviewedCount,
-    connectSSE,
-    disconnectSSE,
     clearNewAccidents,
   } = useSSE();
 
@@ -46,6 +44,8 @@ export default function AccidentsPage() {
         const newCount = transformedData.filter(
           (accident) => accident.status === "new"
         ).length;
+        // قم بتحديث العداد بناءً على البيانات التي تم جلبها
+        // هذا يضمن مزامنة العداد عند دخول الصفحة
         updateUnviewedCount(newCount);
       } else {
         setError(result.error || "فشل في جلب الحوادث");
@@ -132,11 +132,8 @@ export default function AccidentsPage() {
 
   useEffect(() => {
     fetchAccidents();
-    connectSSE();
-
-    return () => {
-      disconnectSSE();
-    };
+    // تم حذف استدعاء connectSSE() و disconnectSSE()
+    // لأنها تتم إدارتها بشكل عام في SSEProvider
   }, []);
 
   // دمج الحوادث من API مع الحوادث الجديدة من SSE
