@@ -6,19 +6,17 @@ import { StandardApi } from "@/app/api/StandarApi";
 import { useSSE } from "@/context/SSEContext";
 
 function transformSseData(data) {
-  const firstSighting = data.sightings?.[0];
   return {
-    id:
-      data.id ||
-      (firstSighting && firstSighting.p_car_id) ||
-      `temp-${Date.now()}`,
+    id: data.id || `temp-${Date.now()}`,
     status: data.status || "new",
-    driver_info: data.driver_info,
-    sightings: data.sightings,
-    timestamp:
-      data.timestamp ||
-      (firstSighting && firstSighting.timestamp) ||
-      new Date().toISOString(),
+    timestamp: data.timestamp || new Date().toISOString(),
+    camera: data.camera || {
+      camera_id: "غير معروف",
+      governorate: "غير معروف",
+      region: "غير معروف",
+      street: "غير معروف",
+      coordinates: "0,0",
+    },
   };
 }
 
@@ -192,6 +190,7 @@ export default function AccidentsPage() {
           accidents={filteredAccidents}
           loading={isLoading}
           onMarkAsViewed={markAsViewed}
+          filter={filter}
         />
       </div>
       {filteredAccidents.length === 0 && !isLoading && (

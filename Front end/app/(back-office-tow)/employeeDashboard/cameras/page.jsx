@@ -2,7 +2,7 @@
 import Heading from "@/components/backoffice/Heading";
 import CameraCard from "@/components/backoffice/CameraCard";
 import CameraSearch from "@/components/backoffice/CameraSearch";
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { StandardApi } from "@/app/api/StandarApi";
 import { useRouter } from "next/navigation";
 

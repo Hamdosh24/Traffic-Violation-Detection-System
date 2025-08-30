@@ -2,7 +2,7 @@
 import Heading from "@/components/backoffice/Heading";
 import SearchResults from "@/components/backoffice/SearchResults";
 import SearchPlate from "@/components/backoffice/SearchPlate";
-import React, { useState } from "react";
+import { useState } from "react";
 
 export default function VehicleTrackingPage() {
   const [searchData, setSearchData] = useState({

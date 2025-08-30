@@ -1,7 +1,7 @@
 export class StandardApi {
   // static BASE_URL = "http://172.20.10.2:8000/api";
   static BASE_URL = "http://localhost:8000/api";
-  static STREAM_URL = "http://localhost:8002/api";
+  // static STREAM_URL = "http://localhost:8002/api";
 
   // جلب سجل المخالفات
   static async fetchRecords(filters = {}) {

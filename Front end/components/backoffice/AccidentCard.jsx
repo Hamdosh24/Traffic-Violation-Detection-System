@@ -29,7 +29,10 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
   const handleCameraStream = (e) => {
     e.stopPropagation();
     // التأكد من وجود البيانات قبل الانتقال
-    if (accident.camera?.camera_id) {
+    if (
+      accident.camera?.camera_id &&
+      accident.camera.camera_id !== "غير معروف"
+    ) {
       router.push(`/employeeDashboard/cameras/${accident.camera.camera_id}`);
     } else {
       console.error("Camera ID is not available.");
@@ -45,7 +48,7 @@ export default function AccidentCard({ accident, onMarkAsViewed }) {
       })
     : "غير معروف";
 
-  // استخدام optional chaining للوصول الآمن للبيانات
+  // استخدام البيانات الجديدة من كائن camera مباشرة
   const locationText = `${accident.camera?.street || "غير معروف"}, ${
     accident.camera?.region || "غير معروف"
   }, ${accident.camera?.governorate || "غير معروف"}`;
