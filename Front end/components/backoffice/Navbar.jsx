@@ -1,3 +1,4 @@
+// components/backoffice/Navbar.js
 "use client";
 import { AlignJustify, BellRingIcon, LogOut, UserRound } from "lucide-react";
 import React, { useState } from "react";
@@ -12,9 +13,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { StandardApi } from "@/app/api/StandarApi";
-import { useSSE } from "@/context/SSEContext"; // هذا يجب أن يعمل الآن
+import { useSSE } from "@/context/SSEContext";
 
-export default function Navbar({ setShowSidebar, showSidebar }) {
+// أضيفي role كـ prop هنا ↓
+export default function Navbar({ setShowSidebar, showSidebar, role }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { disconnectSSE, unviewedCount } = useSSE();
@@ -22,9 +24,7 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // استدعاء دالة فصل الاتصال من الـ context
       disconnectSSE();
-
       const { success } = await StandardApi.logout();
       if (success) {
         localStorage.removeItem("token");
@@ -64,19 +64,21 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
       <div className="absolute right-6 flex items-center space-x-4">
         <ThemeSwitcherBtn />
 
-        <div className="relative">
-          <Link href="/employeeDashboard/notifications">
-            <div className="relative p-1">
-              <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
-              {/* عرض عداد الإشعارات الجديدة */}
-              {unviewedCount > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                  {unviewedCount}
-                </span>
-              )}
-            </div>
-          </Link>
-        </div>
+        {/* عرض جرس الإشعارات فقط إذا كان المستخدم Employee */}
+        {role === "Employee" && (
+          <div className="relative">
+            <Link href="/employeeDashboard/notifications">
+              <div className="relative p-1">
+                <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
+                {unviewedCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    {unviewedCount}
+                  </span>
+                )}
+              </div>
+            </Link>
+          </div>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none flex items-center">

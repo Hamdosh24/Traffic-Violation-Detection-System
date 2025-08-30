@@ -67,7 +67,11 @@ export default function EmployeeLayout({ children }) {
               showSidebar ? "ml-64" : "ml-0"
             }`}
           >
-            <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+            <Navbar
+              role="Employee"
+              showSidebar={showSidebar}
+              setShowSidebar={setShowSidebar}
+            />
             <main className="p-8 text-slate-800 dark:text-slate-50 relative flex-grow">
               {theme === "light" && (
                 <div className="absolute inset-0 -z-10 bg-milkColor" />

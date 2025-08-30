@@ -14,6 +14,7 @@ import {
   BellRing,
   Camera,
   Car,
+  ClipboardList,
 } from "lucide-react";
 import {
   Collapsible,
@@ -68,6 +69,11 @@ export default function Sidebar({ role, showSidebar }) {
 
   // روابط الموظف
   const employeeLinks = [
+    {
+      title: "سجل المخالفات",
+      icon: ClipboardList,
+      href: "/employeeDashboard/violations",
+    },
     {
       title: "الاشعارات",
       icon: BellRing,

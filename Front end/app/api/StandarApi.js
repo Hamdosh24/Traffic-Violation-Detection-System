@@ -3,6 +3,78 @@ export class StandardApi {
   static BASE_URL = "http://localhost:8000/api";
   static STREAM_URL = "http://localhost:8002/api";
 
+  // جلب سجل المخالفات
+  static async fetchRecords(filters = {}) {
+    try {
+      const token = this.validateToken();
+
+      const requestBody = {
+        type_name: filters.type_name || "كل المخالفات",
+        governorate: filters.governorate || "كل المحافظات",
+        region: filters.region || "كل المناطق",
+        from_date: filters.from_date || "",
+        to_date: filters.to_date || "",
+      };
+
+      // إزالة الحقول الفارغة
+      Object.keys(requestBody).forEach((key) => {
+        if (requestBody[key] === "") {
+          delete requestBody[key];
+        }
+      });
+
+      console.log("Request URL:", `${this.BASE_URL}/records`);
+      console.log("Request Body:", requestBody);
+
+      const response = await fetch(`${this.BASE_URL}/records`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      // تحقق من نوع المحتوى أولاً
+      const contentType = response.headers.get("content-type");
+      console.log("Content-Type:", contentType);
+
+      if (!contentType || !contentType.includes("application/json")) {
+        const textResponse = await response.text();
+        console.error("Non-JSON response:", textResponse.substring(0, 200));
+        throw new Error("الخادم أعاد استجابة غير متوقعة (ليست JSON)");
+      }
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        return {
+          success: false,
+          error: "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+        };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.message || "فشل في جلب سجل المخالفات",
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.data || data,
+      };
+    } catch (err) {
+      console.error("API Error [fetchRecords]:", err);
+      return {
+        success: false,
+        error: err.message || "حدث خطأ أثناء جلب سجل المخالفات",
+      };
+    }
+  }
+
   static validateToken() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -98,7 +170,7 @@ export class StandardApi {
   }
 
   // region filter
-  static async fetchViolationFiltersByRegion() {
+  static async fetchViolationFiltersByRegionandrecords() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {

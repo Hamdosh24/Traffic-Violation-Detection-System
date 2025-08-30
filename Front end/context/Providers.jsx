@@ -6,7 +6,7 @@ import { SSEProvider } from "./SSEContext";
 
 export default function Providers({ children }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark">
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <Toaster position="top-center" reverseOrder={false} />
       <SSEProvider>{children}</SSEProvider>
     </ThemeProvider>
