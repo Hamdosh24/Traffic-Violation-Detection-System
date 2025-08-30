@@ -5,6 +5,7 @@ import AccidentList from "@/components/backoffice/AccidentList";
 import { StandardApi } from "@/app/api/StandarApi";
 import { useSSE } from "@/context/SSEContext";
 
+// Utility function to transform data
 function transformSseData(data) {
   return {
     id: data.id || `temp-${Date.now()}`,
@@ -21,17 +22,17 @@ function transformSseData(data) {
 }
 
 export default function AccidentsPage() {
-  const [accidents, setAccidents] = useState([]);
+  const [allAccidents, setAllAccidents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
 
   const {
     isConnected,
-    unviewedCount,
     newAccidents,
     updateUnviewedCount,
-    setNewAccidents, // Added this from the useSSE hook
+    unviewedCount,
+    clearNewAccidents, // استخدم هذه الدالة بدلاً من setNewAccidents
   } = useSSE();
 
   const fetchAccidents = async () => {
@@ -40,8 +41,11 @@ export default function AccidentsPage() {
       const result = await StandardApi.fetchAllAccidents();
       if (result.success) {
         const transformedData = result.data.map(transformSseData);
-        setAccidents(transformedData);
-        const newCount = transformedData.filter(
+        // Combine initial fetched data with new SSE accidents
+        const combinedData = [...newAccidents, ...transformedData];
+        setAllAccidents(combinedData);
+
+        const newCount = combinedData.filter(
           (accident) => accident.status === "new"
         ).length;
         updateUnviewedCount(newCount);
@@ -61,31 +65,20 @@ export default function AccidentsPage() {
     try {
       const result = await StandardApi.markAccidentAsViewed(accidentId);
       if (result.success) {
-        // Find the accident in the newAccidents list
-        const accidentFromNew = newAccidents.find(
-          (acc) => acc.id === accidentId
-        );
-
-        if (accidentFromNew) {
-          // If the accident is from the SSE stream, remove it from the newAccidents list
-          // and add it to the main accidents list with the new status.
-          setNewAccidents((prev) =>
-            prev.filter((acc) => acc.id !== accidentId)
+        // Find and update the accident in the main list
+        setAllAccidents((prevAccidents) => {
+          const updatedAccidents = prevAccidents.map((acc) =>
+            acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
           );
-          setAccidents((prev) => [
-            { ...accidentFromNew, status: "acknowledged" },
-            ...prev,
-          ]);
-        } else {
-          // If the accident is from the initial API fetch, just update its status
-          // in the main accidents list.
-          setAccidents((prevAccidents) =>
-            prevAccidents.map((acc) =>
-              acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
-            )
-          );
-        }
 
+          // Clear all new accidents since we don't have a way to remove just one
+          // Alternatively, you could filter the newAccidents list
+          clearNewAccidents();
+
+          return updatedAccidents;
+        });
+
+        // Update the global unviewed count
         updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
       } else {
         setError(result.error || "فشل في تحديث الحادث");
@@ -98,67 +91,25 @@ export default function AccidentsPage() {
     }
   };
 
-  const markAllAsViewed = async () => {
-    setIsLoading(true);
-    try {
-      const allUnviewedAccidents = [...accidents, ...newAccidents].filter(
-        (acc) => acc.status === "new"
-      );
-
-      if (allUnviewedAccidents.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-
-      const updatePromises = allUnviewedAccidents.map((accident) =>
-        StandardApi.markAccidentAsViewed(accident.id)
-      );
-
-      const results = await Promise.all(updatePromises);
-      const allSuccess = results.every((result) => result && result.success);
-
-      if (allSuccess) {
-        // Update all new accidents from both lists to acknowledged.
-        const updatedNewAccidents = newAccidents.map((acc) => ({
-          ...acc,
-          status: "acknowledged",
-        }));
-
-        // Update status of existing new accidents in the main list.
-        const updatedMainAccidents = accidents.map((acc) =>
-          acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
-        );
-
-        // Clear the newAccidents list completely
-        setNewAccidents([]);
-        // Combine the newly acknowledged accidents from the SSE stream with the main list
-        setAccidents([...updatedNewAccidents, ...updatedMainAccidents]);
-
-        updateUnviewedCount(0);
-      } else {
-        setError("فشل في تحديث بعض الحوادث");
-      }
-    } catch (err) {
-      setError("حدث خطأ أثناء تحديث الحوادث");
-      console.error("Error marking all as viewed:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchAccidents();
   }, []);
 
-  const allAccidents = [...newAccidents, ...accidents];
+  useEffect(() => {
+    // Update the list when new SSE accidents arrive
+    if (newAccidents.length > 0) {
+      setAllAccidents((prev) => [...newAccidents, ...prev]);
+
+      const newCount =
+        allAccidents.filter((accident) => accident.status === "new").length +
+        newAccidents.length;
+      updateUnviewedCount(newCount);
+    }
+  }, [newAccidents]);
 
   const sortedAccidents = [...allAccidents].sort((a, b) => {
-    if (a.status === "new" && b.status !== "new") {
-      return -1;
-    }
-    if (a.status !== "new" && b.status === "new") {
-      return 1;
-    }
+    if (a.status === "new" && b.status !== "new") return -1;
+    if (a.status !== "new" && b.status === "new") return 1;
     return new Date(b.timestamp) - new Date(a.timestamp);
   });
 
@@ -202,21 +153,14 @@ export default function AccidentsPage() {
             </span>
           </div>
           <button
-            onClick={() => window.location.reload()}
+            onClick={fetchAccidents}
             disabled={isLoading}
             className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="إعادة الاتصال"
+            title="تحديث القائمة"
           >
             <RefreshCw
               className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
             />
-          </button>
-          <button
-            onClick={markAllAsViewed}
-            disabled={unviewedCount === 0 || isLoading}
-            className="px-3 py-2 text-sm font-medium bg-customGreen text-white rounded-lg hover:bg-customGreen/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "جاري التحميل..." : "تعيين الكل كمشاهدة"}
           </button>
         </div>
       </div>

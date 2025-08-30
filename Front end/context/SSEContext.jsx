@@ -38,7 +38,6 @@ export const SSEProvider = ({ children }) => {
     eventSource.onopen = () => {
       console.log("✅ SSE connection established.");
       setIsConnected(true);
-      // مسح أي محاولة إعادة اتصال سابقة
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
@@ -48,12 +47,8 @@ export const SSEProvider = ({ children }) => {
     eventSource.addEventListener("new-accident", (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("📨 New accident received:", data);
+        console.log("📨 New accident received:", data); // Using the setter functions directly, which is correct
 
-        // زيادة العداد
-        setUnviewedCount((prevCount) => prevCount + 1);
-
-        // إضافة الحادث الجديد إلى القائمة
         setNewAccidents((prevAccidents) => {
           const transformedData = {
             id: data.id || `temp-${Date.now()}`,
@@ -67,9 +62,9 @@ export const SSEProvider = ({ children }) => {
               coordinates: "0,0",
             },
           };
-
           return [transformedData, ...prevAccidents];
         });
+        setUnviewedCount((prevCount) => prevCount + 1);
       } catch (e) {
         console.error("❌ Error parsing accident data:", e);
       }
@@ -81,7 +76,6 @@ export const SSEProvider = ({ children }) => {
       eventSource.close();
       eventSourceRef.current = null;
 
-      // إعادة الاتصال بعد 5 ثوانٍ فقط إذا لم يكن هناك محاولة سابقة
       if (!reconnectTimeoutRef.current) {
         reconnectTimeoutRef.current = setTimeout(() => {
           reconnectTimeoutRef.current = null;
@@ -89,7 +83,8 @@ export const SSEProvider = ({ children }) => {
         }, 5000);
       }
     };
-  }, []);
+    // The fix: Add all dependencies that affect the closure
+  }, [setNewAccidents, setUnviewedCount]);
 
   const disconnectSSE = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -104,9 +99,7 @@ export const SSEProvider = ({ children }) => {
     }
   }, []);
 
-  // الاتصال تلقائياً عند التحميل وفصل عند الخروج
   useEffect(() => {
-    // الانتظار قليلاً قبل الاتصال
     const timeout = setTimeout(() => {
       connectSSE();
     }, 1000);
@@ -139,6 +132,7 @@ export const SSEProvider = ({ children }) => {
     updateUnviewedCount,
     addNewAccident,
     clearNewAccidents,
+    setNewAccidents,
   };
 
   return <SSEContext.Provider value={value}>{children}</SSEContext.Provider>;
