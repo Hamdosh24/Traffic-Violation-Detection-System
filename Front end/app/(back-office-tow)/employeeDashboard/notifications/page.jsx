@@ -31,7 +31,7 @@ export default function AccidentsPage() {
     unviewedCount,
     newAccidents,
     updateUnviewedCount,
-    clearNewAccidents,
+    setNewAccidents, // Added this from the useSSE hook
   } = useSSE();
 
   const fetchAccidents = async () => {
@@ -44,8 +44,6 @@ export default function AccidentsPage() {
         const newCount = transformedData.filter(
           (accident) => accident.status === "new"
         ).length;
-        // قم بتحديث العداد بناءً على البيانات التي تم جلبها
-        // هذا يضمن مزامنة العداد عند دخول الصفحة
         updateUnviewedCount(newCount);
       } else {
         setError(result.error || "فشل في جلب الحوادث");
@@ -63,16 +61,29 @@ export default function AccidentsPage() {
     try {
       const result = await StandardApi.markAccidentAsViewed(accidentId);
       if (result.success) {
-        // تحديث الحوادث المحملة من API
-        setAccidents((prevAccidents) =>
-          prevAccidents.map((acc) =>
-            acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
-          )
+        // Find the accident in the newAccidents list
+        const accidentFromNew = newAccidents.find(
+          (acc) => acc.id === accidentId
         );
 
-        // تحديث الحوادث الجديدة من SSE
-        if (newAccidents.some((acc) => acc.id === accidentId)) {
-          clearNewAccidents();
+        if (accidentFromNew) {
+          // If the accident is from the SSE stream, remove it from the newAccidents list
+          // and add it to the main accidents list with the new status.
+          setNewAccidents((prev) =>
+            prev.filter((acc) => acc.id !== accidentId)
+          );
+          setAccidents((prev) => [
+            { ...accidentFromNew, status: "acknowledged" },
+            ...prev,
+          ]);
+        } else {
+          // If the accident is from the initial API fetch, just update its status
+          // in the main accidents list.
+          setAccidents((prevAccidents) =>
+            prevAccidents.map((acc) =>
+              acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
+            )
+          );
         }
 
         updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
@@ -90,7 +101,6 @@ export default function AccidentsPage() {
   const markAllAsViewed = async () => {
     setIsLoading(true);
     try {
-      // جمع كل الحوادث الجديدة (من API وSSE)
       const allUnviewedAccidents = [...accidents, ...newAccidents].filter(
         (acc) => acc.status === "new"
       );
@@ -108,15 +118,21 @@ export default function AccidentsPage() {
       const allSuccess = results.every((result) => result && result.success);
 
       if (allSuccess) {
-        // تحديث جميع الحوادث إلى حالة "تمت المشاهدة"
-        setAccidents((prevAccidents) =>
-          prevAccidents.map((acc) =>
-            acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
-          )
+        // Update all new accidents from both lists to acknowledged.
+        const updatedNewAccidents = newAccidents.map((acc) => ({
+          ...acc,
+          status: "acknowledged",
+        }));
+
+        // Update status of existing new accidents in the main list.
+        const updatedMainAccidents = accidents.map((acc) =>
+          acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
         );
 
-        // مسح الحوادث الجديدة من SSE
-        clearNewAccidents();
+        // Clear the newAccidents list completely
+        setNewAccidents([]);
+        // Combine the newly acknowledged accidents from the SSE stream with the main list
+        setAccidents([...updatedNewAccidents, ...updatedMainAccidents]);
 
         updateUnviewedCount(0);
       } else {
@@ -132,11 +148,8 @@ export default function AccidentsPage() {
 
   useEffect(() => {
     fetchAccidents();
-    // تم حذف استدعاء connectSSE() و disconnectSSE()
-    // لأنها تتم إدارتها بشكل عام في SSEProvider
   }, []);
 
-  // دمج الحوادث من API مع الحوادث الجديدة من SSE
   const allAccidents = [...newAccidents, ...accidents];
 
   const sortedAccidents = [...allAccidents].sort((a, b) => {
@@ -155,7 +168,6 @@ export default function AccidentsPage() {
     return true;
   });
 
-  // حساب الإحصائيات من جميع الحوادث (API + SSE)
   const totalCount = allAccidents.length;
   const newCount = allAccidents.filter((a) => a.status === "new").length;
   const acknowledgedCount = allAccidents.filter(
