@@ -14,6 +14,7 @@ const SSEContext = createContext(null);
 export const SSEProvider = ({ children }) => {
   const [unviewedCount, setUnviewedCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
+  const [newAccidents, setNewAccidents] = useState([]);
   const eventSourceRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
 
@@ -48,7 +49,27 @@ export const SSEProvider = ({ children }) => {
       try {
         const data = JSON.parse(event.data);
         console.log("📨 New accident received:", data);
+
+        // زيادة العداد
         setUnviewedCount((prevCount) => prevCount + 1);
+
+        // إضافة الحادث الجديد إلى القائمة
+        setNewAccidents((prevAccidents) => {
+          const transformedData = {
+            id: data.id || `temp-${Date.now()}`,
+            status: data.status || "new",
+            timestamp: data.timestamp || new Date().toISOString(),
+            camera: data.camera || {
+              camera_id: "غير معروف",
+              governorate: "غير معروف",
+              region: "غير معروف",
+              street: "غير معروف",
+              coordinates: "0,0",
+            },
+          };
+
+          return [transformedData, ...prevAccidents];
+        });
       } catch (e) {
         console.error("❌ Error parsing accident data:", e);
       }
@@ -100,12 +121,24 @@ export const SSEProvider = ({ children }) => {
     setUnviewedCount(newCount);
   }, []);
 
+  const addNewAccident = useCallback((accident) => {
+    setNewAccidents((prev) => [accident, ...prev]);
+    setUnviewedCount((prev) => prev + 1);
+  }, []);
+
+  const clearNewAccidents = useCallback(() => {
+    setNewAccidents([]);
+  }, []);
+
   const value = {
     unviewedCount,
     isConnected,
+    newAccidents,
     connectSSE,
     disconnectSSE,
     updateUnviewedCount,
+    addNewAccident,
+    clearNewAccidents,
   };
 
   return <SSEContext.Provider value={value}>{children}</SSEContext.Provider>;

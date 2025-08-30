@@ -26,72 +26,123 @@ export default function AccidentsPage() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
 
-  const { isConnected, unviewedCount, updateUnviewedCount } = useSSE();
+  const {
+    isConnected,
+    unviewedCount,
+    newAccidents,
+    updateUnviewedCount,
+    connectSSE,
+    disconnectSSE,
+    clearNewAccidents,
+  } = useSSE();
 
   const fetchAccidents = async () => {
     setIsLoading(true);
-    const result = await StandardApi.fetchAllAccidents();
-    if (result.success) {
-      const transformedData = result.data.map(transformSseData);
-      setAccidents(transformedData);
-      const newCount = transformedData.filter(
-        (accident) => accident.status === "new"
-      ).length;
-      updateUnviewedCount(newCount);
-    } else {
-      setError(result.error);
+    try {
+      const result = await StandardApi.fetchAllAccidents();
+      if (result.success) {
+        const transformedData = result.data.map(transformSseData);
+        setAccidents(transformedData);
+        const newCount = transformedData.filter(
+          (accident) => accident.status === "new"
+        ).length;
+        updateUnviewedCount(newCount);
+      } else {
+        setError(result.error || "فشل في جلب الحوادث");
+      }
+    } catch (err) {
+      setError("حدث خطأ أثناء جلب الحوادث");
+      console.error("Error fetching accidents:", err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const markAsViewed = async (accidentId) => {
     setIsLoading(true);
-    const result = await StandardApi.markAccidentAsViewed(accidentId);
-    if (result.success) {
-      setAccidents((prevAccidents) =>
-        prevAccidents.map((acc) =>
-          acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
-        )
-      );
-      updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
-    } else {
-      setError(result.error);
+    try {
+      const result = await StandardApi.markAccidentAsViewed(accidentId);
+      if (result.success) {
+        // تحديث الحوادث المحملة من API
+        setAccidents((prevAccidents) =>
+          prevAccidents.map((acc) =>
+            acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
+          )
+        );
+
+        // تحديث الحوادث الجديدة من SSE
+        if (newAccidents.some((acc) => acc.id === accidentId)) {
+          clearNewAccidents();
+        }
+
+        updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
+      } else {
+        setError(result.error || "فشل في تحديث الحادث");
+      }
+    } catch (err) {
+      setError("حدث خطأ أثناء تحديث الحادث");
+      console.error("Error marking as viewed:", err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const markAllAsViewed = async () => {
     setIsLoading(true);
-    const unviewedAccidents = accidents.filter((acc) => acc.status === "new");
-    if (unviewedAccidents.length === 0) {
-      setIsLoading(false);
-      return;
-    }
-
-    const updatePromises = unviewedAccidents.map((accident) =>
-      StandardApi.markAccidentAsViewed(accident.id)
-    );
-    const results = await Promise.all(updatePromises);
-    const allSuccess = results.every((result) => result && result.success);
-
-    if (allSuccess) {
-      setAccidents((prevAccidents) =>
-        prevAccidents.map((acc) =>
-          acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
-        )
+    try {
+      // جمع كل الحوادث الجديدة (من API وSSE)
+      const allUnviewedAccidents = [...accidents, ...newAccidents].filter(
+        (acc) => acc.status === "new"
       );
-      updateUnviewedCount(0);
-    } else {
-      setError("فشل في تحديث بعض الحوادث.");
+
+      if (allUnviewedAccidents.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+
+      const updatePromises = allUnviewedAccidents.map((accident) =>
+        StandardApi.markAccidentAsViewed(accident.id)
+      );
+
+      const results = await Promise.all(updatePromises);
+      const allSuccess = results.every((result) => result && result.success);
+
+      if (allSuccess) {
+        // تحديث جميع الحوادث إلى حالة "تمت المشاهدة"
+        setAccidents((prevAccidents) =>
+          prevAccidents.map((acc) =>
+            acc.status === "new" ? { ...acc, status: "acknowledged" } : acc
+          )
+        );
+
+        // مسح الحوادث الجديدة من SSE
+        clearNewAccidents();
+
+        updateUnviewedCount(0);
+      } else {
+        setError("فشل في تحديث بعض الحوادث");
+      }
+    } catch (err) {
+      setError("حدث خطأ أثناء تحديث الحوادث");
+      console.error("Error marking all as viewed:", err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
     fetchAccidents();
+    connectSSE();
+
+    return () => {
+      disconnectSSE();
+    };
   }, []);
 
-  const sortedAccidents = [...accidents].sort((a, b) => {
+  // دمج الحوادث من API مع الحوادث الجديدة من SSE
+  const allAccidents = [...newAccidents, ...accidents];
+
+  const sortedAccidents = [...allAccidents].sort((a, b) => {
     if (a.status === "new" && b.status !== "new") {
       return -1;
     }
@@ -106,6 +157,13 @@ export default function AccidentsPage() {
     if (filter === "new") return accident.status === "new";
     return true;
   });
+
+  // حساب الإحصائيات من جميع الحوادث (API + SSE)
+  const totalCount = allAccidents.length;
+  const newCount = allAccidents.filter((a) => a.status === "new").length;
+  const acknowledgedCount = allAccidents.filter(
+    (a) => a.status === "acknowledged"
+  ).length;
 
   return (
     <div className="max-w-3xl mx-auto p-4" dir="rtl">
@@ -164,13 +222,10 @@ export default function AccidentsPage() {
             onChange={(e) => setFilter(e.target.value)}
             className="appearance-none pl-3 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-customGreen focus:border-customGreen outline-none"
           >
-            <option value="all">الكل ({accidents.length})</option>
-            <option value="new">
-              جديد ({accidents.filter((a) => a.status === "new").length})
-            </option>
+            <option value="all">الكل ({totalCount})</option>
+            <option value="new">جديد ({newCount})</option>
             <option value="acknowledged">
-              تمت مشاهدته (
-              {accidents.filter((a) => a.status === "acknowledged").length})
+              تمت مشاهدته ({acknowledgedCount})
             </option>
           </select>
         </div>
