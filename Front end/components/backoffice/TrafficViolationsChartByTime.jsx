@@ -150,7 +150,7 @@ export default function TrafficViolationsChartByTime() {
               : "rgba(54, 162, 235, 1)",
           borderWidth: 2,
           tension: 0.4,
-          fill: false,
+          fill: true,
           pointBackgroundColor:
             reportType === "حوادث"
               ? "rgba(220, 53, 69, 1)"

@@ -9,24 +9,66 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { StandardApi } from "@/app/api/StandarApi";
 
-export default function SmallChart() {
-  ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-  );
+// Mock API for demonstration purposes
+const StandardApi = {
+  get: async (endpoint) => {
+    // Simulate API call with a delay
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
+    // Function to generate mock data for the last 30 days
+    const generateMockData = (baseTotal) => {
+      const data = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        // استخدام التاريخ بالإنجليزية
+        const formattedDate = date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+        const total = baseTotal + Math.floor(Math.random() * 50) - 25; // Random variation
+        data.push({ date: formattedDate, total: Math.max(0, total) });
+      }
+      return data;
+    };
+
+    if (endpoint === "/dashboard/line_chart") {
+      return {
+        success: true,
+        data: generateMockData(150),
+      };
+    }
+    if (endpoint === "/dashboard/line_chart2") {
+      return {
+        success: true,
+        data: generateMockData(300),
+      };
+    }
+    return { success: false, error: "Endpoint not found" };
+  },
+};
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+export default function App() {
   const [loading, setLoading] = useState(true);
   const [violationsData, setViolationsData] = useState([]);
   const [accidentsData, setAccidentsData] = useState([]);
+  const [chartToDisplay, setChartToDisplay] = useState("violations");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +100,7 @@ export default function SmallChart() {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -66,11 +109,81 @@ export default function SmallChart() {
         display: true,
         text: "تغير عدد المخالفات والحوادث عبر الزمن",
       },
+      tooltip: {
+        mode: "index",
+        intersect: false,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        titleColor: "#fff",
+        bodyColor: "#fff",
+        borderColor: "rgba(255, 255, 255, 0.2)",
+        borderWidth: 1,
+        padding: 10,
+        cornerRadius: 8,
+        displayColors: true,
+        callbacks: {
+          title: function (tooltipItems) {
+            return tooltipItems[0].label;
+          },
+          label: function (context) {
+            let label = context.dataset.label || "";
+            if (label) {
+              label += ": ";
+            }
+            if (context.parsed.y !== null) {
+              label += new Intl.NumberFormat("en-US").format(context.parsed.y);
+            }
+            return label;
+          },
+        },
+      },
     },
     elements: {
       line: {
-        tension: 0.2,
+        tension: 0.4,
+        borderWidth: 2,
       },
+      point: {
+        radius: 0,
+        hoverRadius: 6,
+        hoverBorderWidth: 2,
+        backgroundColor: "#FFFFFF",
+        borderColor: "#FFFFFF",
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: "#A0AEC0",
+        },
+        border: {
+          display: false,
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: "#A0AEC0",
+          callback: function (value) {
+            return new Intl.NumberFormat("en-US").format(value);
+          },
+        },
+        border: {
+          display: false,
+        },
+      },
+    },
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
+    hover: {
+      mode: "index",
+      intersect: false,
     },
   };
 
@@ -86,10 +199,11 @@ export default function SmallChart() {
             data: violationsData.map((item) => item.total),
             borderColor: "rgb(255, 99, 132)",
             backgroundColor: "rgba(255, 99, 132, 0.5)",
+            fill: "start",
           },
         ],
       },
-      color: "rgb(255, 99, 132,20)",
+      color: "rgb(255, 99, 132)",
     },
     {
       title: "الحوادث",
@@ -102,26 +216,23 @@ export default function SmallChart() {
             data: accidentsData.map((item) => item.total),
             borderColor: "rgb(0, 137, 132)",
             backgroundColor: "rgba(0, 137, 132, 0.8)",
+            fill: "start",
           },
         ],
       },
-      color: "rgb(0, 137, 132,20)",
+      color: "rgb(0, 137, 132)",
     },
   ];
-
-  const [chartToDisplay, setChartToDisplay] = useState(tabs[0].type);
 
   if (loading) {
     return (
       <div className="bg-milkColor dark:bg-customDarkGreen p-8 rounded-md shadow-xl py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mb-6"></div>
-
           <div className="flex space-x-4 mb-6">
             <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded w-24"></div>
             <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded w-24"></div>
           </div>
-
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg h-64">
             <div className="h-full bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
@@ -136,42 +247,42 @@ export default function SmallChart() {
         تغير عدد المخالفات والحوادث عبر الزمن
       </h2>
       <div className="p-4">
-        {/* Tabs  */}
+        {/* Tabs */}
         <div className="text-sm font-medium text-center text-gray-200 border-b border-gray-400 dark:text-gray-400 dark:border-gray-500">
           <ul className="flex flex-wrap -mb-px">
-            {tabs.map((tab, i) => {
-              return (
-                <li
-                  key={i}
-                  onClick={() => setChartToDisplay(tab.type)}
-                  className="me-2"
+            {tabs.map((tab, i) => (
+              <li
+                key={i}
+                onClick={() => setChartToDisplay(tab.type)}
+                className="me-2"
+              >
+                <button
+                  className={
+                    chartToDisplay === tab.type
+                      ? `inline-block p-4 text-white border-b-2 rounded-t-lg`
+                      : `inline-block p-4 border-b-2 border-transparent rounded-t-lg text-gray-300 border-gray-300 dark:text-slate-500 dark:border-slate-500 hover:text-gray-600 hover:border-gray-600 dark:hover:border-gray-100 dark:hover:text-gray-100`
+                  }
+                  style={{
+                    color: chartToDisplay === tab.type ? tab.color : "",
+                    borderColor: chartToDisplay === tab.type ? tab.color : "",
+                  }}
                 >
-                  <button
-                    className={
-                      chartToDisplay == tab.type
-                        ? `inline-block p-4 text-white border-b-2 rounded-t-lg`
-                        : `inline-block p-4 border-b-2 border-transparent rounded-t-lg text-gray-300 border-gray-300 dark:text-slate-500 dark:border-slate-500  hover:text-gray-600 hover:border-gray-600 dark:hover:border-gray-100 dark:hover:text-gray-100`
-                    }
-                    style={{
-                      color: chartToDisplay === tab.type ? tab.color : "",
-                      borderColor: chartToDisplay === tab.type ? tab.color : "",
-                    }}
-                  >
-                    {tab.title}
-                  </button>
-                </li>
-              );
-            })}
+                  {tab.title}
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
 
         {/* Content to display */}
-        {tabs.map((tab, i) => {
-          if (chartToDisplay == tab.type) {
-            return <Line key={i} options={options} data={tab.data} />;
-          }
-          return null;
-        })}
+        <div className="h-72 mt-4">
+          {tabs.map((tab, i) => {
+            if (chartToDisplay === tab.type) {
+              return <Line key={i} options={options} data={tab.data} />;
+            }
+            return null;
+          })}
+        </div>
       </div>
     </div>
   );

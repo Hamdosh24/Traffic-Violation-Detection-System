@@ -58,11 +58,11 @@ export default function Sidebar({ role, showSidebar }) {
       ? [
           {
             title: "مخطط مكاني",
-            href: "/employeeDashboard/church",
+            href: "/employeeDashboard/spatial",
           },
           {
             title: "مخطط زمني",
-            href: "/employeeDashboard/spatial",
+            href: "/employeeDashboard/temporal",
           },
         ]
       : [];

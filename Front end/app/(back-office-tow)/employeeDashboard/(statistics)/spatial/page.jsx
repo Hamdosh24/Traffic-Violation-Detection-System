@@ -1,10 +1,10 @@
 import React from "react";
-import TrafficViolationsChartByTime from "../../../../../components/backoffice/TrafficViolationsChartByTime";
+import TrafficViolationsChart from "@/components/backoffice/TrafficViolationsChart";
 
 export default function page() {
   return (
     <div>
-      <TrafficViolationsChartByTime />
+      <TrafficViolationsChart />
     </div>
   );
 }
