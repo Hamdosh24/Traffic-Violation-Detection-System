@@ -9,22 +9,31 @@ use App\Http\Resources\AccidentResource;
 use App\Models\Accident;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AccidentController extends Controller
 {
+    /**
+     * Store a newly created accident in storage.
+     */
     public function store(StoreAccidentRequest $request): JsonResponse
     {
-        $accident = Accident::create($request->validated());
+        try {
+            // الخطوة 1: إنشاء الحادث فقط.
+            // الـ Observer سيتولى بقية العملية تلقائيًا (إطلاق الحدث).
+            $accident = Accident::create($request->validated());
 
-        // <<< الخطوة 1: إضافة الحادث الجديد إلى الكاش ليتمكن الـ Stream من التقاطه
-        Cache::put('latest_accident', $accident, now()->addMinutes(1));
+            return response()->json([
+                'message' => 'Accident recorded successfully.',
+                'id' => $accident->id,
+            ], 201);
 
-        return response()->json([
-            'message' => 'Accident recorded successfully.',
-            'id' => $accident->id,
-        ], 201);
+        } catch (\Exception $e) {
+            Log::error('Failed to record accident: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to record accident.'], 500);
+        }
     }
 
     /**
@@ -32,82 +41,78 @@ class AccidentController extends Controller
      */
     public function acknowledge(Request $request, Accident $accident): JsonResponse
     {
-        if ($accident->status !== 'new') {
-            return response()->json(['message' => 'This accident has already been handled.'], 409); // Conflict
+        // استخدام تحديث ذري لمنع أكثر من موظف من متابعة نفس الحادث
+        $updatedRows = Accident::where('id', $accident->id)
+            ->where('status', 'new') // شرط حيوي لضمان أن الحادث لم يتم متابعته
+            ->update([
+                'status' => 'acknowledged',
+                'claimed_by' => $request->user()->id, // استخدام ID المستخدم المصادق عليه
+                'claimed_at' => now(),
+            ]);
+
+        // إذا لم يتم تحديث أي صف، فهذا يعني أن موظفًا آخر قد سبقه
+        if ($updatedRows === 0) {
+            return response()->json(['message' => 'This accident has already been handled.'], 409); // 409 Conflict
         }
 
-        $accident->update([
-            'status' => 'acknowledged',
-            'claimed_by' => $request->user()->user_id,
-            'claimed_at' => now(),
-        ]);
+        // جلب الحادث بعد تحديثه للحصول على البيانات الجديدة
+        $updatedAccident = $accident->fresh();
 
-        Cache::put('latest_acknowledged_accident', $accident, now()->addMinutes(1));
-        event(new AccidentAcknowledged($accident));
+        // بث حدث "متابعة حادث" إلى جميع المستخدمين الآخرين
+        broadcast(new AccidentAcknowledged($updatedAccident))->toOthers();
 
         return response()->json([
-            'data' => new AccidentResource($accident),
+            'data' => new AccidentResource($updatedAccident),
         ]);
     }
 
     /**
      * Stream new and acknowledged accidents in real-time using SSE.
      */
-    public function streamNewAccidents(Request $request): StreamedResponse // <<< يمكن إضافة Request هنا للمصادقة
+    public function streamNewAccidents(Request $request): StreamedResponse
     {
-        // <<< يمكنك إضافة تحقق من التوكن هنا إذا أرسلته كـ query parameter
-        // if (!$request->hasValidSignature()) {
-        //    abort(401);
-        // }
-        
         $response = new StreamedResponse(function () {
             set_time_limit(0);
+            try {
+                // الاشتراك في قناة Redis. هذه عملية مستمرة وتبقي الاتصال مفتوحًا
+                Redis::psubscribe(['accidents-channel'], function ($message, $channel) {
+                    $decodedMessage = json_decode($message, true);
+                    $eventName = $decodedMessage['event'] ?? 'message';
+                    $data = json_encode($decodedMessage['data']);
 
-            // <<< الخطوة 2: إضافة عداد للـ Heartbeat
-            $counter = 0;
+                    // إرسال البيانات بصيغة SSE إلى العميل
+                    echo "event: {$eventName}\n";
+                    echo "data: {$data}\n\n";
 
-            while (true) {
-                if ($latestAccident = Cache::get('latest_accident')) {
-                    echo "event: new-accident\n";
-                    echo 'data: '.(new AccidentResource($latestAccident))->toJson()."\n\n";
-                    Cache::forget('latest_accident');
-                }
-
-                if ($acknowledgedAccident = Cache::get('latest_acknowledged_accident')) {
-                    echo "event: accident-acknowledged\n";
-                    echo 'data: '.json_encode(['id' => $acknowledgedAccident->id])."\n\n";
-                    Cache::forget('latest_acknowledged_accident');
-                }
-                
-                // <<< الخطوة 2: إرسال Heartbeat كل 15 ثانية لإبقاء الاتصال مفتوحاً
-                if ($counter % 15 == 0) {
-                    echo ": keep-alive\n\n";
-                }
-
+                    // تفريغ المخزن المؤقت (buffer) لضمان الإرسال الفوري
+                    ob_flush();
+                    flush();
+                });
+            } catch (\Exception $e) {
+                // تسجيل أي خطأ يحدث أثناء اتصال Redis
+                Log::error('SSE Redis Subscription Error: ' . $e->getMessage());
+                echo "event: error\n";
+                echo 'data: {"message": "Stream connection lost."}' . "\n\n";
                 ob_flush();
                 flush();
-                sleep(1);
-                $counter++; // <<< زيادة العداد
-
-                if (connection_aborted()) {
-                    break;
-                }
             }
         });
 
         $response->headers->set('Content-Type', 'text/event-stream');
         $response->headers->set('X-Accel-Buffering', 'no');
         $response->headers->set('Cache-Control', 'no-cache');
-
         return $response;
     }
 
+    /**
+     * Display a paginated listing of the resource.
+     */
     public function indexAll(Request $request)
     {
         $recentAccidents = Accident::with('camera')
             ->where('timestamp', '>=', now()->subHours(24))
-            ->latest()
-            ->get();
+            ->latest('timestamp') // الأفضل تحديد الحقل للترتيب
+            ->paginate(20); // استخدام paginate للأداء
 
         return AccidentResource::collection($recentAccidents);
     }
