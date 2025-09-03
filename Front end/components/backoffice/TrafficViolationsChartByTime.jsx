@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  d,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import DatePicker from "react-datepicker";

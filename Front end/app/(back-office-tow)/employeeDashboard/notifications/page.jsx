@@ -1,3 +1,4 @@
+// AccidentsPage.js
 "use client";
 import { useState, useEffect } from "react";
 import { AlertTriangle, Filter, RefreshCw } from "lucide-react";
@@ -32,7 +33,7 @@ export default function AccidentsPage() {
     newAccidents,
     updateUnviewedCount,
     unviewedCount,
-    clearNewAccidents, // استخدم هذه الدالة بدلاً من setNewAccidents
+    clearNewAccidents,
   } = useSSE();
 
   const fetchAccidents = async () => {
@@ -41,13 +42,15 @@ export default function AccidentsPage() {
       const result = await StandardApi.fetchAllAccidents();
       if (result.success) {
         const transformedData = result.data.map(transformSseData);
-        // Combine initial fetched data with new SSE accidents
-        const combinedData = [...newAccidents, ...transformedData];
-        setAllAccidents(combinedData);
+        // التغيير هنا: فقط قم بتعيين البيانات التي تم جلبها مباشرة، بدون دمج
+        setAllAccidents(transformedData);
+        // هنا نقوم بدمج الحوادث الجديدة التي قد تكون وصلت أثناء الجلب
+        setAllAccidents((prev) => [...newAccidents, ...prev]);
 
-        const newCount = combinedData.filter(
-          (accident) => accident.status === "new"
-        ).length;
+        // حساب عدد الحوادث الجديدة بعد الدمج وتحديث الـ count
+        const newCount =
+          newAccidents.length +
+          transformedData.filter((a) => a.status === "new").length;
         updateUnviewedCount(newCount);
       } else {
         setError(result.error || "فشل في جلب الحوادث");
@@ -65,20 +68,13 @@ export default function AccidentsPage() {
     try {
       const result = await StandardApi.markAccidentAsViewed(accidentId);
       if (result.success) {
-        // Find and update the accident in the main list
         setAllAccidents((prevAccidents) => {
           const updatedAccidents = prevAccidents.map((acc) =>
             acc.id === accidentId ? { ...acc, status: "acknowledged" } : acc
           );
-
-          // Clear all new accidents since we don't have a way to remove just one
-          // Alternatively, you could filter the newAccidents list
-          clearNewAccidents();
-
           return updatedAccidents;
         });
-
-        // Update the global unviewed count
+        // تحديث العداد بشكل صحيح بعد تغيير الحالة
         updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
       } else {
         setError(result.error || "فشل في تحديث الحادث");
@@ -93,19 +89,18 @@ export default function AccidentsPage() {
 
   useEffect(() => {
     fetchAccidents();
+    // إزالة newAccidents من الـ dependencies لمنع إعادة الجلب
   }, []);
 
   useEffect(() => {
-    // Update the list when new SSE accidents arrive
+    // هذا الـ useEffect مسؤول فقط عن دمج الحوادث الجديدة من الـ SSE
     if (newAccidents.length > 0) {
       setAllAccidents((prev) => [...newAccidents, ...prev]);
-
-      const newCount =
-        allAccidents.filter((accident) => accident.status === "new").length +
-        newAccidents.length;
-      updateUnviewedCount(newCount);
+      // بعد الدمج، يجب تفريغ قائمة الحوادث الجديدة لمنع التكرار
+      clearNewAccidents();
     }
-  }, [newAccidents]);
+    // التغيير هنا: هذا الـ useEffect يعتمد فقط على newAccidents
+  }, [newAccidents, clearNewAccidents]);
 
   const sortedAccidents = [...allAccidents].sort((a, b) => {
     if (a.status === "new" && b.status !== "new") return -1;
