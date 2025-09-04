@@ -7,12 +7,9 @@ use App\Models\Accident;
 
 class AccidentObserver
 {
-    /**
-     * Handle the Accident "created" event.
-     */
     public function created(Accident $accident): void
     {
-        // ✅ هذا هو المكان الصحيح والوحيد لإطلاق الحدث
-        broadcast(new NewAccidentCreated($accident));
+        // ✅ ما زلنا نطلق الحدث نفسه
+        // event(new NewAccidentCreated($accident));
     }
 }
