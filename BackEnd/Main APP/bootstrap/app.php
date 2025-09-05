@@ -3,8 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\QueryStringTokenAuth;
-
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withProviders([
-    App\Providers\RouteServiceProvider::class,
-])
+        App\Providers\RouteServiceProvider::class,
+    ])
 
     ->create();

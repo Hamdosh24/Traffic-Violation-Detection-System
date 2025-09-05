@@ -2,9 +2,9 @@
 
 namespace Tests;
 
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-// 1. استيراد الـ middleware الذي نريد تعطيله
 use App\Http\Middleware\TokenExpiryMiddleware;
+// 1. استيراد الـ middleware الذي نريد تعطيله
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -16,7 +16,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // 2. إضافة هذا السطر لتعطيل الـ middleware أثناء الاختبارات فقط
         $this->withoutMiddleware(TokenExpiryMiddleware::class);
     }

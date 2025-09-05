@@ -23,7 +23,7 @@ class ViolationTest extends TestCase
         $violationType = ViolationType::factory()->create(['key' => 'speeding']); // استخدام key معروف
 
         $violationData = [
-'camera_id' => (string) $camera->camera_id,
+            'camera_id' => (string) $camera->camera_id,
             'violation_type_key' => 'speeding', // إرسال الـ key كما يتوقع الـ Controller
             'plate_number' => '123-ABC',
             'timestamp' => now()->toDateTimeString(),
@@ -41,7 +41,8 @@ class ViolationTest extends TestCase
             'plate_num' => '123-ABC',
         ]);
     }
-     #[Test]
+
+    #[Test]
     public function it_fails_to_create_a_violation_with_an_invalid_type_key(): void
     {
         // Arrange

@@ -72,15 +72,15 @@ class PassingCarController extends Controller
         if (empty($driverInfo)) {
             // Case: Driver NOT found
             $responseData = [
-                    'driver_info' => null, // Set driver_info to null
-                    'sightings' => SightingResource::collection($sightings),
+                'driver_info' => null, // Set driver_info to null
+                'sightings' => SightingResource::collection($sightings),
             ];
         } else {
             // Case: Driver IS found ("Happy Path")
             $responseData = [
 
-                    'driver_info' => new DriverResource($driverInfo),
-                    'sightings' => SightingResource::collection($sightings),
+                'driver_info' => new DriverResource($driverInfo),
+                'sightings' => SightingResource::collection($sightings),
             ];
 
         }
