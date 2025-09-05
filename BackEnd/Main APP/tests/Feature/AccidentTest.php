@@ -37,7 +37,7 @@ class AccidentTest extends TestCase
         // Arrange
         $user = User::factory()->create();
         $accident = Accident::factory()->create();
-        
+
         Sanctum::actingAs($user);
 
         // Act
@@ -52,6 +52,7 @@ class AccidentTest extends TestCase
             'claimed_by' => $user->user_id,
         ]);
     }
+
     public function a_regular_user_cannot_acknowledge_an_accident(): void
     {
         // Arrange

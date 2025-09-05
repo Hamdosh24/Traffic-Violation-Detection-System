@@ -15,14 +15,14 @@ class QueryStringTokenAuth
         // تحقق من وجود التوكن وصحته
         $accessToken = $token ? PersonalAccessToken::findToken($token) : null;
 
-        if (!$accessToken) {
+        if (! $accessToken) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         // اربط المستخدم بالمصادقة
-$request->setUserResolver(function () use ($accessToken) {
-    return $accessToken->tokenable;
-});
+        $request->setUserResolver(function () use ($accessToken) {
+            return $accessToken->tokenable;
+        });
 
         return $next($request);
     }
