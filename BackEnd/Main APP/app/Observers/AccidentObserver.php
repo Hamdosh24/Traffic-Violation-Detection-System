@@ -9,7 +9,7 @@ class AccidentObserver
 {
     public function created(Accident $accident): void
     {
-        // ✅ ما زلنا نطلق الحدث نفسه
-        // event(new NewAccidentCreated($accident));
+        // إطلاق الحدث عند تسجيل حادث جديد
+        event(new NewAccidentCreated($accident));
     }
 }
