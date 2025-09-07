@@ -114,18 +114,16 @@ export default function Sidebar({ role, showSidebar }) {
       <Link
         href={role === "Manager" ? "/adminDashboard" : "/employeeDashboard"}
       >
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center border-b border-gray-200 dark:border-gray-700 py-4">
           <Image
             src="/Logo1.png"
             alt="First text image"
             width={75}
             height={100}
-            className="object-contain"
+            className="object-contain mb-2"
             quality={100}
           />
-          <span className="pl-2 font-bold text-[#b7a579]">
-            كشف المخالفات المرورية
-          </span>
+          <h1 className="text-2xl font-bold text-[#b7a579]">رقيب</h1>
         </div>
       </Link>
 

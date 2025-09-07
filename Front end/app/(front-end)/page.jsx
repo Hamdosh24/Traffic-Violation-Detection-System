@@ -43,19 +43,24 @@ export default function page() {
           dir="rtl"
         >
           {/* Logo Section - تحسينات للشاشات الصغيرة */}
-          <div className="lg:ml-24 pb-6 sm:pb-28 flex flex-col justify-center items-center lg:items-end">
-            <div className="w-[180px] h-[90px] sm:w-[240px] sm:h-[120px] lg:w-[300px] lg:h-[150px] relative">
+          <div className="lg:ml-24 pb-6 sm:pb-28 flex flex-col justify-center items-center  lg:items-end">
+            <div className="flex flex-col items-center justify-center m-auto w-[180px] h-[90px] sm:w-[240px] sm:h-[120px] lg:w-[300px] lg:h-[150px] relative">
               <Image
                 src="/Logo1.png"
                 alt="Traffic Violation Logo"
                 fill
-                className="object-contain"
+                className="object-contain "
                 quality={100}
               />
             </div>
-            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#b7a579] mt-3 sm:mt-4 text-center lg:text-right px-2 sm:px-0">
-              نظام كشف المخالفات المرورية
-            </span>
+            <div className="flex flex-col justify-center items-center">
+              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-iconGold mt-3 sm:mt-4 text-center lg:text-right  sm:px-0">
+                " رقيب "
+              </h1>
+              <span className="text-xl sm:text-xl lg:text-2xl font-bold text-customDarkGreenbg mt-3 pt-5 sm:mt-4 text-center lg:text-right sm:px-0">
+                منظومة متكاملة لمراقبة الطرق بالذكاء الصنعي
+              </span>
+            </div>
           </div>
 
           {/* Login Form - تحسينات للشاشات الصغيرة */}
