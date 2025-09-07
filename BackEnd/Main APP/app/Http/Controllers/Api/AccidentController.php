@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\AccidentAcknowledged; // <-- إضافة: استدعاء الحدث
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAccidentRequest;
 use App\Http\Resources\AccidentResource;
@@ -19,8 +20,9 @@ class AccidentController extends Controller
         try {
             $accident = Accident::create($request->validated());
 
-            // بث مباشر عبر الحدث
-            event(new \App\Events\NewAccidentCreated($accident));
+            // <-- التعديل هنا (الإصلاح رقم 2): تم حذف هذا السطر لمنع الإشعارات المكررة
+            // event(new \App\Events\NewAccidentCreated($accident));
+            // المراقب AccidentObserver يقوم بهذه المهمة بالفعل بشكل تلقائي وموثوق.
 
             return response()->json([
                 'message' => 'Accident recorded successfully.',
@@ -48,6 +50,10 @@ class AccidentController extends Controller
             return response()->json(['message' => 'This accident has already been handled.'], 409);
         }
 
+        // <-- التعديل هنا (الإصلاح رقم 1): إطلاق الحدث لإعلام جميع الموظفين
+        // هذا السطر يرسل إشعاراً فورياً لواجهات المستخدم الأخرى لتحديث الحالة.
+        event(new AccidentAcknowledged($accident));
+
         return response()->json([
             'data' => new AccidentResource($accident->fresh()->load('camera')),
         ]);
@@ -55,6 +61,7 @@ class AccidentController extends Controller
 
     public function streamNewAccidents(Request $request): StreamedResponse
     {
+        // ... باقي الكود يبقى كما هو بدون تغيير
         $response = new StreamedResponse(function () {
             ini_set('zlib.output_compression', 0);
             ini_set('output_buffering', 0);
@@ -112,6 +119,7 @@ class AccidentController extends Controller
 
     public function indexAll(Request $request)
     {
+        // ... باقي الكود يبقى كما هو بدون تغيير
         $recentAccidents = Accident::with('camera')
             ->where('timestamp', '>=', now()->subHours(24))
             ->latest('timestamp')

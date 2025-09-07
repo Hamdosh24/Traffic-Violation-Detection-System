@@ -20,8 +20,8 @@ start "" "%MEDIA_MTX_PATH%" "%~dp0mediamtx.yml"
 timeout /t 5 /nobreak
 
 rem ==== تشغيل البث لكل كاميرا في نافذة مستقلة ====
-start "Cam1 Stream" /min "%FFMPEG_PATH%" -re -stream_loop -1 -i "%VIDEO1_PATH%" -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -r 15 -c:a aac -f rtsp -rtsp_transport tcp %STREAM1_URL%
-start "Cam2 Stream" /min "%FFMPEG_PATH%" -re -stream_loop -1 -i "%VIDEO2_PATH%" -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -r 15 -c:a aac -f rtsp -rtsp_transport tcp %STREAM2_URL%
-start "Cam3 Stream" /min "%FFMPEG_PATH%" -re -stream_loop -1 -i "%VIDEO3_PATH%" -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -r 15 -c:a aac -f rtsp -rtsp_transport tcp %STREAM3_URL%
+start "Cam1 Stream" /min "%FFMPEG_PATH%" -re -stream_loop -1 -i "%VIDEO1_PATH%" -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -r 15 -c:a aac -f rtsp -rtsp_transport udp %STREAM1_URL%
+start "Cam2 Stream" /min "%FFMPEG_PATH%" -re -stream_loop -1 -i "%VIDEO2_PATH%" -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -r 15 -c:a aac -f rtsp -rtsp_transport udp %STREAM2_URL%
+start "Cam3 Stream" /min "%FFMPEG_PATH%" -re -stream_loop -1 -i "%VIDEO3_PATH%" -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -r 15 -c:a aac -f rtsp -rtsp_transport udp %STREAM3_URL%
 
 pause

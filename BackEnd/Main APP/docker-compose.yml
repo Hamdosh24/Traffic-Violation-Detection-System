@@ -25,7 +25,6 @@ services:
             - mysql
             - redis
 
-    # --- الخدمة الجديدة المخصصة للبث المباشر (مع التصحيح) ---
     streaming:
         build:
             context: ./vendor/laravel/sail/runtimes/8.3
@@ -34,14 +33,12 @@ services:
                 WWWGROUP: '${WWWGROUP}'
         image: sail-8.3/app
         command: php artisan serve --host=0.0.0.0 --port=8002
-        # ✅ --- هذا هو القسم الذي تم إضافته ---
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
-        # --- نهاية القسم المضاف ---
         volumes:
             - '.:/var/www/html'
         ports:
@@ -51,7 +48,6 @@ services:
         depends_on:
             - laravel.test
 
-    # --- بقية الخدمات ---
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -84,6 +80,21 @@ services:
             test: ["CMD", "redis-cli", "ping"]
             retries: 3
             timeout: 5s
+
+    # --- خدمة PHPMYADMIN الجديدة ---
+    phpmyadmin:
+        image: phpmyadmin
+        container_name: main_app_phpmyadmin
+        restart: unless-stopped
+        ports:
+            - "8081:80" # <-- لاحظ المنفذ الجديد 8081
+        environment:
+            PMA_HOST: mysql # <-- يتصل بخدمة 'mysql' الخاصة بـ Sail
+        networks:
+            - sail
+        depends_on:
+            - mysql
+
 networks:
     sail:
         driver: bridge
