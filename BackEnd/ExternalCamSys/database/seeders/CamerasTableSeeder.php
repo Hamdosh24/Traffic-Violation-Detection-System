@@ -35,7 +35,7 @@ class CamerasTableSeeder extends Seeder
                 'governorate' => $selected['governorate'],
                 'coordinates' => '33.5138,36.2765',
                 'ip_address' => '192.168.100.' . ($index + 1),
-                'status' => rand(0, 1) ? 'active' : 'inactive',
+                'status' => 'inactive',
                 'rtsp_url' => 'rtsp://127.0.0.1:8554/cam' . ($index + 1),
                 'hls_path' => 'http://127.0.0.1:8888/cam' . ($index + 1) . '/index.m3u8',
                 'ai_enabled' => rand(0, 1),
