@@ -1,5 +1,3 @@
-// file: components/frontend/Login.jsx
-
 "use client";
 import { StandardApi } from "@/app/api/StandarApi";
 import { useSSE } from "@/context/SSEContext";
@@ -35,6 +33,7 @@ export default function Login() {
       }
 
       localStorage.setItem("token", data.access_token);
+      console.log("Token:", data.access_token);
       localStorage.setItem(
         "user",
         JSON.stringify({

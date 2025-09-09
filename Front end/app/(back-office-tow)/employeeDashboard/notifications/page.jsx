@@ -1,6 +1,5 @@
-// AccidentsPage.js
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // أضف useCallback
 import { AlertTriangle, Filter, RefreshCw } from "lucide-react";
 import AccidentList from "@/components/backoffice/AccidentList";
 import { StandardApi } from "@/app/api/StandarApi";
@@ -36,18 +35,16 @@ export default function AccidentsPage() {
     clearNewAccidents,
   } = useSSE();
 
-  const fetchAccidents = async () => {
+  // استخدم useCallback لجعل الدالة مستقرة
+  const fetchAccidents = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await StandardApi.fetchAllAccidents();
       if (result.success) {
         const transformedData = result.data.map(transformSseData);
-        // التغيير هنا: فقط قم بتعيين البيانات التي تم جلبها مباشرة، بدون دمج
         setAllAccidents(transformedData);
-        // هنا نقوم بدمج الحوادث الجديدة التي قد تكون وصلت أثناء الجلب
         setAllAccidents((prev) => [...newAccidents, ...prev]);
 
-        // حساب عدد الحوادث الجديدة بعد الدمج وتحديث الـ count
         const newCount =
           newAccidents.length +
           transformedData.filter((a) => a.status === "new").length;
@@ -61,7 +58,7 @@ export default function AccidentsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [newAccidents, updateUnviewedCount]); // أضف dependencies هنا
 
   const markAsViewed = async (accidentId) => {
     setIsLoading(true);
@@ -74,7 +71,6 @@ export default function AccidentsPage() {
           );
           return updatedAccidents;
         });
-        // تحديث العداد بشكل صحيح بعد تغيير الحالة
         updateUnviewedCount((prevCount) => Math.max(0, prevCount - 1));
       } else {
         setError(result.error || "فشل في تحديث الحادث");
@@ -89,17 +85,13 @@ export default function AccidentsPage() {
 
   useEffect(() => {
     fetchAccidents();
-    // إزالة newAccidents من الـ dependencies لمنع إعادة الجلب
-  }, []);
+  }, [fetchAccidents]); // أضف fetchAccidents إلى dependencies
 
   useEffect(() => {
-    // هذا الـ useEffect مسؤول فقط عن دمج الحوادث الجديدة من الـ SSE
     if (newAccidents.length > 0) {
       setAllAccidents((prev) => [...newAccidents, ...prev]);
-      // بعد الدمج، يجب تفريغ قائمة الحوادث الجديدة لمنع التكرار
       clearNewAccidents();
     }
-    // التغيير هنا: هذا الـ useEffect يعتمد فقط على newAccidents
   }, [newAccidents, clearNewAccidents]);
 
   const sortedAccidents = [...allAccidents].sort((a, b) => {

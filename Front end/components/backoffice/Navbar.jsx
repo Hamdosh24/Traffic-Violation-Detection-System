@@ -51,7 +51,7 @@ export default function Navbar({ setShowSidebar, showSidebar, role }) {
       <div className="flex-shrink-0 z-[101]">
         <Link href="/employeeDashboard">
           <Image
-            src="/Logo1.png"
+            src="/Gold.png"
             alt="Logo"
             width={75}
             height={100}

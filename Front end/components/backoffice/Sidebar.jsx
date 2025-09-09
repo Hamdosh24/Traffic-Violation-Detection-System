@@ -114,20 +114,19 @@ export default function Sidebar({ role, showSidebar }) {
       <Link
         href={role === "Manager" ? "/adminDashboard" : "/employeeDashboard"}
       >
-        <div className="flex flex-col items-center justify-center border-b border-gray-200 dark:border-gray-700 py-4">
+        <div className="flex flex-col items-center justify-center py-4">
           <Image
-            src="/Logo1.png"
+            src="/Gold.png"
             alt="First text image"
-            width={75}
-            height={100}
-            className="object-contain mb-2"
+            width={100}
+            height={75}
+            className="object-contain"
             quality={100}
           />
-          <h1 className="text-2xl font-bold text-[#b7a579]">رقيب</h1>
         </div>
       </Link>
 
-      <div className="text-gray-400 mt-5 space-y-3 flex flex-col">
+      <div className="text-gray-400 space-y-3 flex flex-col">
         {/* رابط لوحة التحكم */}
         <Link
           href={role === "Manager" ? "/adminDashboard" : "/employeeDashboard"}

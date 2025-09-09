@@ -13,7 +13,6 @@ export default function page() {
       {/* Small Cards  */}
       <SmallCards />
       {/* Charts  */}
-
       <DashboardCharts />
     </div>
   );

@@ -12,46 +12,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-
-// Mock API for demonstration purposes
-const StandardApi = {
-  get: async (endpoint) => {
-    // Simulate API call with a delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Function to generate mock data for the last 30 days
-    const generateMockData = (baseTotal) => {
-      const data = [];
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        // استخدام التاريخ بالإنجليزية
-        const formattedDate = date.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        });
-        const total = baseTotal + Math.floor(Math.random() * 50) - 25; // Random variation
-        data.push({ date: formattedDate, total: Math.max(0, total) });
-      }
-      return data;
-    };
-
-    if (endpoint === "/dashboard/line_chart") {
-      return {
-        success: true,
-        data: generateMockData(150),
-      };
-    }
-    if (endpoint === "/dashboard/line_chart2") {
-      return {
-        success: true,
-        data: generateMockData(300),
-      };
-    }
-    return { success: false, error: "Endpoint not found" };
-  },
-};
+import { StandardApi } from "@/app/api/StandarApi";
 
 ChartJS.register(
   CategoryScale,
@@ -73,20 +34,22 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // جلب بيانات المخالفات
         const violationsResponse = await StandardApi.get(
           "/dashboard/line_chart"
         );
         if (violationsResponse.success) {
           setViolationsData(violationsResponse.data);
+        } else {
+          console.error("Error fetching violations:", violationsResponse.error);
         }
 
-        // جلب بيانات الحوادث
         const accidentsResponse = await StandardApi.get(
           "/dashboard/line_chart2"
         );
         if (accidentsResponse.success) {
           setAccidentsData(accidentsResponse.data);
+        } else {
+          console.error("Error fetching accidents:", accidentsResponse.error);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
