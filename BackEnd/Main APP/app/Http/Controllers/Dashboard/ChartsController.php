@@ -29,7 +29,7 @@ class ChartsController extends Controller
             $result = $violations->map(function ($violation) use ($total) {
                 return [
                     'type' => $violation->violationType->type_name ?? 'غير معروف',
-                    'percentage' => round(($violation->total / $total) * 100, 2),
+                    'percentage' => round(($violation->total / $total) * 100, 2), // حساب النسبة المئوية لكل نوع مخالفة وتقريبها إلى منزلتين عشريتين
                 ];
             });
 
@@ -57,17 +57,17 @@ class ChartsController extends Controller
                 ->whereBetween('timestamp', [$startDate, $endDate])
                 ->groupBy(DB::raw('DATE(timestamp)'))
                 ->orderBy('date')
-                ->pluck('total', 'date');
+                ->pluck('total', 'date'); // يرجع [ '2025-08-10' => 5, ...]
 
             // إنشاء مصفوفة لجميع الأيام الـ 30
             $trendData = [];
             $currentDate = $startDate->copy();
 
-            while ($currentDate->lte($endDate)) {
+            while ($currentDate->lte($endDate)) { // تستمر الحلقة طالما $currentDate أصغر من أو يساوي $endDate
                 $dateStr = $currentDate->toDateString();
                 $trendData[] = [
                     'date' => $dateStr,
-                    'total' => $violations[$dateStr] ?? 0,
+                    'total' => $violations[$dateStr] ?? 0, // تحديد عدد المخالفات في اليوم الحالي، أو 0 إذا لم تحدث أي مخالفة
                 ];
                 $currentDate->addDay();
             }

@@ -217,7 +217,7 @@ class EmployeeController extends Controller
         try {
             $employee = User::findOrFail($user_id);
             $name = $employee->user_name;
-            $employee->roles()->detach();
+            $employee->roles()->detach(); // فك ارتباط جميع الأدوار المرتبطة بالموظف قبل حذفه
             $employee->delete();
 
             ActivityLog::create([
