@@ -28,17 +28,21 @@ class BasicInfosController extends Controller
             $totalCameras = Camera::count();
 
             // 4. أكثر نوع مخالفة شيوعًا هذا الشهر
+
+            // إيجاد العدد الأعلى
             $maxCount = Violation::whereBetween('timestamp', [$startOfMonth, $endOfMonth])
-                ->select('v_type_id', DB::raw('count(*) as total'))
-                ->groupBy('v_type_id')
-                ->orderByDesc('total')
-                ->limit(1)
-                ->pluck('total')
-                ->first();
+                ->select('v_type_id', DB::raw('count(*) as total')) // حساب عدد كل نوع مخالفة
+                ->groupBy('v_type_id')                             // تجميع البيانات حسب نوع المخالفة
+                ->orderByDesc('total')                              // ترتيب النتائج تنازليًا حسب عدد المخالفات
+                ->limit(1)                                          // أخذ النوع الأكثر حدوثًا فقط
+                ->pluck('total')                                    // جلب قيمة العدد فقط (total)
+                ->first();                                          // أخذ أول قيمة من النتيجة (الأعلى)
 
             if ($maxCount === null) {
                 $mostCommonViolations = collect();
+
             } else {
+                // جلب أنواع المخالفات ذات العدد الاعلى
                 $mostCommonViolations = Violation::whereBetween('timestamp', [$startOfMonth, $endOfMonth])
                     ->select('v_type_id', DB::raw('count(*) as total'))
                     ->groupBy('v_type_id')
