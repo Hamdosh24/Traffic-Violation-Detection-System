@@ -1,6 +1,7 @@
+// components/backoffice/Navbar.js
 "use client";
 import { AlignJustify, BellRingIcon, LogOut, UserRound } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import ThemeSwitcherBtn from "@/components/backoffice/ThemeSwitcherBtn";
 import {
   DropdownMenu,
@@ -11,29 +12,19 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import useAccidentStore from "@/stores/useAccidentStore";
 import { StandardApi } from "@/app/api/StandarApi";
+import { useSSE } from "@/context/SSEContext";
 
-export default function Navbar({ setShowSidebar, showSidebar }) {
+// أضيفي role كـ prop هنا ↓
+export default function Navbar({ setShowSidebar, showSidebar, role }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { unviewedCount, disconnectSSE, setupSSEConnection } =
-    useAccidentStore();
-
-  useEffect(() => {
-    // إعداد اتصال SSE عند تحميل المكون
-    setupSSEConnection();
-
-    // فصل الاتصال عند إزالة المكون
-    return () => disconnectSSE();
-  }, [disconnectSSE, setupSSEConnection]);
+  const { disconnectSSE, unviewedCount } = useSSE();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // استدعاء دالة فصل الاتصال الصحيحة من المتجر
       disconnectSSE();
-
       const { success } = await StandardApi.logout();
       if (success) {
         localStorage.removeItem("token");
@@ -60,7 +51,7 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
       <div className="flex-shrink-0 z-[101]">
         <Link href="/employeeDashboard">
           <Image
-            src="/Logo1.png"
+            src="/Gold.png"
             alt="Logo"
             width={75}
             height={100}
@@ -73,18 +64,21 @@ export default function Navbar({ setShowSidebar, showSidebar }) {
       <div className="absolute right-6 flex items-center space-x-4">
         <ThemeSwitcherBtn />
 
-        <div className="relative">
-          <Link href="/employeeDashboard/notifications">
-            <div className="relative p-1">
-              <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
-              {unviewedCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {unviewedCount > 99 ? "99+" : unviewedCount}
-                </span>
-              )}
-            </div>
-          </Link>
-        </div>
+        {/* عرض جرس الإشعارات فقط إذا كان المستخدم Employee */}
+        {role === "Employee" && (
+          <div className="relative">
+            <Link href="/employeeDashboard/notifications">
+              <div className="relative p-1">
+                <BellRingIcon className="h-6 w-6 text-customGreen mx-2 hover:dark:text-white cursor-pointer" />
+                {unviewedCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    {unviewedCount}
+                  </span>
+                )}
+              </div>
+            </Link>
+          </div>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none flex items-center">

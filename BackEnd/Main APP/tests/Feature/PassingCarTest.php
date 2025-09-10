@@ -20,7 +20,7 @@ class PassingCarTest extends TestCase
         // Arrange
         $camera = Camera::factory()->create();
         $passingCarData = [
-'camera_id' => (string) $camera->camera_id,
+            'camera_id' => (string) $camera->camera_id,
             'plate_num' => 'XYZ-987',
             'timestamp' => now()->toDateTimeString(),
         ];

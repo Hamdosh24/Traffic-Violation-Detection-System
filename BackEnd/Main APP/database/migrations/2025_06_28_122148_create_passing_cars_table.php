@@ -8,30 +8,35 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * هذه الدالة هي التي يتم تنفيذها عندما نبني الجدول
+     *
+     * This method creates the 'passing_cars' table.
+     *
+     * @return void
      */
     public function up(): void
     {
-        // هنا نطلب من لارافيل إنشاء جدول جديد اسمه 'passing_cars'
+        // Creates a new table named 'passing_cars' in the database.
         Schema::create('passing_cars', function (Blueprint $table) {
-            // العمود الأول: المفتاح الأساسي للجدول، من نوع UUID ليكون فريدًا جدًا
+            // Column 1: The primary key, using a UUID for global uniqueness.
             $table->uuid('p_car_id')->primary();
 
-            // العمود الثاني: لتخزين معرّف الكاميرا التي رصدت السيارة
+            // Column 2: Stores the identifier of the camera that captured the car.
             $table->string('camera_id');
 
-            // العمود الثالث: لتخزين رقم لوحة السيارة المرصودة
+            // Column 3: Stores the plate number of the passing car.
             $table->string('plate_num');
 
-            // العمود الرابع: لتخزين وقت وتاريخ الرصد بدقة
+            // Column 4: Stores the precise date and time of the sighting.
             $table->timestamp('timestamp');
-
         });
     }
 
     /**
      * Reverse the migrations.
-     * هذه الدالة يتم تنفيذها عندما نريد حذف الجدول (للتراجع عن التغيير)
+     *
+     * This method drops the 'passing_cars' table if it exists.
+     *
+     * @return void
      */
     public function down(): void
     {

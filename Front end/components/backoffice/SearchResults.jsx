@@ -12,9 +12,6 @@ function SightingsTable({ sightings, driverInfo }) {
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                رقم اللوحة
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 معرف الكاميرا
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -34,9 +31,6 @@ function SightingsTable({ sightings, driverInfo }) {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {sightings.map((sighting, idx) => (
               <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {sighting.plate_num || driverInfo?.plate_num || "غير متوفر"}
-                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                   {sighting.camera?.camera_id || "غير متوفر"}
                 </td>
@@ -135,6 +129,10 @@ export default function SearchResults({
   loading,
   error,
 }) {
+  // إضافة حالة لتتبع ما إذا كان قد تم إجراء بحث من قبل
+  const hasSearched =
+    sightings.length > 0 || loading || error || driverInfo !== null;
+
   return (
     <div className="max-w-4xl mx-auto px-4">
       {error && (
@@ -149,7 +147,7 @@ export default function SearchResults({
         </div>
       )}
 
-      {driverInfo && (
+      {driverInfo ? (
         <div
           className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6"
           dir="rtl"
@@ -187,14 +185,29 @@ export default function SearchResults({
             </div>
           </div>
         </div>
+      ) : (
+        // عرض رسالة عندما لا يكون هناك بيانات سائق فقط إذا كان قد تم البحث مسبقاً
+        hasSearched &&
+        !loading &&
+        !error && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6 text-center">
+            <p className="text-gray-600 dark:text-gray-300">
+              لا يوجد بيانات للسائق متاحة للعرض
+            </p>
+          </div>
+        )
       )}
 
       {/* حالة عدم وجود نتائج بعد البحث */}
-      {!loading && sightings.length === 0 && driverInfo === null && !error && (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          الرجاء إدخال رقم لوحة المركبة للبحث
-        </div>
-      )}
+      {!loading &&
+        sightings.length === 0 &&
+        driverInfo === null &&
+        !error &&
+        !hasSearched && (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            الرجاء إدخال رقم لوحة المركبة للبحث
+          </div>
+        )}
 
       {/* نتائج المشاهدات */}
       {sightings.length > 0 && (

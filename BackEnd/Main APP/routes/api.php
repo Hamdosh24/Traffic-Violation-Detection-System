@@ -9,9 +9,9 @@ use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\Dashboard\BasicInfosController;
 use App\Http\Controllers\Dashboard\ChartsController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Statistics\FiltersController;
 use App\Http\Controllers\Statistics\StatisticsController;
-use App\Http\Controllers\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

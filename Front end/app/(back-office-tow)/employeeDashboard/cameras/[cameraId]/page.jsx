@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StandardApi } from "@/app/api/StandarApi";
 import Hls from "hls.js";

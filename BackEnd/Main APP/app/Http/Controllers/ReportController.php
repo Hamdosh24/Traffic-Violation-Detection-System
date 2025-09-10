@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Accident;
-use App\Models\Violation;
 use App\Models\ActivityLog;
+use App\Models\Violation;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -16,16 +16,16 @@ class ReportController extends Controller
     {
         try {
             $validated = $request->validate([
-                'type_name'   => 'required|string',
+                'type_name' => 'required|string',
                 'governorate' => 'nullable|string',
-                'region'      => 'nullable|string',
-                'from_date'   => 'nullable|date',
-                'to_date'     => 'nullable|date',
+                'region' => 'nullable|string',
+                'from_date' => 'nullable|date',
+                'to_date' => 'nullable|date',
             ]);
 
             $isAccident = strtolower($validated['type_name']) === 'حوادث';
-            $baseModel  = $isAccident ? new Accident : new Violation;
-            $tableName  = $baseModel->getTable();
+            $baseModel = $isAccident ? new Accident : new Violation;
+            $tableName = $baseModel->getTable();
 
             $from = !empty($validated['from_date']) ? Carbon::parse($validated['from_date'])->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
 
@@ -35,8 +35,7 @@ class ReportController extends Controller
                 ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
                 ->whereBetween("$tableName.timestamp", [$from, $to]);
 
-            if (! $isAccident) 
-            {
+            if (! $isAccident) {
                 $query->join('violation_types', "$tableName.v_type_id", '=', 'violation_types.v_type_id');
 
                 if (strtolower($validated['type_name']) !== 'كل المخالفات') {
@@ -53,9 +52,7 @@ class ReportController extends Controller
                     'cameras.region',
                     'cameras.street'
                 );
-            } 
-            else 
-            {
+            } else {
                 $query->select(
                     "$tableName.id",
                     "$tableName.camera_id",
@@ -71,28 +68,28 @@ class ReportController extends Controller
             $records = $query->orderBy("$tableName.timestamp", 'desc')->get();
 
             ActivityLog::create([
-                'user_id'     => Auth::user()->user_id ?? null,
+                'user_id' => Auth::user()->user_id ?? null,
                 'action_type' => 'عرض سجل المخالفات و الحوادث',
                 'description' => "عرض بيانات {$validated['type_name']} من {$from->toDateString()} إلى {$to->toDateString()}",
-                'model_type'  => 'Violation | Accident',
-                'model_id'    => null,
-                'ip_address'  => $request->ip(),
-                'user_agent'  => $request->userAgent(),
+                'model_type' => 'Violation | Accident',
+                'model_id' => null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
             ]);
 
             return response()->json([
                 'status' => true,
-                'data'   => $records,
+                'data' => $records,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'فشل التحقق من البيانات.',
-                'errors'  => $e->errors(),
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => $e->getMessage(),
             ], 500);
         }

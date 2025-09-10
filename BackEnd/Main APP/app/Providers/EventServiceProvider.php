@@ -2,31 +2,66 @@
 
 namespace App\Providers;
 
-use App\Events\ViolationRecorded;
-use App\Listeners\LogSuccessfulLogin;
-use App\Listeners\LogSuccessfulLogout;
-use App\Listeners\SendViolationNotifications;
-use Illuminate\Auth\Events\Login;
-use Illuminate\Auth\Events\Logout; // <-- إضافة جديدة
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider; // <-- إضافة جديدة
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Event;
+use App\Events\NewAccidentCreated;
+use App\Listeners\CacheNewAccident;
+use App\Events\AccidentAcknowledged;
+use App\Listeners\CacheAcknowledgedAccident;
 
+/**
+ * This provider is the central registration point for all event listeners in the application.
+ */
 class EventServiceProvider extends ServiceProvider
 {
+    /**
+     * The event to listener mappings for the application.
+     *
+     * This array maps event classes to the listener classes that should be executed
+     * when that event is fired.
+     *
+     * @var array<class-string, array<int, class-string>>
+     */
     protected $listen = [
-        Login::class => [
-            LogSuccessfulLogin::class,
+        // When a user registers, send them a verification email.
+        Registered::class => [
+            SendEmailVerificationNotification::class,
         ],
-        Logout::class => [
-            LogSuccessfulLogout::class,
+
+        // When a new accident is created...
+        NewAccidentCreated::class => [
+            // ...trigger the listener that caches it for the Redis stream.
+            CacheNewAccident::class,
         ],
-        // <-- إضافة جديدة
-        ViolationRecorded::class => [
-            SendViolationNotifications::class,
+
+        // When an accident is acknowledged...
+        AccidentAcknowledged::class => [
+            // ...trigger the listener that caches the acknowledgment for the Redis stream.
+            CacheAcknowledgedAccident::class,
         ],
     ];
 
-    public function boot()
+    /**
+     * Register any events for your application.
+     *
+     * @return void
+     */
+    public function boot(): void
     {
         //
+    }
+
+    /**
+     * Determine if events and listeners should be automatically discovered.
+     *
+     * @return bool
+     */
+    public function shouldDiscoverEvents(): bool
+    {
+        // Set to false to rely exclusively on the manual mapping in the $listen array.
+        // This is often preferred for clarity and performance in larger applications.
+        return false;
     }
 }

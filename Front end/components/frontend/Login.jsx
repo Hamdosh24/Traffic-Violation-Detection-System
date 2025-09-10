@@ -1,8 +1,8 @@
 "use client";
+import { StandardApi } from "@/app/api/StandarApi";
+import { useSSE } from "@/context/SSEContext";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import useAccidentStore from "@/stores/useAccidentStore";
-import { StandardApi } from "@/app/api/StandarApi";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -11,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { connectSSE } = useSSE();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,24 +33,22 @@ export default function Login() {
       }
 
       localStorage.setItem("token", data.access_token);
+      console.log("Token:", data.access_token);
       localStorage.setItem(
         "user",
         JSON.stringify({
           role: data.role,
           name: data.name || email,
         })
-      );
+      ); // هنا، بعد نجاح تسجيل الدخول، سنبدأ اتصال SSE
 
-      // تفعيل اتصال SSE بعد تسجيل الدخول بنجاح
-      useAccidentStore.getState().setupSSEConnection();
+      connectSSE();
 
       router.push(
         data.role === "Manager" ? "/adminDashboard" : "/employeeDashboard"
       );
     } catch (err) {
       setError(err.message);
-      // تنظيف أي اتصالات SSE في حالة الخطأ
-      useAccidentStore.getState().disconnectSSE();
     } finally {
       setIsLoading(false);
     }
@@ -61,13 +60,11 @@ export default function Login() {
         <h5 className="text-2xl text-center font-bold text-milkColor">
           تسجيل الدخول
         </h5>
-
         {error && (
           <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">
             {error}
           </div>
         )}
-
         <div>
           <label
             htmlFor="email"
@@ -86,7 +83,6 @@ export default function Login() {
             disabled={isLoading}
           />
         </div>
-
         <div>
           <label
             htmlFor="password"
@@ -94,7 +90,6 @@ export default function Login() {
           >
             كلمة السر
           </label>
-
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -106,7 +101,6 @@ export default function Login() {
               required
               disabled={isLoading}
             />
-
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
@@ -144,7 +138,6 @@ export default function Login() {
             </button>
           </div>
         </div>
-
         <button
           type="submit"
           disabled={isLoading}
@@ -152,8 +145,9 @@ export default function Login() {
         >
           {isLoading ? (
             <>
+              جاري المعالجة ...
               <svg
-                className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                className="animate-spin ml-1 mr-3 h-4 w-4 text-white"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -172,7 +166,6 @@ export default function Login() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              جاري المعالجة...
             </>
           ) : (
             "تسجيل الدخول"

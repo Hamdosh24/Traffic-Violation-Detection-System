@@ -3,11 +3,13 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { StandardApi } from "@/app/api/StandarApi";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function EditAccount({ params }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     user_name: "",
     national_num: "",
@@ -46,7 +48,7 @@ export default function EditAccount({ params }) {
         setFormData({
           ...response.data,
           password: "",
-          role_name: response.data.role_name, // تأكد من أن الخادم يُرجع هذا الحقل
+          role_name: response.data.role_name,
         });
       } catch (error) {
         toast.error(error.message);
@@ -77,7 +79,6 @@ export default function EditAccount({ params }) {
     setIsSubmitting(true);
 
     try {
-      // التحقق من البيانات المطلوبة (باستثناء كلمة المرور والصلاحية)
       const requiredFields = [
         "user_name",
         "national_num",
@@ -93,7 +94,6 @@ export default function EditAccount({ params }) {
         throw new Error("الرجاء تعبئة جميع الحقول المطلوبة");
       }
 
-      // إعداد بيانات الإرسال حسب التوثيق
       const submitData = {
         user_name: formData.user_name,
         first_name: formData.first_name,
@@ -104,7 +104,6 @@ export default function EditAccount({ params }) {
         gender: formData.gender,
       };
 
-      // إضافة الحقول الاختيارية إذا كانت موجودة
       if (formData.password) {
         submitData.password = formData.password;
       }
@@ -192,14 +191,28 @@ export default function EditAccount({ params }) {
           <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
             كلمة المرور الجديدة
           </label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left"
-            placeholder="اتركها فارغة للحفاظ على كلمة المرور الحالية"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full p-2.5 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen text-left"
+              placeholder="اتركها فارغة للحفاظ على كلمة المرور الحالية"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-600 dark:text-gray-400"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* حقل الصلاحية */}
@@ -209,8 +222,7 @@ export default function EditAccount({ params }) {
           </label>
           <input
             type="text"
-            name="role_id"
-            value={formData.role_name} // استخدم role_name بدلاً من role_id لعرض اسم الصلاحية
+            value={formData.role_name}
             readOnly
             className="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-right cursor-not-allowed"
           />

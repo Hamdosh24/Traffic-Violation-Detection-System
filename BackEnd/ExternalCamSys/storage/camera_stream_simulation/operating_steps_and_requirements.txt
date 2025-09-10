@@ -3,7 +3,7 @@ requirements:
 2- batch file
 3- which program supports viewing RTSP video. (download link: "https://www.videolan.org/vlc/")
 4- mediamtx server (download link: https://github.com/bluenviron/mediamtx/releases/download/v1.13.1/mediamtx_v1.13.1_windows_amd64.zip)
-5- ffmpeg
+5- ffmpeg (download link: https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip)
 
 
 -------------------------------------------------------------------------------------------------------------------------
