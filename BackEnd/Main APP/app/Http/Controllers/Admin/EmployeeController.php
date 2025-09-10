@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request; // استدعاء موديل activity log
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class EmployeeController extends Controller
 {
@@ -17,7 +18,7 @@ class EmployeeController extends Controller
         try {
             // $employees = User::with('roles')->get();
 
-            $employees = User::with('roles')->get()->map(function ($user) {
+            $employees = User::with('roles')->get()->map(function ($user) { // eager loading لجلب كل المستخدمين مع ادوارهم المرتبطة بهم (لتقليل عدد الاستعلامات)
                 $role = $user->roles->first(); // أخذ أول دور فقط
 
                 return [
@@ -60,7 +61,15 @@ class EmployeeController extends Controller
                 // 'user_id' => 'required|unique:users,user_id',
                 'user_name' => 'required',
                 'national_num' => 'required',
-                'password' => 'required',
+                'password' => [
+                    'required',
+                    Password::min(8)      // الطول الأدنى
+                        ->letters()       // يجب أن يحتوي على حروف
+                        ->mixedCase()     // يجب أن يحتوي على حرف كبير وصغير
+                        ->numbers()       // يجب أن يحتوي على أرقام
+                        ->symbols(),      // يجب أن يحتوي على رموز خاصة
+                ],
+
                 'first_name' => 'required',
                 'last_name' => 'required',
                 'phone_num' => 'required',
