@@ -10,8 +10,9 @@ class FiltersController extends Controller
 {
     public function getDataByHour()
     {
-        $regions = Camera::select('region')->distinct()->pluck('region');
-        $regions->prepend('كل المناطق');
+        $regions = Camera::select('region')->distinct()->pluck('region'); // distinct() → تأكد أن كل منطقة تظهر مرة واحدة فقط
+        $regions->prepend('كل المناطق'); // إضافة خيار شامل
+
         $governorates = Camera::select('governorate')->distinct()->pluck('governorate');
         $governorates->prepend('كل المحافظات');
 

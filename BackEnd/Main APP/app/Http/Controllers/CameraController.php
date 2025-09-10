@@ -14,6 +14,9 @@ class CameraController extends Controller
     public function index(Request $request)
     {
         try {
+            // جلب الأعمدة المطلوبة فقط
+            $cameras = Camera::select('camera_id', 'region', 'governorate')->get();
+
             ActivityLog::create([
                 'user_id' => Auth::user()->user_id ?? null,
                 'action_type' => 'عرض كل الكاميرات',
@@ -24,13 +27,9 @@ class CameraController extends Controller
                 'user_agent' => $request->userAgent(),
             ]);
 
-            // جلب الأعمدة المطلوبة فقط
-            $cameras = Camera::select('camera_id', 'region', 'governorate')->get();
-
             return response()->json($cameras, 200);
         } catch (\Exception $e) {
             Log::error('Error fetching cameras: '.$e->getMessage());
-
             return response()->json(['message' => 'An error occurred while retrieving cameras.'], 500);
         }
     }
@@ -61,7 +60,6 @@ class CameraController extends Controller
             return response()->json($camera, 200);
         } catch (\Exception $e) {
             Log::error("Error fetching camera with ID {$id}: ".$e->getMessage());
-
             return response()->json(['message' => 'An error occurred while retrieving the camera.'], 500);
         }
     }

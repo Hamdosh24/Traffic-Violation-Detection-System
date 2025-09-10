@@ -33,7 +33,7 @@ class StatisticsController extends Controller
             $from = \Carbon\Carbon::parse($validated['from_date'])->startOfDay();
             $to = \Carbon\Carbon::parse($validated['to_date'])->endOfDay();
 
-            // حساب عدد الأيام شامل اليوم الأخير
+            // حساب عدد الأيام بين تاريخين، شامل اليوم الأخير
             $days = $from->diffInDays($to) + 1;
 
             // بناء الاستعلام
@@ -72,7 +72,7 @@ class StatisticsController extends Controller
             // تهيئة مصفوفة الساعات
             $result = [];
             for ($i = 0; $i < 24; $i++) {
-                $next = ($i + 1) % 24;
+                $next = ($i + 1) % 24; // % 24: لضمان أن الساعة الأخيرة 23 تليها 0
                 $label = $i.'-'.$next;
                 $result[$label] = 0;
             }
@@ -81,7 +81,7 @@ class StatisticsController extends Controller
             foreach ($violations as $v) {
                 $next = ($v->hour + 1) % 24;
                 $label = $v->hour.'-'.$next;
-                $result[$label] = round($v->count / $days, 2);
+                $result[$label] = round($v->count / $days, 2); // حساب المتوسط اليومي لكل ساعة وتقريبه لخانتين عشريتين
             }
 
             ActivityLog::create([

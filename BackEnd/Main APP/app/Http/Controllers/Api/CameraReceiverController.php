@@ -34,8 +34,8 @@ class CameraReceiverController extends Controller
 
         // إنشاء أو تحديث الكاميرا
         Camera::updateOrCreate(
-            ['external_id' => $request->external_id],
-            $validated->validated()
+            ['external_id' => $request->external_id], // البحث عن كاميرا لها نفس external_id
+            $validated->validated() // يعيد البيانات الصحيحة بعد التحقق (validation) من الطلب لتحديث الكاميرا الموجودة أو لإنشاء كاميرا جديدة
         );
 
         return response()->json([

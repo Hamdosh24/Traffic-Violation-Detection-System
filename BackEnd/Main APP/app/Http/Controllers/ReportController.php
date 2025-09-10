@@ -27,13 +27,9 @@ class ReportController extends Controller
             $baseModel  = $isAccident ? new Accident : new Violation;
             $tableName  = $baseModel->getTable();
 
-            $from = !empty($validated['from_date'])
-                ? Carbon::parse($validated['from_date'])->startOfDay()
-                : Carbon::now()->subDays(30)->startOfDay();
+            $from = !empty($validated['from_date']) ? Carbon::parse($validated['from_date'])->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
 
-            $to = !empty($validated['to_date'])
-                ? Carbon::parse($validated['to_date'])->endOfDay()
-                : Carbon::now()->endOfDay();
+            $to = !empty($validated['to_date']) ? Carbon::parse($validated['to_date'])->endOfDay() : Carbon::now()->endOfDay();
 
             $query = $baseModel::query()
                 ->join('cameras', "$tableName.camera_id", '=', 'cameras.camera_id')
