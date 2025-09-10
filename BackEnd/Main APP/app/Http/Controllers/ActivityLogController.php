@@ -26,7 +26,6 @@ class ActivityLogController extends Controller
             $username = $validated['username'] ?? 'كل المستخدمين';
 
             $fromTime = isset($validated['from_time']) ? Carbon::parse($validated['from_time'])->startOfDay() : Carbon::now()->startOfDay();
-            // $fromTime = isset($validated['from_time']) ? Carbon::parse($validated['from_time'])->startOfDay() : Carbon::now()->subDay()->startOfDay();
             $toTime = isset($validated['to_time']) ? Carbon::parse($validated['to_time'])->endOfDay() : Carbon::now()->endOfDay();
 
             // بناء الاستعلام
@@ -40,9 +39,7 @@ class ActivityLogController extends Controller
                 $users = User::where('user_name', 'LIKE', '%'.$username.'%')->pluck('user_id');
 
                 if ($users->isEmpty()) {
-                    return response()->json([
-                        'error' => "لا يوجد مستخدم يحتوي اسمه على: $username",
-                    ], 404);
+                    return response()->json(['error' => "لا يوجد مستخدم يحتوي اسمه على: $username",], 404);
                 }
 
                 $query->whereIn('user_id', $users);
