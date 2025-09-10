@@ -3,37 +3,36 @@
 namespace App\Events;
 
 use App\Models\Accident;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class AccidentAcknowledged implements ShouldBroadcast
+/**
+ * Event fired when a user acknowledges an accident.
+ *
+ * This event serves as a signal to other parts of the application,
+ * particularly real-time frontends, that an accident has been "claimed"
+ * and its status should be updated for all observers.
+ */
+class AccidentAcknowledged
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    // The Dispatchable trait allows this event to be dispatched easily.
+    // The SerializesModels trait efficiently handles model serialization if the event is queued.
+    use Dispatchable, SerializesModels;
 
+    /**
+     * The accident instance that was acknowledged.
+     *
+     * @var \App\Models\Accident
+     */
     public Accident $accident;
 
+    /**
+     * Create a new event instance.
+     *
+     * @param \App\Models\Accident $accident The accident that was just acknowledged.
+     */
     public function __construct(Accident $accident)
     {
         $this->accident = $accident;
-    }
-
-    public function broadcastOn(): array
-    {
-        return [new Channel('accidents-channel')];
-    }
-
-    public function broadcastAs(): string
-    {
-        // اسم الحدث هنا مختلف
-        return 'accident-acknowledged';
-    }
-
-    public function broadcastWith(): array
-    {
-        // نرسل فقط الـ ID كما في الكود الأصلي
-        return ['id' => $this->accident->id];
     }
 }
