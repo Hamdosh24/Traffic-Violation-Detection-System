@@ -23,7 +23,7 @@ class ViolationMessageBuilder
         $driverName = self::getDriverFullName($driverInfo);
         $location = self::getViolationLocation($violation);
 
-        // Best Practice: Convert the stored integer value (in hellalas/cents)
+        // Best Practice: Convert the stored integer value (e.g., 30000 for 300.00)
         // back to a readable decimal format for display.
         $fineAmount = number_format(($violation->violationType?->fine_amount ?? 0) / 100, 2);
 
@@ -31,7 +31,8 @@ class ViolationMessageBuilder
             .'*اسم السائق:* '.($driverName ?: 'غير متوفر')."\n"
             .'*رقم اللوحة:* '.$violation->plate_num."\n"
             .'*نوع المخالفة:* '.($violation->violationType?->type_name ?? 'غير محدد')."\n"
-            .'*قيمة الغرامة:* '.$fineAmount." ليرة\n" // Use the formatted amount
+            // ✅ Use the formatted amount and the correct currency name.
+            .'*قيمة الغرامة:* '.$fineAmount." ليرة\n"
             .'*الموقع:* '.($location ?: 'غير محدد')."\n"
             .'*الوقت:* '.$violation->timestamp;
     }
@@ -65,3 +66,4 @@ class ViolationMessageBuilder
         ])->filter()->implode('، '); // filter() removes all null/empty values before implode()
     }
 }
+

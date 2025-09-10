@@ -53,17 +53,25 @@ class NewViolationNotification extends Notification implements ShouldQueue
 
     /**
      * Build the mail representation of the notification.
+     *
+     * @param object $notifiable
+     * @return \Illuminate\Notifications\Messages\MailMessage
      */
     public function toMail(object $notifiable): MailMessage
     {
-        // Use helper methods from the builder for consistent message formatting.
+        // --- هنا يتم بناء محتوى البريد الإلكتروني ---
+
+        // استخدام الـ Builder للحصول على البيانات المنسقة
         $driverName = ViolationMessageBuilder::getDriverFullName($this->driverInfo) ?: 'السائق الكريم';
         $location = ViolationMessageBuilder::getViolationLocation($this->violation);
 
-        // Safely access related properties using the nullsafe operator (?->).
         $violationName = $this->violation->violationType?->type_name ?? 'غير محدد';
-        $fineAmount = ($this->violation->violationType?->fine_amount / 100) ?? 'غير محدد';
+        
+        // تحويل القيمة المالية وتنسيقها
+        $fineAmountInSmallestUnit = $this->violation->violationType?->fine_amount ?? 0;
+        $formattedFineAmount = number_format($fineAmountInSmallestUnit / 100, 2);
 
+        // بناء الرسالة سطرًا بسطر
         return (new MailMessage)
             ->subject('إشعار مخالفة مرورية جديدة')
             ->greeting('مرحباً، '.$driverName)
@@ -71,10 +79,11 @@ class NewViolationNotification extends Notification implements ShouldQueue
             ->line('---')
             ->line('**رقم اللوحة:** '.$this->violation->plate_num)
             ->line('**نوع المخالفة:** '.$violationName)
-            ->line('**قيمة المخالفة:** '.$fineAmount.' ليرة')
+            ->line('**قيمة المخالفة:** '.$formattedFineAmount.' ليرة')
             ->line('**الموقع:** '.($location ?: 'غير محدد'))
             ->line('**التاريخ والوقت:** '.$this->violation->timestamp)
             ->line('---')
             ->line('نشكر لكم تعاونكم.');
     }
 }
+
