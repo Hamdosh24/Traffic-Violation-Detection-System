@@ -20,9 +20,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'customThrottle' => \App\Http\Middleware\CustomThrottleRequests::class,
             'token.expires' => \App\Http\Middleware\TokenExpiryMiddleware::class,
             'check.external.api_key' => \App\Http\Middleware\CheckExternalApiKey::class,
+            'query.token' => \App\Http\Middleware\QueryStringTokenAuth::class,
+
         ]);
 
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    ->withProviders([
+        App\Providers\RouteServiceProvider::class,
+    ])
+
+    ->create();

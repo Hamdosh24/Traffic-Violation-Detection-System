@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import data from "../../Data.json";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function CustomDataTable() {

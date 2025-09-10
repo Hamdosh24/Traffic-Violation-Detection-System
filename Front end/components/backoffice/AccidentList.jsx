@@ -2,7 +2,12 @@
 import { AlertTriangle } from "lucide-react";
 import AccidentCard from "./AccidentCard";
 
-export default function AccidentList({ accidents, loading, onMarkAsViewed }) {
+export default function AccidentList({
+  accidents,
+  loading,
+  onMarkAsViewed,
+  filter,
+}) {
   if (loading) {
     return (
       <div className="space-y-4 p-4">
@@ -33,16 +38,23 @@ export default function AccidentList({ accidents, loading, onMarkAsViewed }) {
   }
 
   if (accidents.length === 0) {
+    const emptyMessage =
+      filter === "new"
+        ? "لا توجد حوادث جديدة حاليًا."
+        : filter === "acknowledged"
+        ? "لا توجد حوادث تمت مشاهدتها."
+        : "لا توجد حوادث حتى الآن.";
+
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <div className="bg-gray-100/50 dark:bg-gray-700/50 p-5 rounded-full mb-4 backdrop-blur-sm">
           <AlertTriangle className="h-8 w-8 text-gray-400 dark:text-gray-500" />
         </div>
         <h3 className="text-xl font-bold text-gray-600 dark:text-gray-300 mb-2">
-          لا توجد حوادث جديدة
+          {emptyMessage}
         </h3>
         <p className="text-gray-500 dark:text-gray-400 max-w-md">
-          سيظهر هنا أي حوادث جديدة يتم رصدها من خلال كاميرات المراقبة
+          سيتم عرض أي حوادث جديدة أو تمت مشاهدتها هنا.
         </p>
       </div>
     );

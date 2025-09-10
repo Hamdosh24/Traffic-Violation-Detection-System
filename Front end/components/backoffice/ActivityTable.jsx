@@ -135,7 +135,7 @@ export default function ActivityTable() {
 
       // إزالة أي بارامترات غير محددة (null)
       const cleanParams = Object.fromEntries(
-        Object.entries(filterParams).filter(([_, v]) => v !== null)
+        Object.entries(filterParams).filter(([, v]) => v !== null)
       );
 
       console.log("username cleanParams", searchTerm);

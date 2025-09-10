@@ -20,6 +20,7 @@ const config: Config = {
         customGreen: "rgb(13, 158, 109)",
         checkGreen: "rgb(133, 255, 179)",
         iconGold: "rgb(183, 165, 121)",
+
         customDarkGreen: "rgba(32, 70, 72)",
         customDarkGreenbg: "rgba(3, 45, 48)",
         maximumGreen: "#628B35",

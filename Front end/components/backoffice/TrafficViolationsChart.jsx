@@ -50,7 +50,8 @@ export default function TrafficViolationsChart() {
     const fetchFilters = async () => {
       try {
         setFiltersLoading(true);
-        const response = await StandardApi.fetchViolationFiltersByRegion();
+        const response =
+          await StandardApi.fetchViolationFiltersByRegionandrecords();
 
         if (response.success) {
           const typesFromApi = response.data.violation_types || [];

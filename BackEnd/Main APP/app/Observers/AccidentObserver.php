@@ -2,25 +2,32 @@
 
 namespace App\Observers;
 
+use App\Events\NewAccidentCreated;
 use App\Models\Accident;
-use App\Models\User;
-use App\Notifications\NewAccidentNotification;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Notification;
 
+/**
+ * Observer for the Accident model.
+ *
+ * This class hooks into the lifecycle events of the Accident model
+ * to perform actions automatically when these events occur.
+ */
 class AccidentObserver
 {
-    public function created(Accident $accident)
+    /**
+     * Handle the Accident "created" event.
+     *
+     * This method is executed automatically by Laravel immediately after
+     * a new accident record is successfully saved to the database.
+     *
+     * @param \App\Models\Accident $accident The newly created accident instance.
+     * @return void
+     */
+    public function created(Accident $accident): void
     {
-        // ✅ الخطوة 1: ضع بيانات الحادث الجديد في الكاش لمدة دقيقة واحدة
-        // قمنا بتحميل علاقة الكاميرا معها لضمان وصول البيانات كاملة
-        Cache::put('latest_accident', $accident->load('camera'), now()->addMinutes(1));
-
-        // الخطوة 2: إرسال الإشعار الداخلي للموظفين (هذه تبقى كما هي)
-        $employees = User::whereHas('roles', function ($query) {
-            $query->where('role_name', 'Employee');
-        })->get();
-
-        Notification::send($employees, new NewAccidentNotification($accident));
+        // By firing an event here, we decouple the "what happened" (an accident was created)
+        // from the "what to do next" (send notifications, cache data, etc.).
+        // Multiple listeners can now react to this single event.
+        event(new NewAccidentCreated($accident));
     }
 }
+
