@@ -154,6 +154,25 @@ class EmployeeController extends Controller
     {
         try {
             $employee = User::findOrFail($user_id);
+            
+            $request->validate([
+                'user_name' => 'sometimes|string',
+                'national_num' => 'sometimes|string',
+                'first_name' => 'sometimes|string',
+                'last_name' => 'sometimes|string',
+                'phone_num' => 'sometimes|string',
+                'email' => 'sometimes|email',
+                'age' => 'sometimes|integer',
+                'gender' => 'sometimes|in:male,female',
+                'password' => [
+                    'sometimes', // كلمة السر اختيارية
+                    Password::min(8)
+                        ->letters()
+                        ->mixedCase()
+                        ->numbers()
+                        ->symbols(),
+                ],
+            ]);
 
             $employee->update($request->only([
                 'user_name',
