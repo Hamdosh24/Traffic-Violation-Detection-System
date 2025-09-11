@@ -24,11 +24,10 @@ class PassingCar extends Model
 
     /**
      * Indicates if the model should be timestamped.
-     * Set to false because this table does not have 'created_at' and 'updated_at' columns.
      *
      * @var bool
      */
-    public $timestamps = false;
+    public $timestamps = True;
 
     // --- Manual UUID Primary Key Configuration ---
 

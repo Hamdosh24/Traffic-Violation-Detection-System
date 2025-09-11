@@ -5,11 +5,12 @@ namespace App\Providers;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 use App\Events\NewAccidentCreated;
 use App\Listeners\CacheNewAccident;
 use App\Events\AccidentAcknowledged;
 use App\Listeners\CacheAcknowledgedAccident;
+// use App\Listeners\StoreNotificationForEmployeesListener; 
+
 
 /**
  * This provider is the central registration point for all event listeners in the application.
@@ -34,6 +35,7 @@ class EventServiceProvider extends ServiceProvider
         NewAccidentCreated::class => [
             // ...trigger the listener that caches it for the Redis stream.
             CacheNewAccident::class,
+            // StoreNotificationForEmployeesListener::class,
         ],
 
         // When an accident is acknowledged...
