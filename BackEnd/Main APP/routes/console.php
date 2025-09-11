@@ -1,51 +1,33 @@
 <?php
 
-// Note: The namespace for the Kernel is typically App\Console
-namespace App\Console;
+use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use Illuminate\Console\Scheduling\Schedule;
+/*
+|--------------------------------------------------------------------------
+| Console Routes
+|--------------------------------------------------------------------------
+|
+| This file is where you may define all of your Closure-based console
+| commands. Each Closure is bound to a command instance allowing a
+| simple approach to interacting with each command's IO methods.
+|
+*/
 
-/**
- * The application's console kernel.
- *
- * This class is responsible for registering the custom Artisan commands
- * and defining the application's command schedule.
- */
-class Kernel extends ConsoleKernel
-{
-    /**
-     * Define the application's command schedule.
-     *
-     * This method is where you define all of the automated tasks (cron jobs)
-     * that should be run by the server on a regular basis.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
-     * @return void
-     */
-    protected function schedule(Schedule $schedule): void
-    {
-        // --- Scheduled Application Maintenance Tasks ---
+Artisan::command('inspire', function () {
+    $this->comment(Inspiring::quote());
+})->purpose('Display an inspiring quote');
 
-        // Schedule our custom command 'app:prune-passing-cars' to run once daily.
-        // This is crucial for keeping the 'passing_cars' table from growing infinitely.
-        // The server's master cron job will trigger this at the appropriate time.
-        $schedule->command('app:prune-passing-cars')->daily();
-    }
 
-    /**
-     * Register the commands for the application.
-     *
-     * This method loads all the custom command classes from the Commands directory,
-     * making them available to be run via `php artisan`.
-     *
-     * @return void
-     */
-    protected function commands(): void
-    {
-        $this->load(__DIR__.'/Commands');
+/*
+|--------------------------------------------------------------------------
+| Schedule Definition
+|--------------------------------------------------------------------------
+|
+| This is the new, recommended place to define your command schedule
+| in Laravel 11.
+|
+*/
 
-        require base_path('routes/console.php');
-    }
-}
-
+Schedule::command('app:prune-passing-cars')->daily();
