@@ -45,6 +45,7 @@ class ChartsControllerTest extends TestCase
     public function it_returns_violations_trend_line()
     {
         // Arrange
+
         $type = ViolationType::factory()->create(); // أنشئ نوع مخالفة أولاً
 
         Violation::factory()->create([
