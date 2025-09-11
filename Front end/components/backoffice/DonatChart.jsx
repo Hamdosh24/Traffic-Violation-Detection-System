@@ -75,11 +75,9 @@ export default function DonatChart() {
 
   if (loading) {
     return (
-      <div className="bg-milkColor/90 dark:bg-customDarkGreen p-8 rounded-md shadow-xl">
+      <div className="bg-milkColor/90 dark:bg-customDarkGreenbg p-8 rounded-md shadow-xl">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-2/3 mb-6"></div>
           <div className="p-4 h-80 flex items-center justify-center">
-            <div className="rounded-full bg-gray-200 dark:bg-gray-700 h-48 w-48"></div>
             <div className="ml-8 space-y-4">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex items-center">
@@ -95,7 +93,7 @@ export default function DonatChart() {
   }
 
   return (
-    <div className="bg-milkColor/90 dark:bg-customDarkGreen p-8 rounded-md shadow-xl">
+    <div className="bg-milkColor/90 dark:bg-customDarkGreenbg p-8 rounded-md shadow-xl">
       <h2 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-50">
         نسبة عدد المخالفات المرورية خلال 30 يوم
       </h2>

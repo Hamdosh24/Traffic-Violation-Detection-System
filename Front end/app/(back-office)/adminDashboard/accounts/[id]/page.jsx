@@ -10,7 +10,7 @@ export default function AccountDetail({ params }) {
   const router = useRouter();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false); // حالة جديدة لتحميل زر الحذف
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchEmployeeData = async () => {
@@ -45,7 +45,7 @@ export default function AccountDetail({ params }) {
   const handleDelete = async () => {
     if (!confirm("هل أنت متأكد من حذف هذا الموظف؟")) return;
 
-    setIsDeleting(true); // بدء عملية الحذف
+    setIsDeleting(true);
 
     try {
       const response = await StandardApi.delete(`/admin/employees/${id}`);
@@ -65,19 +65,19 @@ export default function AccountDetail({ params }) {
         toast.error(error.message || "حدث خطأ أثناء حذف الموظف");
       }
     } finally {
-      setIsDeleting(false); // انتهاء عملية الحذف
+      setIsDeleting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-4 flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  // Skeleton Loading Component
+  const SkeletonDetailItem = () => (
+    <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
+      <div className="h-4 w-24 bg-gray-300/50 rounded animate-pulse mb-2"></div>
+      <div className="h-6 w-40 bg-gray-300/50 rounded animate-pulse"></div>
+    </div>
+  );
 
-  if (!employee) {
+  if (!employee && !loading) {
     return (
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-6">الموظف غير موجود</h1>
@@ -94,92 +94,135 @@ export default function AccountDetail({ params }) {
   return (
     <div className="p-4" dir="rtl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          تفاصيل الموظف: {employee.user_name}
-        </h1>
+        {loading ? (
+          <div className="h-8 w-64 bg-gray-300/50 rounded animate-pulse"></div>
+        ) : (
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            تفاصيل الموظف: {employee.user_name}
+          </h1>
+        )}
+
         <div className="space-x-2">
-          <Link
-            href={`/adminDashboard/accounts/${id}/edit`}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-3"
-          >
-            تعديل
-          </Link>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className={`px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 ${
-              isDeleting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {isDeleting ? "جاري الحذف..." : "حذف"}
-          </button>
+          {loading ? (
+            <>
+              <div className="h-10 w-20 bg-gray-300/50 rounded animate-pulse inline-block"></div>
+              <div className="h-10 w-20 bg-gray-300/50 rounded animate-pulse inline-block"></div>
+            </>
+          ) : (
+            <>
+              <Link
+                href={`/adminDashboard/accounts/${id}/edit`}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-3"
+              >
+                تعديل
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className={`px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 ${
+                  isDeleting ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {isDeleting ? "جاري الحذف..." : "حذف"}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* المعلومات الشخصية */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-customDarkGreenbg p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             المعلومات الشخصية
           </h2>
           <div className="space-y-4">
-            <DetailItem
-              label="الاسم الكامل"
-              value={`${employee.first_name} ${employee.last_name}`}
-            />
-            <DetailItem label="الرقم الوطني" value={employee.national_num} />
-            <DetailItem
-              label="تاريخ الانشاء"
-              value={new Date(employee.created_at).toLocaleDateString()}
-            />
-            <DetailItem label="العمر" value={employee.age} />
-            <DetailItem
-              label="الجنس"
-              value={employee.gender === "male" ? "ذكر" : "أنثى"}
-            />
+            {loading ? (
+              <>
+                <SkeletonDetailItem />
+                <SkeletonDetailItem />
+                <SkeletonDetailItem />
+                <SkeletonDetailItem />
+                <SkeletonDetailItem />
+              </>
+            ) : (
+              <>
+                <DetailItem
+                  label="الاسم الكامل"
+                  value={`${employee.first_name} ${employee.last_name}`}
+                />
+                <DetailItem
+                  label="الرقم الوطني"
+                  value={employee.national_num}
+                />
+                <DetailItem
+                  label="تاريخ الانشاء"
+                  value={new Date(employee.created_at).toLocaleDateString()}
+                />
+                <DetailItem label="العمر" value={employee.age} />
+                <DetailItem
+                  label="الجنس"
+                  value={employee.gender === "male" ? "ذكر" : "أنثى"}
+                />
+              </>
+            )}
           </div>
         </div>
 
         {/* معلومات التواصل */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-customDarkGreenbg p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             معلومات التواصل
           </h2>
           <div className="space-y-4">
-            <DetailItem label="رقم الهاتف" value={employee.phone_num} />
-            <DetailItem label="البريد الإلكتروني" value={employee.email} />
-            <DetailItem
-              label="الحالة"
-              value={
-                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                  نشط
-                </span>
-              }
-            />
+            {loading ? (
+              <>
+                <SkeletonDetailItem />
+                <SkeletonDetailItem />
+                <SkeletonDetailItem />
+              </>
+            ) : (
+              <>
+                <DetailItem label="رقم الهاتف" value={employee.phone_num} />
+                <DetailItem label="البريد الإلكتروني" value={employee.email} />
+                <DetailItem
+                  label="الحالة"
+                  value={
+                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                      نشط
+                    </span>
+                  }
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
 
       <div className="mt-6">
-        <Link
-          href="/adminDashboard/accounts"
-          className="text-customGreen hover:underline flex items-center"
-        >
-          <svg
-            className="w-4 h-4 ml-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {loading ? (
+          <div className="h-6 w-40 bg-gray-300/50 rounded animate-pulse"></div>
+        ) : (
+          <Link
+            href="/adminDashboard/accounts"
+            className="text-customGreen hover:underline flex items-center"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          العودة إلى قائمة الحسابات
-        </Link>
+            <svg
+              className="w-4 h-4 ml-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            العودة إلى قائمة الحسابات
+          </Link>
+        )}
       </div>
     </div>
   );

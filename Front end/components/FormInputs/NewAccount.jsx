@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { StandardApi } from "@/app/api/StandarApi";
-import { Eye, EyeOff } from "lucide-react"; // استيراد الأيقونات
+import { Eye, EyeOff } from "lucide-react";
 
 export default function NewEmployee() {
   const router = useRouter();
@@ -99,7 +99,7 @@ export default function NewEmployee() {
     <div className="p-6 max-w-4xl mx-auto" dir="rtl">
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"
+        className="bg-white dark:bg-customDarkGreenbg p-6 rounded-lg shadow-md"
       >
         <div className="grid gap-6 mb-6 md:grid-cols-2">
           {/* اسم المستخدم */}
@@ -166,18 +166,15 @@ export default function NewEmployee() {
             </div>
           </div>
 
-          <input type="hidden" name="role_id" value={employeeRole.role_id} />
-          {/* الصلاحية */}
-          <div className="col-span-2">
+          {/* حقل الصلاحية - تم تعديله ليكون بنفس حجم الحقول الأخرى */}
+          <div>
             <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-right">
-              الصلاحية
+              الصلاحية *
             </label>
-            <div className="bg-gray-100 dark:bg-gray-700 p-2.5 rounded-lg text-right">
+            <div className="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-11 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-right cursor-not-allowed flex items-center">
               {employeeRole.role_name}
             </div>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 text-right">
-              سيتم منح الصلاحية: <strong>موظف</strong> للحساب الجديد
-            </p>
+            <input type="hidden" name="role_id" value={employeeRole.role_id} />
           </div>
 
           {/* الاسم الأول */}
@@ -286,7 +283,7 @@ export default function NewEmployee() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm ml-3 px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-white bg-customGreen hover:bg-emerald-700 font-medium rounded-lg text-sm ml-3 px-5 py-2.5 dark:bg-customGreen dark:hover:bg-emerald-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "جاري إنشاء الموظف..." : "إنشاء موظف جديد"}
           </button>

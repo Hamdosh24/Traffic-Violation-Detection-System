@@ -21,14 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "components/backoffice/LineChartComponent.jsx",
-    "app/(front-end)/page.jsx",
-    "components/backoffice/ClientLayout.jsx"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "components/backoffice/WeeklySalesChart.jsx"],
   "exclude": ["node_modules"]
 }

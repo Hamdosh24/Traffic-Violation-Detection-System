@@ -33,7 +33,7 @@ export default function Login() {
       }
 
       localStorage.setItem("token", data.access_token);
-      console.log("Token:", data.access_token);
+      console.log("token", data.access_token);
       localStorage.setItem(
         "user",
         JSON.stringify({

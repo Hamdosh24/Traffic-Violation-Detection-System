@@ -189,7 +189,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="bg-milkColor dark:bg-customDarkGreen p-8 rounded-md shadow-xl py-8">
+      <div className="bg-milkColor dark:bg-customDarkGreenbg p-8 rounded-md shadow-xl py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mb-6"></div>
           <div className="flex space-x-4 mb-6">
@@ -205,7 +205,7 @@ export default function App() {
   }
 
   return (
-    <div className="bg-milkColor dark:bg-customDarkGreen p-8 rounded-md shadow-xl py-8">
+    <div className="bg-milkColor dark:bg-customDarkGreenbg p-8 rounded-md shadow-xl py-8">
       <h2 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-50">
         تغير عدد المخالفات والحوادث عبر الزمن
       </h2>

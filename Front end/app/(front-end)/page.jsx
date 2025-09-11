@@ -9,7 +9,7 @@ export default function page() {
       <nav className="w-full py-3 px-4 sm:px-6 absolute top-0 left-0 right-0 z-20 flex justify-between items-center bg-white/90 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none">
         <div className="flex items-center">
           <Image
-            src="/Logo1.png"
+            src="/Gold.png"
             alt="Logo"
             width={60}
             height={30}
