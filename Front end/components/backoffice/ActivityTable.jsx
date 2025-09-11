@@ -30,6 +30,77 @@ const ChevronRight = () => (
   </svg>
 );
 
+// Skeleton Loading Component
+const ActivityTableSkeleton = () => {
+  const SkeletonRow = () => (
+    <tr className="bg-white border-b dark:bg-customDarkGreenbg dark:border-gray-700">
+      {[...Array(4)].map((_, i) => (
+        <td key={i} className="px-6 py-4">
+          <div className="h-4 bg-gray-300/50 rounded animate-pulse"></div>
+        </td>
+      ))}
+    </tr>
+  );
+
+  return (
+    <div
+      className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4"
+      dir="rtl"
+    >
+      {/* Filter Skeleton */}
+      <div className="p-4 bg-white dark:bg-customDarkGreenbg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-pulse">
+        <div className="relative w-full md:w-80">
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+        </div>
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-md w-40"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-md w-32"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-md w-32"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-md w-28"></div>
+        </div>
+      </div>
+
+      {/* Table Skeleton */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+          <thead className="text-xs uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-400">
+            <tr>
+              <th scope="col" className="px-6 py-3">
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+              <th scope="col" className="px-6 py-3">
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+              <th scope="col" className="px-6 py-3">
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+              <th scope="col" className="px-6 py-3">
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...Array(6)].map((_, index) => (
+              <SkeletonRow key={index} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Skeleton */}
+      <div className="flex items-center dark:bg-customDarkGreen flex-column flex-wrap md:flex-row justify-between pt-4 p-5 animate-pulse">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 mb-4 md:mb-0"></div>
+        <div className="flex space-x-2">
+          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ACTION_TYPES = [
   "عرض قائمة الحسابات",
   "انشاء حساب",
@@ -43,6 +114,7 @@ const ACTION_TYPES = [
   "عرض كل الكاميرات",
   "عرض كاميرا",
   "بحث عن لوحة",
+  "عرض سجل المخالفات و الحوادث",
 ];
 
 const getActionColor = (action) => {
@@ -62,17 +134,19 @@ const getActionColor = (action) => {
     "تسجيل دخول":
       "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     "تسجيل خروج":
-      "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+      "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
     "عرض الاحصاءات":
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
     "عرض سجل الانشطة":
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
     "عرض كل الكاميرات":
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
     "عرض كاميرا":
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
     "بحث عن لوحة":
-      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+      "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900 dark:text-fuchsia-200",
+    "عرض سجل المخالفات و الحوادث":
+      "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200",
     default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
   };
 
@@ -214,10 +288,10 @@ export default function ActivityTable() {
       <li key={1}>
         <button
           onClick={() => goToPage(1)}
-          className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+          className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md mr-1 ${
             currentPage === 1
               ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
-              : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+              : "text-gray-500 hover:bg-slate-200 dark:bg-customDarkGreenbg dark:hover:bg-gray-500 dark:hover:text-white"
           }`}
         >
           1
@@ -251,7 +325,7 @@ export default function ActivityTable() {
               className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
                 currentPage === i
                   ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
-                  : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+                  : "text-gray-500 hover:bg-slate-200 dark:bg-customDarkGreenbg dark:hover:bg-gray-500 dark:hover:text-white"
               }`}
             >
               {i}
@@ -274,10 +348,10 @@ export default function ActivityTable() {
         <li key={totalPages}>
           <button
             onClick={() => goToPage(totalPages)}
-            className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
+            className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ml-1 ${
               currentPage === totalPages
                 ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
-                : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+                : "text-gray-500 hover:bg-slate-200 dark:bg-customDarkGreenbg dark:hover:bg-gray-500 dark:hover:text-white"
             }`}
           >
             {totalPages}
@@ -290,11 +364,7 @@ export default function ActivityTable() {
   };
 
   if (isLoading && activities.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <ActivityTableSkeleton />;
   }
 
   if (error) {
@@ -390,7 +460,7 @@ export default function ActivityTable() {
 
           <button
             onClick={applyFilter}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+            className="bg-customGreen hover:bg-emerald-700 text-white px-4 py-2 rounded  text-sm"
           >
             تطبيق الفلتر
           </button>
@@ -474,7 +544,7 @@ export default function ActivityTable() {
         <nav className="flex items-center dark:bg-customDarkGreen flex-column flex-wrap md:flex-row justify-between pt-4 p-5">
           <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
             عرض{" "}
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="font-semibold text-gray-90 dark:text-white">
               {itemStartIndex + 1}-{itemEndIndex}
             </span>{" "}
             من{" "}
@@ -487,7 +557,7 @@ export default function ActivityTable() {
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+                className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-customDarkGreenbg dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
               >
                 <ChevronRight />
               </button>
@@ -497,7 +567,7 @@ export default function ActivityTable() {
               <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+                className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-customDarkGreenbg dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
               >
                 <ChevronLeft />
               </button>

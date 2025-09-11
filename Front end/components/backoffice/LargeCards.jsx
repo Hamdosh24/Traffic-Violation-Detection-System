@@ -37,11 +37,11 @@ export default function LargeCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8 ">
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className="rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse h-48 shadow-lg p-6 flex flex-col"
+            className="rounded-xl bg-gradient-to-br dark:bg-customDarkGreenbg animate-pulse h-48 shadow-lg p-6 flex flex-col"
           >
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8 h-8 rounded-full bg-gray-300/50"></div>

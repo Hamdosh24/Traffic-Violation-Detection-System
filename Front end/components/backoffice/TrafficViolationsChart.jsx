@@ -285,7 +285,7 @@ export default function TrafficViolationsChart() {
   }
 
   return (
-    <div className="bg-milkColor dark:bg-customDarkGreen p-4 md:p-6 rounded-lg shadow-md">
+    <div className="bg-milkColor dark:bg-customDarkGreenbg p-4 md:p-6 rounded-lg shadow-md">
       {/* Hidden Print Content */}
       <div className="hidden">
         <div ref={componentRef} className="p-4">
@@ -477,6 +477,7 @@ export default function TrafficViolationsChart() {
           </div>
         )}
 
+        {/* فلتر المحافظة  */}
         <div className="flex flex-col items-end">
           <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             المحافظة
@@ -495,6 +496,7 @@ export default function TrafficViolationsChart() {
           </select>
         </div>
 
+        {/* الفلتر الزمني  */}
         <div className="flex flex-row justify-center items-center ml-5">
           <div className="flex flex-col items-end mx-2">
             <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -529,14 +531,14 @@ export default function TrafficViolationsChart() {
 
       {/* Chart */}
       {violationData.length > 0 ? (
-        <div className="bg-white dark:bg-customDarkGreenbg p-3 md:p-4 rounded-lg mb-4 md:mb-6">
+        <div className="bg-white dark:bg-customDarkGreen p-3 md:p-4 rounded-lg mb-4 md:mb-6">
           <div className="h-64 md:h-80 w-full">
             <Bar data={chartData} options={chartOptions} />
           </div>
         </div>
       ) : (
         !isLoading && (
-          <div className="bg-white dark:bg-customDarkGreenbg p-4 rounded-lg text-center text-gray-500">
+          <div className="bg-white dark:bg-customDarkGreen dark:text-white p-4 rounded-lg text-center text-gray-500">
             {reportType === "حوادث"
               ? "لا توجد بيانات حوادث متاحة. يرجى تحديد الفلاتر والضغط على زر جلب البيانات"
               : "لا توجد بيانات مخالفات متاحة. يرجى تحديد الفلاتر والضغط على زر جلب البيانات"}

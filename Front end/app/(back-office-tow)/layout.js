@@ -1,13 +1,9 @@
-// app/(dashboard)/employeeDashboard/layout.js
 "use client";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Sidebar from "@/components/backoffice/Sidebar";
 import Navbar from "@/components/backoffice/Navbar";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-// احذفي هذا السطر ↓
-// import { SSEProvider } from "@/context/SSEContext";
 
 export default function EmployeeLayout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -55,7 +51,6 @@ export default function EmployeeLayout({ children }) {
   return (
     <div className="flex min-h-screen">
       {isEmployee ? (
-        // احذفي الـ SSEProvider من هنا ↓
         <>
           <Sidebar
             role="Employee"
@@ -77,16 +72,7 @@ export default function EmployeeLayout({ children }) {
                 <div className="absolute inset-0 -z-10 bg-milkColor" />
               )}
               {theme === "dark" && (
-                <div className="absolute inset-0 -z-10">
-                  <Image
-                    src="/page.jpg"
-                    alt="Background"
-                    fill
-                    className="object-cover"
-                    quality={75}
-                    priority
-                  />
-                </div>
+                <div className="absolute inset-0 -z-10 bg-customDark" />
               )}
               {children}
             </main>

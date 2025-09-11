@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Sidebar from "@/components/backoffice/Sidebar";
 import Navbar from "@/components/backoffice/Navbar";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function Layout({ children }) {
@@ -58,24 +57,12 @@ export default function Layout({ children }) {
       >
         <Navbar showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
         <main className="p-8 text-slate-800 dark:text-slate-50 relative flex-grow">
-          {/* خلفية بيضاء للثيم الفاتح */}
           {theme === "light" && (
             <div className="absolute inset-0 -z-10 bg-milkColor" />
           )}
 
-          {/* صورة الخلفية للثيم الداكن */}
           {theme === "dark" && (
-            // <div className="absolute inset-0 -z-10 bg-maxGreen" />
-            <div className="absolute inset-0 -z-10">
-              <Image
-                src="/page.jpg"
-                alt="Background"
-                fill
-                className="object-cover"
-                quality={75}
-                priority
-              />
-            </div>
+            <div className="absolute inset-0 -z-10 bg-customDark" />
           )}
 
           {children}

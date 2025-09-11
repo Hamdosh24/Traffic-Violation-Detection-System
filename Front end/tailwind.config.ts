@@ -23,6 +23,7 @@ const config: Config = {
 
         customDarkGreen: "rgba(32, 70, 72)",
         customDarkGreenbg: "rgba(3, 45, 48)",
+        customDark: "#143b3a",
         maximumGreen: "#628B35",
         maxGreen: "#364b44",
         phthaloGreen: "#103713",

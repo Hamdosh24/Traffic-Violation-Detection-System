@@ -119,13 +119,16 @@ export default function CrudTable() {
     }
   };
 
-  if (isLoading && employees.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  // Skeleton Loading Rows
+  const SkeletonRow = () => (
+    <tr className="bg-white border-b dark:bg-customDarkGreenbg dark:border-gray-700">
+      {[...Array(12)].map((_, i) => (
+        <td key={i} className="px-6 py-4">
+          <div className="h-4 bg-gray-300/50 rounded animate-pulse"></div>
+        </td>
+      ))}
+    </tr>
+  );
 
   if (error) {
     return (
@@ -134,6 +137,7 @@ export default function CrudTable() {
       </div>
     );
   }
+
   return (
     <div
       className="relative overflow-x-auto shadow-md sm:rounded-lg w-full"
@@ -158,7 +162,7 @@ export default function CrudTable() {
           </div>
           <input
             type="text"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-customGreen focus:border-customGreen block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-customGreen dark:focus:border-customGreen"
             placeholder="(الاسم, اسم المستخدم , الايميل"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -168,7 +172,7 @@ export default function CrudTable() {
 
       {/* Table */}
       <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-400">
+        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-100">
           <tr>
             <th scope="col" className="px-6 py-3">
               اسم المستخدم
@@ -209,7 +213,11 @@ export default function CrudTable() {
           </tr>
         </thead>
         <tbody>
-          {currentItems.length > 0 ? (
+          {isLoading ? (
+            // Show skeleton loading when data is loading
+            [...Array(5)].map((_, index) => <SkeletonRow key={index} />)
+          ) : currentItems.length > 0 ? (
+            // Show actual data when loaded
             currentItems.map((employee) => (
               <tr
                 key={employee.user_id}
@@ -263,7 +271,7 @@ export default function CrudTable() {
             ))
           ) : (
             <tr className="bg-white dark:bg-gray-800">
-              <td colSpan="11" className="px-6 py-4 text-center">
+              <td colSpan="12" className="px-6 py-4 text-center">
                 {searchTerm ? "لا توجد نتائج مطابقة" : "لا يوجد موظفون"}
               </td>
             </tr>
@@ -271,55 +279,71 @@ export default function CrudTable() {
         </tbody>
       </table>
 
-      {/* Pagination */}
+      {/* Pagination - Skeleton when loading */}
       <nav
         className="flex items-center dark:bg-customDarkGreen flex-column flex-wrap md:flex-row justify-between pt-4 p-5"
         aria-label="Table navigation"
       >
-        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
-          عرض{" "}
-          <span className="font-semibold text-gray-900 dark:text-white mx-1">
-            {itemStartIndex}-{itemEndIndex}
-          </span>{" "}
-          من{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {searchTerm ? filteredEmployees.length : totalItems}
-          </span>
-        </span>
-        <ul className="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
-          <li>
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </li>
-          {Array.from({ length: totalPages }, (_, index) => (
-            <li key={index}>
-              <button
-                onClick={() => goToPage(index + 1)}
-                className={
-                  currentPage === index + 1
-                    ? "flex items-center justify-center px-3 h-8 rounded-md text-blue-700 bg-blue-100 dark:border-gray-700 dark:bg-customGreen dark:text-white"
-                    : "flex items-center justify-center px-3 h-8 leading-tight rounded-md text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-500 dark:hover:text-white"
-                }
-              >
-                {index + 1}
-              </button>
-            </li>
-          ))}
-          <li>
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          </li>
-        </ul>
+        {isLoading ? (
+          <div className="flex items-center w-full justify-between">
+            <div className="h-4 w-40 bg-gray-300/50 rounded animate-pulse"></div>
+            <div className="flex space-x-1">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-8 w-8 bg-gray-300/50 rounded animate-pulse"
+                ></div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <span className="text-sm font-normal items-center block text-gray-500 dark:text-white mb-4 md:mb-0 w-full md:inline md:w-auto">
+              عرض{" "}
+              <span className="font-semibold text-gray-900 dark:text-white mx-1">
+                {itemStartIndex}-{itemEndIndex}
+              </span>{" "}
+              من{" "}
+              <span className="font-semibold text-gray-900 dark:text-white mx-1">
+                {searchTerm ? filteredEmployees.length : totalItems}
+              </span>
+            </span>
+            <ul className="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
+              <li>
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center justify-center px-3 ml-2 cursor-pointer h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-customDarkGreenbg dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </li>
+              {Array.from({ length: totalPages }, (_, index) => (
+                <li key={index}>
+                  <button
+                    onClick={() => goToPage(index + 1)}
+                    className={
+                      currentPage === index + 1
+                        ? "flex items-center justify-center px-3 h-8 rounded-md text-customGreen bg-green-100 hover:text-dark dark:border-gray-700 dark:bg-customGreen dark:text-white"
+                        : "flex items-center justify-center px-3 h-8 leading-tight rounded-md text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-500 dark:hover:text-white"
+                    }
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+              <li>
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center justify-center px-3 mr-2 h-8 cursor-pointer leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-customDarkGreenbg dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </li>
+            </ul>
+          </>
+        )}
       </nav>
     </div>
   );

@@ -38,8 +38,13 @@ export default function SmallCards() {
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow animate-pulse h-32"
-          ></div>
+            className="bg-white dark:bg-customDarkGreenbg p-6 rounded-lg shadow animate-pulse"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-10 w-10 bg-gray-300 rounded-full"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+            </div>
+          </div>
         ))}
       </div>
     );
