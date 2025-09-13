@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react"; // أضف useCallback
+import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Filter, RefreshCw } from "lucide-react";
 import AccidentList from "@/components/backoffice/AccidentList";
 import { StandardApi } from "@/app/api/StandarApi";
@@ -20,6 +20,29 @@ function transformSseData(data) {
     },
   };
 }
+
+// Skeleton Loading Component
+const AccidentSkeleton = () => {
+  return (
+    <div className="animate-pulse p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+          <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
+        </div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
+      </div>
+      <div className="mt-3 space-y-2">
+        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+      </div>
+      <div className="mt-3 flex justify-between items-center">
+        <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+        <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
+      </div>
+    </div>
+  );
+};
 
 export default function AccidentsPage() {
   const [allAccidents, setAllAccidents] = useState([]);
@@ -58,7 +81,7 @@ export default function AccidentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [newAccidents, updateUnviewedCount]); // أضف dependencies هنا
+  }, [newAccidents, updateUnviewedCount]);
 
   const markAsViewed = async (accidentId) => {
     setIsLoading(true);
@@ -85,7 +108,7 @@ export default function AccidentsPage() {
 
   useEffect(() => {
     fetchAccidents();
-  }, [fetchAccidents]); // أضف fetchAccidents إلى dependencies
+  }, [fetchAccidents]);
 
   useEffect(() => {
     if (newAccidents.length > 0) {
@@ -142,7 +165,7 @@ export default function AccidentsPage() {
           <button
             onClick={fetchAccidents}
             disabled={isLoading}
-            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-customDarkGreen rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="تحديث القائمة"
           >
             <RefreshCw
@@ -160,7 +183,7 @@ export default function AccidentsPage() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="appearance-none pl-3 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-customGreen focus:border-customGreen outline-none"
+            className="appearance-none pl-3 pr-8 py-2 text-sm bg-white dark:bg-customDarkGreen border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-customGreen focus:border-customGreen outline-none"
           >
             <option value="all">الكل ({totalCount})</option>
             <option value="new">جديد ({newCount})</option>
@@ -180,23 +203,32 @@ export default function AccidentsPage() {
           الاتصال غير نشط. جاري محاولة إعادة الاتصال تلقائياً...
         </div>
       )}
-      <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-sm backdrop-blur-sm">
-        <AccidentList
-          accidents={filteredAccidents}
-          loading={isLoading}
-          onMarkAsViewed={markAsViewed}
-          filter={filter}
-        />
+
+      <div className="bg-white/80 dark:bg-customDarkGreenbg rounded-xl shadow-sm backdrop-blur-sm">
+        {isLoading ? (
+          <div>
+            {[...Array(3)].map((_, index) => (
+              <AccidentSkeleton key={index} />
+            ))}
+          </div>
+        ) : filteredAccidents.length > 0 ? (
+          <AccidentList
+            accidents={filteredAccidents}
+            loading={isLoading}
+            onMarkAsViewed={markAsViewed}
+            filter={filter}
+            showEmptyMessage={false} // إضافة خاصية جديدة لمنع عرض الرسالة في المكون الداخلي
+          />
+        ) : (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            {filter === "all"
+              ? "لا توجد حوادث حتى الآن"
+              : filter === "new"
+              ? "لا توجد حوادث جديدة"
+              : "لا توجد حوادث تمت مشاهدتها"}
+          </div>
+        )}
       </div>
-      {filteredAccidents.length === 0 && !isLoading && (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          {filter === "all"
-            ? "لا توجد حوادث حتى الآن"
-            : filter === "new"
-            ? "لا توجد حوادث جديدة"
-            : "لا توجد حوادث تمت مشاهدتها"}
-        </div>
-      )}
     </div>
   );
 }

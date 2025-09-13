@@ -1,5 +1,4 @@
 import Heading from "@/components/backoffice/Heading";
-import React from "react";
 import ViolationTable from "@/components/backoffice/ViolationTable";
 
 export default function page() {

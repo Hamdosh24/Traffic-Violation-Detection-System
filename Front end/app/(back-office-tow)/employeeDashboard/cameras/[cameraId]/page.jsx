@@ -18,7 +18,6 @@ export default function CameraDetailsPage({ params }) {
         setError(null);
 
         const response = await StandardApi.fetchCameraById(cameraId);
-        console.log("API Response:", response);
 
         if (!response.success) {
           throw new Error(response.error);
@@ -53,15 +52,6 @@ export default function CameraDetailsPage({ params }) {
     }
   }, [camera]);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="mt-4 text-lg">جاري تحميل بيانات الكاميرا...</p>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -82,22 +72,32 @@ export default function CameraDetailsPage({ params }) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <button
           onClick={() => router.push("/employeeDashboard/cameras")}
-          className="flex items-center justify-center text-blue-600 hover:text-blue-800 transition-colors"
+          className="flex items-center justify-center text-customGreen hover:text-iconGold dark:hover:text-white transition-colors"
         >
           العودة إلى القائمة
         </button>
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-          تفاصيل الكاميرا: {camera.camera_id}
-        </h1>
+        {loading ? (
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse"></div>
+        ) : (
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+            تفاصيل الكاميرا: {camera.camera_id}
+          </h1>
+        )}
       </div>
 
       {/* Live Stream */}
-      <div className="bg-white dark:bg-customDarkGreen rounded-lg p-6 mb-8 shadow-md">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white text-right">
-          البث المباشر
-        </h2>
-        <div className="aspect-video w-full bg-black rounded-md overflow-hidden flex items-center justify-center">
-          {camera.hls_path ? (
+      <div className="bg-white dark:bg-customDarkGreenbg rounded-lg p-6 mb-8 shadow-md">
+        {loading ? (
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4 animate-pulse"></div>
+        ) : (
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white text-right">
+            البث المباشر
+          </h2>
+        )}
+        <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden flex items-center justify-center">
+          {loading ? (
+            <div className="w-full h-full bg-gray-300 dark:bg-gray-600 animate-pulse"></div>
+          ) : camera.hls_path ? (
             <video
               id="live-video"
               controls
@@ -112,41 +112,55 @@ export default function CameraDetailsPage({ params }) {
 
       {/* Camera Info */}
       <div
-        className="bg-white dark:bg-customDarkGreen rounded-lg p-6 shadow-md"
+        className="bg-white dark:bg-customDarkGreenbg rounded-lg p-6 shadow-md"
         dir="rtl"
       >
-        <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-white text-right">
-          معلومات الكاميرا
-        </h2>
+        {loading ? (
+          <div className="h-6 bg-gray-200 dark:bg-customDarkGreen rounded w-32 mb-6 animate-pulse"></div>
+        ) : (
+          <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-white text-right">
+            معلومات الكاميرا
+          </h2>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <DetailCard label="معرف الكاميرا" value={camera.camera_id} />
-          <DetailCard label="المحافظة" value={camera.governorate} />
-          <DetailCard label="المنطقة" value={camera.region} />
-          <DetailCard label="الشارع" value={camera.street} />
-          <DetailCard
-            label="تاريخ الإنشاء"
-            value={
-              camera.created_at
-                ? new Date(camera.created_at).toLocaleDateString("ar-EG", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : "غير متوفر"
-            }
-          />
-          <DetailCard
-            label="تاريخ التحديث"
-            value={
-              camera.updated_at
-                ? new Date(camera.updated_at).toLocaleDateString("ar-EG", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : "غير متوفر"
-            }
-          />
+          {loading ? (
+            <>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonDetailCard key={index} />
+              ))}
+            </>
+          ) : (
+            <>
+              <DetailCard label="معرف الكاميرا" value={camera.camera_id} />
+              <DetailCard label="المحافظة" value={camera.governorate} />
+              <DetailCard label="المنطقة" value={camera.region} />
+              <DetailCard label="الشارع" value={camera.street} />
+              <DetailCard
+                label="تاريخ الإنشاء"
+                value={
+                  camera.created_at
+                    ? new Date(camera.created_at).toLocaleDateString("ar-EG", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "غير متوفر"
+                }
+              />
+              <DetailCard
+                label="تاريخ التحديث"
+                value={
+                  camera.updated_at
+                    ? new Date(camera.updated_at).toLocaleDateString("ar-EG", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "غير متوفر"
+                }
+              />
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -155,13 +169,22 @@ export default function CameraDetailsPage({ params }) {
 
 function DetailCard({ label, value }) {
   return (
-    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm text-right">
+    <div className="bg-gray-50 dark:bg-customDarkGreen p-4 rounded-lg shadow-sm text-right">
       <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
         {label}
       </h3>
       <p className="text-lg font-semibold text-gray-800 dark:text-white break-words">
         {value || "غير متوفر"}
       </p>
+    </div>
+  );
+}
+
+function SkeletonDetailCard() {
+  return (
+    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm text-right">
+      <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24 mb-2 animate-pulse"></div>
+      <div className="h-6 bg-gray-300 dark:bg-gray-500 rounded w-32 animate-pulse"></div>
     </div>
   );
 }

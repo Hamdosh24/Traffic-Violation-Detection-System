@@ -10,10 +10,15 @@ export default function VehicleTrackingPage() {
     sightings: [],
     loading: false,
     error: null,
+    hasSearched: false,
+    invalidPlate: false,
   });
 
   const handleSearchResults = (data) => {
-    setSearchData(data);
+    setSearchData({
+      ...data,
+      hasSearched: true,
+    });
   };
 
   return (
@@ -25,6 +30,8 @@ export default function VehicleTrackingPage() {
         sightings={searchData.sightings}
         loading={searchData.loading}
         error={searchData.error}
+        hasSearched={searchData.hasSearched}
+        invalidPlate={searchData.invalidPlate}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -42,7 +42,7 @@ export default function TrafficViolationsChartByTime() {
     violation_types: [],
   });
   const [filtersLoading, setFiltersLoading] = useState(true);
-  const [reportType, setReportType] = useState("مخالفات"); // ['حوادث', 'مخالفات']
+  const [reportType, setReportType] = useState("مخالفات");
   const chartRef = useRef();
   const componentRef = useRef();
 

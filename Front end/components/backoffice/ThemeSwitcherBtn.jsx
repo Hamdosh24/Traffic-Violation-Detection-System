@@ -8,8 +8,6 @@ export default function ThemeSwitcherBtn() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  console.log(theme);
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -21,7 +19,11 @@ export default function ThemeSwitcherBtn() {
       className="text-green-600"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
-      {theme === "light" ? <Moon /> : <Sun />}
+      {theme === "light" ? (
+        <Moon className="stroke-customGreen dark:hover:stroke-milkColor" />
+      ) : (
+        <Sun className="stroke-customGreen dark:hover:stroke-milkColor" />
+      )}
     </button>
   );
 }

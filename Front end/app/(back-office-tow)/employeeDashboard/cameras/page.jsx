@@ -61,14 +61,7 @@ export default function CamerasPage() {
       <Heading title="الكاميرات" />
 
       <div className="max-w-4xl mx-auto pt-8">
-        <CameraSearch onSearch={setSearchTerm} />
-
-        {loading && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-2">جاري تحميل بيانات الكاميرات...</p>
-          </div>
-        )}
+        <CameraSearch onSearch={setSearchTerm} loading={loading} />
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
@@ -77,20 +70,42 @@ export default function CamerasPage() {
         )}
 
         <div className="mt-10">
-          {!loading && !error && displayedCameras.length > 0
-            ? displayedCameras.map((camera) => (
-                <CameraCard
-                  key={camera.camera_id}
-                  data={camera}
-                  onViewDetails={() => handleViewDetails(camera.camera_id)}
-                />
-              ))
-            : !loading &&
-              !error && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد كاميرات متاحة"}
+          {loading ? (
+            // Skeleton loading state
+            <div className="space-y-6">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="max-w-4xl mx-auto shadow-lg rounded-lg flex justify-between items-center bg-white/50 dark:bg-customDarkGreen p-4"
+                >
+                  <div className="flex items-center space-x-4 rtl:space-x-reverse w-full">
+                    <div className="flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
                 </div>
-              )}
+              ))}
+            </div>
+          ) : displayedCameras.length > 0 ? (
+            // بيانات حقيقية
+            displayedCameras.map((camera) => (
+              <CameraCard
+                key={camera.camera_id}
+                data={camera}
+                onViewDetails={() => handleViewDetails(camera.camera_id)}
+              />
+            ))
+          ) : (
+            // لما ما يكون في نتائج
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد كاميرات متاحة"}
+            </div>
+          )}
         </div>
       </div>
     </div>

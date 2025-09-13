@@ -47,7 +47,7 @@ export const SSEProvider = ({ children }) => {
     eventSource.addEventListener("new-accident", (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("📨 New accident received:", data); // Using the setter functions directly, which is correct
+        console.log("New accident received:", data);
 
         setNewAccidents((prevAccidents) => {
           const transformedData = {
@@ -66,12 +66,12 @@ export const SSEProvider = ({ children }) => {
         });
         setUnviewedCount((prevCount) => prevCount + 1);
       } catch (e) {
-        console.error("❌ Error parsing accident data:", e);
+        console.error("Error parsing accident data:", e);
       }
     });
 
     eventSource.onerror = (err) => {
-      console.error("❌ SSE connection error:", err);
+      console.error("SSE connection error:", err);
       setIsConnected(false);
       eventSource.close();
       eventSourceRef.current = null;

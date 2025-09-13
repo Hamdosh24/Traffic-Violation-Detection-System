@@ -1,50 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { StandardApi } from "@/app/api/StandarApi";
-
-const ChevronLeft = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M15 19l-7-7 7-7"
-    ></path>
-  </svg>
-);
-
-const ChevronRight = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"></path>
-  </svg>
-);
-
-const RefreshIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-    ></path>
-  </svg>
-);
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 
 export default function ViolationTable() {
   const [violations, setViolations] = useState([]);
@@ -255,7 +212,7 @@ export default function ViolationTable() {
           className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
             currentPage === 1
               ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
-              : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+              : "text-gray-500 hover:bg-slate-200 dark:bg-customDarkGreenbg dark:hover:bg-gray-500 dark:hover:text-white"
           }`}
         >
           1
@@ -289,7 +246,7 @@ export default function ViolationTable() {
               className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
                 currentPage === i
                   ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
-                  : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+                  : "text-gray-500 hover:bg-slate-200 dark:bg-customDarkGreenbg dark:hover:bg-gray-500 dark:hover:text-white"
               }`}
             >
               {i}
@@ -315,7 +272,7 @@ export default function ViolationTable() {
             className={`flex items-center justify-center px-3 h-8 leading-tight rounded-md ${
               currentPage === totalPages
                 ? "text-blue-700 bg-blue-100 dark:bg-customGreen dark:text-white"
-                : "text-gray-500 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-gray-500 dark:hover:text-white"
+                : "text-gray-500 hover:bg-slate-200 dark:bg-customDarkGreenbg dark:hover:bg-gray-500 dark:hover:text-white"
             }`}
           >
             {totalPages}
@@ -327,12 +284,70 @@ export default function ViolationTable() {
     return pages;
   };
 
-  if (isLoading && violations.length === 0) {
+  // Skeleton Loading للجدول
+  const TableSkeleton = () => {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="animate-pulse">
+        <div className="p-4 bg-white dark:bg-customDarkGreenbg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 w-full">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex flex-col">
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-1 w-1/3"></div>
+                <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-3 mt-4 md:mt-0 w-full md:w-auto justify-end">
+            <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+            <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+            <thead className="text-xs uppercase bg-gray-50 dark:bg-customDarkGreen dark:text-gray-400">
+              <tr>
+                {[...Array(7)].map((_, i) => (
+                  <th key={i} scope="col" className="px-3 py-3 sm:px-6">
+                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mx-auto"></div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[...Array(6)].map((_, rowIndex) => (
+                <tr
+                  key={rowIndex}
+                  className="bg-white border-b dark:bg-customDarkGreenbg dark:border-gray-700"
+                >
+                  {[...Array(7)].map((_, cellIndex) => (
+                    <td key={cellIndex} className="px-3 py-4 sm:px-6">
+                      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center dark:bg-customDarkGreen justify-between pt-4 p-5 gap-4">
+          <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-40"></div>
+          <div className="flex gap-2">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-8"
+              ></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
+  };
+
+  if (isLoading && violations.length === 0) {
+    return <TableSkeleton />;
   }
 
   if (error) {
@@ -472,7 +487,7 @@ export default function ViolationTable() {
             className="flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300 text-sm dark:bg-gray-600 dark:text-white disabled:opacity-50"
             title="تحديث البيانات"
           >
-            <RefreshIcon />
+            <RefreshCw className="w-4 h-4" />
             {refreshing ? "جاري التحديث..." : "تحديث"}
           </button>
 
@@ -604,9 +619,9 @@ export default function ViolationTable() {
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+                className="flex items-center justify-center px-3 ml-1 h-8 ms-0 leading-tight text-gray-500 rounded-s-lg hover:text-blue-700 dark:bg-customDarkGreenbg dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
               >
-                <ChevronRight />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </li>
             {renderPageNumbers()}
@@ -614,9 +629,9 @@ export default function ViolationTable() {
               <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
+                className="flex items-center justify-center px-3 mr-1 h-8 leading-tight text-gray-500 rounded-e-lg hover:text-blue-700 dark:bg-customDarkGreenbg dark:border-slate-600 dark:text-gray-400 dark:hover:text-white"
               >
-                <ChevronLeft />
+                <ChevronLeft className="w-4 h-4" />
               </button>
             </li>
           </ul>

@@ -2,186 +2,192 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
-import logo from "../../public/Logo.svg";
 import { usePathname } from "next/navigation";
 import {
-  Boxes,
-  Building2,
+  LogOut,
   ChevronDown,
   ChevronRight,
-  CircleDollarSign,
-  ExternalLink,
   LayoutGrid,
-  LayoutList,
-  LogOut,
-  // Minus,
-  MonitorPlay,
-  ScanSearch,
-  Settings,
-  Slack,
-  Truck,
-  User,
-  UserSquare2,
-  UsersRound,
-  Warehouse,
+  User2,
+  History,
+  ChartColumnIncreasing,
+  BellRing,
+  Camera,
+  Car,
+  ClipboardList,
 } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useRouter } from "next/navigation";
+import { StandardApi } from "@/app/api/StandarApi";
 
-export default function Sidebar({ showSidebar, setShowSidebar }) {
+export default function Sidebar({ role, showSidebar }) {
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
-
-  console.log(pathname);
-  const catalogueLinks = [
-    {
-      title: "Products",
-      icon: Boxes,
-      href: "/dashboard/products",
-    },
-    {
-      title: "Categories",
-      icon: LayoutList,
-      href: "/dashboard/categories",
-    },
-    {
-      title: "Coupons",
-      icon: ScanSearch,
-      href: "/dashboard/coupons",
-    },
-    {
-      title: "store Banners",
-      icon: MonitorPlay,
-      href: "/dashboard/banners",
-    },
-  ];
-  const sidebarLinks = [
-    {
-      title: "Customers",
-      icon: UsersRound,
-      href: "/dashboard/customers",
-    },
-    {
-      title: "Markets",
-      icon: Warehouse,
-      href: "/dashboard/markets",
-    },
-    {
-      title: "Farmers",
-      icon: UserSquare2,
-      href: "/dashboard/farmers",
-    },
-    {
-      title: "Orders",
-      icon: Truck,
-      href: "/dashboard/orders",
-    },
-    {
-      title: "Our Staff",
-      icon: User,
-      href: "/dashboard/staff",
-    },
-    {
-      title: "Limi Community",
-      icon: Building2,
-      href: "/dashboard/community",
-    },
-    {
-      title: "Wallet",
-      icon: CircleDollarSign,
-      href: "/dashboard/wallet",
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-      href: "/dashboard/settings",
-    },
-    {
-      title: "Online Store",
-      icon: ExternalLink,
-      href: "/",
-    },
-  ];
   const [openMenu, setOpenMenu] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const { success, error } = await StandardApi.logout();
+
+      if (success) {
+        // مسح token وإعادة التوجيه
+        localStorage.removeItem("token");
+        console.log("token: was deleted");
+        router.push("/"); // توجيه إلى صفحة تسجيل الدخول
+      } else {
+        console.error("Logout error:", error);
+        alert(`فشل تسجيل الخروج: ${error}`);
+      }
+    } catch (err) {
+      console.error("Logout failed:", err);
+      alert("حدث خطأ غير متوقع أثناء تسجيل الخروج");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  // روابط الإحصائيات (للموظفين فقط)
+  const statisticsLinks =
+    role === "Employee"
+      ? [
+          {
+            title: "مخطط مكاني",
+            href: "/employeeDashboard/spatial",
+          },
+          {
+            title: "مخطط زمني",
+            href: "/employeeDashboard/temporal",
+          },
+        ]
+      : [];
+
+  // روابط الموظف
+  const employeeLinks = [
+    {
+      title: "سجل المخالفات",
+      icon: ClipboardList,
+      href: "/employeeDashboard/violations",
+    },
+    {
+      title: "الاشعارات",
+      icon: BellRing,
+      href: "/employeeDashboard/notifications",
+    },
+    {
+      title: "الكاميرات",
+      icon: Camera,
+      href: "/employeeDashboard/cameras",
+    },
+    {
+      title: "تعقب مركبة",
+      icon: Car,
+      href: "/employeeDashboard/tracking",
+    },
+  ];
+
+  // روابط المدير
+  const managerLinks = [
+    {
+      title: "الحسابات",
+      icon: User2,
+      href: "/adminDashboard/accounts",
+    },
+    {
+      title: "سجل النشاط",
+      icon: History,
+      href: "/adminDashboard/activityLog",
+    },
+  ];
+
   return (
     <div
-      className={
-        showSidebar
-          ? "z-50 fixed sm:block mt-16 sm:mt-0 dark:bg-slate-800 bg-white space-y-6 w-64 h-screen dark:text-slate-100 left-0 top-0 shadow-md overflow-y-scroll"
-          : "z-50 fixed hidden sm:block mt-16 sm:mt-0 dark:bg-slate-800 bg-white space-y-6 w-64 h-screen dark:text-slate-100 left-0 top-0 shadow-md overflow-y-scroll"
-      }
+      className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-milkColor dark:bg-customDarkGreenbg shadow-md transition-transform duration-300 ease-in-out z-50 ${
+        showSidebar ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
-      <div className="px-6 py-4">
-        <Link onClick={() => setShowSidebar(false)} href="/dashboard">
-          <Image src={logo} alt="limifood logo" className="w-28 text-black" />
-        </Link>
-      </div>
-      <div className="text-gray-400  space-y-3 flex flex-col">
+      <Link
+        href={role === "Manager" ? "/adminDashboard" : "/employeeDashboard"}
+      >
+        <div className="flex flex-col items-center justify-center py-4">
+          <Image
+            src="/Gold.png"
+            alt="First text image"
+            width={100}
+            height={75}
+            className="object-contain"
+            quality={100}
+          />
+        </div>
+      </Link>
+
+      <div className="text-gray-400 space-y-3 flex flex-col">
+        {/* رابط لوحة التحكم */}
         <Link
-          onClick={() => setShowSidebar(false)}
-          href="/dashboard"
+          href={role === "Manager" ? "/adminDashboard" : "/employeeDashboard"}
           className={
-            pathname === "/dashboard"
-              ? "flex items-center space-x-1 px-6 py-2.5 border-l-4 border- border-customGreen text-customGreen"
+            pathname ===
+            (role === "Manager" ? "/adminDashboard" : "/employeeDashboard")
+              ? "flex items-center space-x-1 px-6 py-2.5 border-l-4 border-customGreen text-customGreen"
               : "flex items-center hover:text-customGreen dark:hover:text-gray-200 space-x-1 px-6 py-2.5"
           }
         >
           <LayoutGrid className="w-5 h-5" />
-          <span className="pl-4 font-bold">Dashboard</span>
+          <span className="pl-4 font-bold">لوحة التحكم</span>
         </Link>
-        {/* "px-6 " */}
-        <Collapsible
-          className={
-            catalogueLinks.some((link) => link.href === pathname)
-              ? "px-6  border-l-4 border-customGreen"
-              : "px-6 "
-          }
-        >
-          <CollapsibleTrigger onClick={() => setOpenMenu(!openMenu)}>
-            <button className="flex items-center text-slate-400 space-x-4 hover:text-customGreen dark:hover:text-gray-200 ">
-              <div className="flex items-center space-x-1">
-                <Slack className="w-5 h-5" />
-                <span className="pl-4 font-bold text-sm">Catalogue</span>
-              </div>
-              {openMenu ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="py-2 pl-5 dark:bg-slate-900 rounded-md text-sm dark:text-slate-500">
-            {catalogueLinks.map((item, i) => {
-              const Icon = item.icon;
-              return (
+
+        {/* قسم الإحصائيات */}
+        {role === "Employee" && (
+          <Collapsible
+            className={
+              statisticsLinks.some((link) => link.href === pathname)
+                ? "px-6 border-l-4 border-customGreen"
+                : "px-6"
+            }
+          >
+            <CollapsibleTrigger onClick={() => setOpenMenu(!openMenu)}>
+              <button className="flex items-center text-slate-400 space-x-4 hover:text-customGreen dark:hover:text-gray-200">
+                <div className="flex items-center space-x-1">
+                  <ChartColumnIncreasing className="w-5 h-5" />
+                  <span className="pl-4 font-bold text-sm">الاحصائيات</span>
+                </div>
+                {openMenu ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="py-2 pl-5 mt-2 dark:bg-customDarkGreen bg-white rounded-md text-sm dark:text-slate-500">
+              {statisticsLinks.map((item, i) => (
                 <Link
-                  onClick={() => setShowSidebar(false)}
                   key={i}
                   href={item.href}
-                  className=" text-slate-400 flex items-center space-x-1 font-medium py-1"
+                  className="text-slate-400 flex items-center space-x-1 font-medium py-1 hover:text-customGreen"
                 >
-                  {/* <Minus className="w-3 h-3" /> */}
-                  <div className="flex justify-center items-center hover:text-customGreen">
-                    <Icon className="w-3 h-3" />
+                  <div className="flex justify-center items-center">
                     <span className="pl-2">{item.title}</span>
                   </div>
                 </Link>
-              );
-            })}
-          </CollapsibleContent>
-        </Collapsible>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
-        {sidebarLinks.map((item, i) => {
+        {/* الروابط الخاصة بكل دور */}
+        {(role === "Employee" ? employeeLinks : managerLinks).map((item, i) => {
           const Icon = item.icon;
           return (
             <Link
-              onClick={() => setShowSidebar(false)}
               key={i}
               href={item.href}
               className={
-                item.href == pathname
+                item.href === pathname
                   ? "flex items-center space-x-1 px-6 py-2.5 border-l-4 border-customGreen text-customGreen"
                   : "flex items-center text-slate-400 hover:text-customGreen dark:hover:text-gray-200 space-x-1 px-6 py-2.5"
               }
@@ -191,11 +197,22 @@ export default function Sidebar({ showSidebar, setShowSidebar }) {
             </Link>
           );
         })}
-        {/* "relative left-5 pt-20" */}
+
+        {/* زر تسجيل الخروج */}
         <div className="m-auto py-4">
-          <button className="bg-customGreen text-white font-medium flex items-center space-x-1 px-16 py-3 rounded-md text-sm hover:bg-emerald-700">
-            <LogOut />
-            <span>Log Out</span>
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="bg-customGreen text-white justify-center flex items-center space-x-1 px-16 py-3 rounded-md text-sm hover:bg-emerald-700 disabled:opacity-70"
+          >
+            {isLoggingOut ? (
+              <span>جاري تسجيل الخروج...</span>
+            ) : (
+              <>
+                <LogOut className="w-5 h-5" />
+                <span className="font-bold">تسجيل الخروج</span>
+              </>
+            )}
           </button>
         </div>
       </div>

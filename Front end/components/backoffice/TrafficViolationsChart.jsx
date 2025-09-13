@@ -15,6 +15,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { utils, writeFile } from "xlsx";
 import { useReactToPrint } from "react-to-print";
 import { StandardApi } from "@/app/api/StandarApi";
+import { Loader2 } from "lucide-react";
 
 ChartJS.register(
   CategoryScale,
@@ -23,6 +24,33 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend
+);
+
+// مكون Skeleton للفلتر
+const FilterSkeleton = () => (
+  <div className="flex flex-col items-end">
+    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
+    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+  </div>
+);
+
+// مكون Skeleton للزر
+const ButtonSkeleton = () => (
+  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded min-w-[120px] animate-pulse"></div>
+);
+
+// مكون Skeleton للبيانات
+const DataSkeleton = () => (
+  <div className="bg-white dark:bg-customDarkGreen p-3 md:p-4 rounded-lg mb-4 md:mb-6">
+    <div className="h-64 md:h-80 w-full flex items-center justify-center">
+      <div className="text-center">
+        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-gray-500 dark:text-gray-300">
+          جاري تحميل البيانات...
+        </p>
+      </div>
+    </div>
+  </div>
 );
 
 export default function TrafficViolationsChart() {
@@ -36,7 +64,7 @@ export default function TrafficViolationsChart() {
   const [currentPage, setCurrentPage] = useState(0);
   const [violationTypes, setViolationTypes] = useState([]);
   const [governorates, setGovernorates] = useState([]);
-  const [filtersLoading, setFiltersLoading] = useState(false);
+  const [filtersLoading, setFiltersLoading] = useState(true);
   const [reportType, setReportType] = useState("مخالفات");
   const itemsPerPage = 30;
   const componentRef = useRef();
@@ -45,7 +73,6 @@ export default function TrafficViolationsChart() {
     return date.toISOString().split("T")[0];
   };
 
-  // جلب الفلاتر (أنواع المخالفات والمحافظات) عند التحميل
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -92,11 +119,14 @@ export default function TrafficViolationsChart() {
         to_date: formatDate(endDate),
       };
 
-      const { success, data, error } =
-        await StandardApi.fetchViolationsByRegionWithDetails(params);
+      const {
+        success,
+        data,
+        error: apiError,
+      } = await StandardApi.fetchViolationsByRegionWithDetails(params);
 
       if (!success) {
-        throw new Error(error || "فشل في جلب البيانات");
+        throw new Error(apiError || "فشل في جلب البيانات");
       }
 
       setViolationData(Array.isArray(data) ? data : []);
@@ -176,7 +206,7 @@ export default function TrafficViolationsChart() {
         ticks: {
           autoSkip: false,
           maxRotation: 45,
-          minRotation: 45,
+          minRotation: 0,
           font: {
             size: window.innerWidth < 768 ? 10 : 12,
             family: "'Tajawal', sans-serif",
@@ -195,7 +225,7 @@ export default function TrafficViolationsChart() {
           },
         },
         ticks: {
-          stepSize: 20,
+          stepSize: 5,
           font: {
             family: "'Tajawal', sans-serif",
           },
@@ -206,7 +236,6 @@ export default function TrafficViolationsChart() {
     categoryPercentage: 0.9,
   };
 
-  // Excel
   const exportToExcel = () => {
     try {
       const ws = utils.json_to_sheet(
@@ -261,29 +290,6 @@ export default function TrafficViolationsChart() {
     `,
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-        <p className="font-bold">خطأ في جلب البيانات:</p>
-        <p>{error}</p>
-        <button
-          onClick={applyFilters}
-          className="mt-2 px-3 py-1 bg-blue-500 text-white rounded"
-        >
-          إعادة المحاولة
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-milkColor dark:bg-customDarkGreenbg p-4 md:p-6 rounded-lg shadow-md">
       {/* Hidden Print Content */}
@@ -336,37 +342,50 @@ export default function TrafficViolationsChart() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-3 md:gap-4">
         <div className="flex gap-2">
-          <button
-            onClick={applyFilters}
-            disabled={filtersLoading || isLoading}
-            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
-          >
-            {isLoading ? (
-              <>
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                جاري التحميل...
-              </>
-            ) : (
-              <>
+          {filtersLoading ? (
+            <>
+              <ButtonSkeleton />
+              <ButtonSkeleton />
+              <ButtonSkeleton />
+            </>
+          ) : (
+            <>
+              <button
+                onClick={applyFilters}
+                disabled={isLoading}
+                className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin h-5 w-5 text-white" />
+                    جاري التحميل...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                    جلب البيانات
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={exportToExcel}
+                disabled={violationData.length === 0 || isLoading}
+                className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5"
@@ -378,57 +397,35 @@ export default function TrafficViolationsChart() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                جلب البيانات
-              </>
-            )}
-          </button>
+                Excel
+              </button>
 
-          <button
-            onClick={exportToExcel}
-            disabled={violationData.length === 0 || isLoading}
-            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            Excel
-          </button>
-
-          <button
-            onClick={handlePrint}
-            disabled={violationData.length === 0 || isLoading}
-            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-              />
-            </svg>
-            طباعة
-          </button>
+              <button
+                onClick={handlePrint}
+                disabled={violationData.length === 0 || isLoading}
+                className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 disabled:opacity-50 min-w-[120px] justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                  />
+                </svg>
+                طباعة
+              </button>
+            </>
+          )}
         </div>
         <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white">
           {reportType === "حوادث"
@@ -439,98 +436,117 @@ export default function TrafficViolationsChart() {
 
       {/* Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
-        {/* فلتر حوادث او مخالفات  */}
-        <div className="flex flex-col items-end">
-          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            نوع التقرير
-          </label>
-          <select
-            value={reportType}
-            onChange={(e) => {
-              setReportType(e.target.value);
-              setViolationData([]); // مسح البيانات عند تغيير نوع التقرير
-            }}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-          >
-            <option value="حوادث">حوادث</option>
-            <option value="مخالفات">مخالفات</option>
-          </select>
-        </div>
+        {filtersLoading ? (
+          <>
+            <FilterSkeleton />
+            <FilterSkeleton />
+            <FilterSkeleton />
+          </>
+        ) : (
+          <>
+            {/* فلتر حوادث او مخالفات  */}
+            <div className="flex flex-col items-end">
+              <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                نوع التقرير
+              </label>
+              <select
+                value={reportType}
+                onChange={(e) => {
+                  setReportType(e.target.value);
+                  setViolationData([]);
+                }}
+                className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+              >
+                <option value="حوادث">حوادث</option>
+                <option value="مخالفات">مخالفات</option>
+              </select>
+            </div>
 
-        {reportType === "مخالفات" && (
-          <div className="flex flex-col items-end">
-            <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              نوع المخالفة
-            </label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-              disabled={filtersLoading || violationTypes.length === 0}
-            >
-              {violationTypes.map((type, index) => (
-                <option key={index} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </div>
+            {reportType === "مخالفات" && (
+              <div className="flex flex-col items-end">
+                <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  نوع المخالفة
+                </label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+                  disabled={violationTypes.length === 0}
+                >
+                  {violationTypes.map((type, index) => (
+                    <option key={index} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* فلتر المحافظة  */}
+            <div className="flex flex-col items-end">
+              <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                المحافظة
+              </label>
+              <select
+                value={selectedGovernorate}
+                onChange={(e) => setSelectedGovernorate(e.target.value)}
+                className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+                disabled={governorates.length === 0}
+              >
+                {governorates.map((gov, index) => (
+                  <option key={index} value={gov}>
+                    {gov}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* الفلتر الزمني  */}
+            <div className="flex flex-row justify-center items-center ml-5">
+              <div className="flex flex-col items-end mx-2">
+                <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  من تاريخ
+                </label>
+                <DatePicker
+                  selected={startDate}
+                  onChange={setStartDate}
+                  selectsStart
+                  startDate={startDate}
+                  endDate={endDate}
+                  className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+                />
+              </div>
+
+              <div className="flex flex-col items-end">
+                <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  إلى تاريخ
+                </label>
+                <DatePicker
+                  selected={endDate}
+                  onChange={setEndDate}
+                  selectsEnd
+                  startDate={startDate}
+                  endDate={endDate}
+                  minDate={startDate}
+                  className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
+                />
+              </div>
+            </div>
+          </>
         )}
-
-        {/* فلتر المحافظة  */}
-        <div className="flex flex-col items-end">
-          <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            المحافظة
-          </label>
-          <select
-            value={selectedGovernorate}
-            onChange={(e) => setSelectedGovernorate(e.target.value)}
-            className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-            disabled={filtersLoading || governorates.length === 0}
-          >
-            {governorates.map((gov, index) => (
-              <option key={index} value={gov}>
-                {gov}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* الفلتر الزمني  */}
-        <div className="flex flex-row justify-center items-center ml-5">
-          <div className="flex flex-col items-end mx-2">
-            <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              من تاريخ
-            </label>
-            <DatePicker
-              selected={startDate}
-              onChange={setStartDate}
-              selectsStart
-              startDate={startDate}
-              endDate={endDate}
-              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-            />
-          </div>
-
-          <div className="flex flex-col items-end">
-            <label className="block mb-1 md:mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              إلى تاريخ
-            </label>
-            <DatePicker
-              selected={endDate}
-              onChange={setEndDate}
-              selectsEnd
-              startDate={startDate}
-              endDate={endDate}
-              minDate={startDate}
-              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-sm md:text-base"
-            />
-          </div>
-        </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-4 text-center">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+
       {/* Chart */}
-      {violationData.length > 0 ? (
+      {isLoading ? (
+        <DataSkeleton />
+      ) : violationData.length > 0 ? (
         <div className="bg-white dark:bg-customDarkGreen p-3 md:p-4 rounded-lg mb-4 md:mb-6">
           <div className="h-64 md:h-80 w-full">
             <Bar data={chartData} options={chartOptions} />
