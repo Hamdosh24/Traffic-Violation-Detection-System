@@ -5,85 +5,63 @@ namespace App\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
+// ✅ Add these specific Exception types
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * A robust client for interacting with the external Traffic Information API.
- * This class encapsulates all logic related to fetching driver data,
- * including caching, retries, and intelligent error handling.
- */
 class TrafficAPIService
 {
-    /**
-     * The base URL for the Traffic API.
-     */
-    protected string $baseUrl;
+    protected $baseUrl;
 
-    /**
-     * Create a new service instance.
-     */
     public function __construct()
     {
-        // Load the API URL from the services configuration file.
-        // This is a best practice to keep credentials and URLs out of the code.
         $this->baseUrl = config('services.traffic_api.url');
     }
 
-    /**
-     * Get driver information by their license plate number.
-     *
-     * @param  string  $plateNumber  The license plate to look up.
-     * @return array|null Returns an array of driver info on success (can be empty for 404),
-     *                    or null if a critical API failure occurs.
-     */
     public function getDriverInfoByPlate(string $plateNumber): ?array
     {
         $cacheKey = 'driver_info:'.$plateNumber;
 
-        // Use the cache to avoid redundant API calls for the same plate number.
-        // If data is in the cache, it's returned immediately.
-        // Otherwise, the closure is executed, and its result is cached for 24 hours.
+        // ✅ You can now safely re-enable the cache
         return Cache::remember($cacheKey, now()->addHours(24), function () use ($plateNumber) {
             try {
                 $response = Http::acceptJson()
-                    ->timeout(8) // Wait a maximum of 8 seconds for a response.
-                    ->retry(2, 100) // Retry 2 times with a 100ms delay if the request fails.
+                    ->timeout(8)
+                    ->retry(2, 100)
                     ->get($this->baseUrl.'/drivers/'.$plateNumber);
 
-                // This will automatically throw a RequestException on 4xx/5xx errors.
-                $response->throw();
-
-                // If we reach here, the status code was successful (2xx).
+                // This will throw an exception on 4xx/5xx errors, which we now handle below.
+                // If we get here, it means the status code was successful (2xx).
                 return $response->json();
 
             } catch (RequestException $e) {
-                // This block handles errors where the API responded with a 4xx or 5xx status code.
-                if ($e->response->status() === 404) {
-                    // 404 (Not Found) is an expected outcome, not a system failure.
-                    // It simply means the driver does not exist.
+                // ✅ This is the intelligent error handling block.
+                // This block runs when the API returns an error status code (4xx or 5xx).
+
+                if ($e->response && $e->response->status() === 404) {
+                    // This is a "Not Found" error. It's an expected outcome, not a failure.
                     Log::info('Driver not found via Traffic API.', ['plate' => $plateNumber]);
 
-                    return []; // Return an empty array to signify "found nothing".
+                    return []; // Return an empty array.
                 }
 
-                // Any other status code (like 500 Internal Server Error) is a true failure.
+                // For any other status code error (like 500), it's a true service failure.
                 Log::error('Traffic API request failed with a status code.', [
                     'plate_number' => $plateNumber,
-                    'status' => $e->response->status(),
-                    'error' => $e->getMessage(),
+                    'status' => $e->response ? $e->response->status() : 'N/A',
+                    'error_message' => $e->getMessage(),
                 ]);
 
-                return null; // Return null to indicate a critical failure.
+                return null; // Return null to indicate failure.
 
             } catch (ConnectionException $e) {
-                // This block handles network-level problems (e.g., DNS issues, timeouts).
-                Log::error('Could not connect to the Traffic API.', [
+                // This block runs for network-level problems (e.g., cURL error 7, timeouts).
+                Log::error('Traffic API connection failed.', [
                     'plate_number' => $plateNumber,
-                    'error' => $e->getMessage(),
+                    'error_message' => $e->getMessage(),
                 ]);
 
-                return null; // Return null to indicate a critical failure.
+                return null; // Return null to indicate failure.
             }
         });
     }

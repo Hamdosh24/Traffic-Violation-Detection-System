@@ -8,10 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 
-/**
- * This service provider is responsible for loading the application's route files
- * and configuring its rate limiters.
- */
 class RouteServiceProvider extends ServiceProvider
 {
     /**
@@ -25,53 +21,39 @@ class RouteServiceProvider extends ServiceProvider
 
     /**
      * Define your route model bindings, pattern filters, and other route configuration.
-     *
-     * @return void
+     */
+    // app/Providers/RouteServiceProvider.php
+
+    /**
+     * Define your route model bindings, pattern filters, and other route configuration.
      */
     public function boot(): void
     {
-        // --- Step 1: Configure application rate limiters ---
-        $this->configureRateLimiting();
+        // ✅ الخطوة 1: عرّف كل الـ Rate Limiters هنا في البداية
 
-        // --- Step 2: Load the route files after configuring the limiters ---
+        RateLimiter::for('sse', function (Request $request) {
+            return Limit::perMinute(30)->by(optional($request->user())->id ?: $request->ip());
+        });
+        // الخطوة 2: قم بتحميل المسارات بعد تعريف الـ Rate Limiters
         $this->routes(function () {
-            // Load the main API routes (e.g., for user auth, public endpoints).
+            // This is for your main api.php file (login, etc.)
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            // Load the system-specific API routes (e.g., for AI cameras).
+            // THIS IS THE FIX: Load your system routes
             Route::middleware('api')
                 ->prefix('api/system')
                 ->group(base_path('routes/api/system.php'));
 
-            // Load the admin-specific API routes (e.g., for admin panel).
+            // THIS IS THE FIX: Load your admin routes
             Route::middleware('api')
                 ->prefix('api/admin')
                 ->group(base_path('routes/api/admin.php'));
 
-            // Load the standard web routes (for views, etc.).
+            // This is for your web.php file
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
-        });
-    }
-
-    /**
-     * Configure the rate limiters for the application.
-     *
-     * @return void
-     */
-    protected function configureRateLimiting(): void
-    {
-        // A standard rate limiter for most API endpoints.
-        RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
-        });
-
-        // A custom, more lenient rate limiter for Server-Sent Events (SSE).
-        // It's separate because SSE connections are long-lived and require different rules.
-        RateLimiter::for('sse', function (Request $request) {
-            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });
     }
 }

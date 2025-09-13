@@ -4,51 +4,37 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * This migration adds 'claimed_by' and 'claimed_at' columns to the 'accidents' table.
- * It uses Schema::table() to modify an existing table.
- */
 return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up(): void
     {
-        // Use Schema::table() to modify the existing 'accidents' table.
         Schema::table('accidents', function (Blueprint $table) {
-            // Add a column to store the UUID of the employee who claimed the accident.
-            // It's nullable because new accidents are unclaimed.
-            // 'after('status')' places this column after the 'status' column for better organization.
+            // عمود لتخزين ID الموظف الذي تبنى الحادث
             $table->uuid('claimed_by')->nullable()->after('status');
 
-            // Add a column to store the timestamp of when the accident was claimed.
+            // عمود لتخزين وقت تبني الحادث
             $table->timestamp('claimed_at')->nullable()->after('claimed_by');
 
-            // Create a foreign key relationship to the 'users' table.
+            // إنشاء علاقة المفتاح الخارجي مع جدول المستخدمين
+            // nullOnDelete يعني أنه إذا تم حذف مستخدم، ستبقى قيمة claimed_by فارغة ولن يتم حذف الحادث
             $table->foreign('claimed_by')
-                  ->references('user_id') // Assumes the primary key on 'users' is 'user_id'.
-                  ->on('users')
-                  ->nullOnDelete(); // IMPORTANT: If the user is deleted, this field becomes NULL, but the accident record is preserved.
+                ->references('user_id')
+                ->on('users')
+                ->nullOnDelete();
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * This method undoes the changes made in the 'up' method.
-     *
-     * @return void
      */
     public function down(): void
     {
         Schema::table('accidents', function (Blueprint $table) {
-            // To remove columns with foreign keys, you must drop the foreign key constraint first.
+            // حذف العلاقة والأعمدة عند التراجع
             $table->dropForeign(['claimed_by']);
-
-            // Then, drop the columns themselves.
             $table->dropColumn(['claimed_by', 'claimed_at']);
         });
     }
