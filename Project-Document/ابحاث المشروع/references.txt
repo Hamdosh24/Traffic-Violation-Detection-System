@@ -1,0 +1,17 @@
+بث:
+https://medium.com/@gold_olar/from-traffic-cameras-to-web-applications-a-streaming-architecture-overview-218759743d86
+
+https://getstream.io/blog/streaming-protocols/
+
+https://www.linkedin.com/advice/1/what-advantages-disadvantages-rtsp-ip-camera-streaming
+
+انواع الكاميرات:
+https://www.spottersecurity.com/blog/ip-camera-vs-analog-camera/
+
+https://www.coram.ai/post/types-of-security-cameras
+
+https://www.avigilon.com/blog/types-of-cctv-cameras
+
+https://www.fs.com/blog/ip-cameras-vs-analog-cameras-what-are-the-differences-978.html
+
+https://support.epcom.net/en/articles/10330836-the-difference-between-analog-and-ip-cameras
